@@ -12,6 +12,8 @@ import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
 import android.util.TypedValue
@@ -28,6 +30,7 @@ import com.bantai.R
 import com.bantai.data.GuardianPreferences
 import com.bantai.model.ScreenContext
 import com.bantai.pipeline.GabaySource
+import com.bantai.rules.GabayRanker
 import com.bantai.rules.PromptBuilder
 import com.bantai.service.BantaiAccessibilityService
 import kotlinx.coroutines.Job
@@ -51,6 +54,7 @@ object GabayOverlay {
     private var card: View? = null
     private var highlightShownAt = 0L
     private var job: Job? = null
+    private val main = Handler(Looper.getMainLooper())
 
     /** Huling tanong, para sa "Susunod na hakbang" pagkatapos pumindot ni Nanay. */
     private var lastQuestion: String? = null
@@ -85,6 +89,7 @@ object GabayOverlay {
 
     fun hideAll() {
         job?.cancel()
+
         listOf(bubble, panel, highlight, card).forEach { it?.let(::removeSafely) }
         bubble = null; panel = null; highlight = null; card = null
         service = null
@@ -101,8 +106,14 @@ object GabayOverlay {
         if (panel != null) return closePanel()
         clearGuide()
         val svc = service ?: return
-        val items = mutableListOf<View>(title(svc, svc.getString(R.string.gabay_panel_title)))
-        lastQuestion?.let { q -> items += option(svc, svc.getString(R.string.gabay_next_step), primary = true) { ask(q) } }
+        val status = TextView(svc).apply {
+            setTextColor(svc.color(R.color.bantai_primary))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
+            setPadding(0, svc.dp(8), 0, 0)
+        }
+        val items = mutableListOf<View>(title(svc, svc.getString(R.string.gabay_panel_title)), status)
+        items += option(svc, svc.getString(R.string.gabay_speak), primary = true) { listen(status) }
+        lastQuestion?.let { q -> items += option(svc, svc.getString(R.string.gabay_next_step)) { ask(q) } }
         for ((labelRes, question) in OPTIONS) items += option(svc, svc.getString(labelRes)) { ask(question) }
         items += option(svc, svc.getString(R.string.gabay_close)) { closePanel() }
         val box = cardView(svc, items)
@@ -110,9 +121,36 @@ object GabayOverlay {
             .apply { gravity = Gravity.BOTTOM }
         wm.addView(box, params)
         panel = box
+
+        // Two-way: magtatanong si Bantay, tapos makikinig pagkatapos niyang magsalita (para hindi niya marinig ang sarili).
+        Bantai.speaker(svc).speak(svc.getString(R.string.gabay_panel_title)) {
+            main.post { if (panel === box) listen(status) }
+        }
+    }
+
+    private fun listen(status: TextView) {
+        val svc = service ?: return
+        Bantai.speaker(svc).stop()
+        status.text = svc.getString(R.string.gabay_listening)
+        VoiceActivity.pending = VoiceActivity.Request(
+            onPartial = { status.text = "🎤 \"$it\"" },
+            onText = { text ->
+                Log.i(TAG, "heard chars=${text.length}")
+                ask(text)
+            },
+            onFail = { error ->
+                Log.e(TAG, "listen failed error=$error")
+                status.text = svc.getString(R.string.gabay_not_heard)
+            },
+        )
+        svc.startActivity(
+            Intent(svc, VoiceActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
+        )
     }
 
     private fun closePanel() {
+        VoiceActivity.pending = null
         panel?.let(::removeSafely)
         panel = null
     }
@@ -125,16 +163,16 @@ object GabayOverlay {
         showCard(svc.getString(R.string.gabay_thinking), offerCallApo = false)
         job?.cancel()
         job = Bantai.scope.launch {
-            delay(300) // hayaang mawala muna ang panel bago basahin ang screen
+            delay(700) // hayaang mawala muna ang panel at ang VoiceActivity bago basahin ang screen
             val (app, buttons) = svc.readButtons()
             // Parehong paglilinis ng label gaya ng nasa prompt, para mahanap ang button na pinili ni Gemma.
             val byLabel = LinkedHashMap<String, Rect>()
             for (b in buttons) PromptBuilder.gabayLabels(listOf(b.label)).firstOrNull()?.let { byLabel.putIfAbsent(it, b.bounds) }
 
             val apoName = GuardianPreferences(svc).apoName
-            val result = Bantai.gabayPipeline(svc).guide(question, ScreenContext(app, byLabel.keys.toList()), apoName)
+            val result = Bantai.gabayPipeline(svc).guide(question, ScreenContext(app, GabayRanker.rank(question, byLabel.keys.toList())), apoName)
             val target = result.steps.firstOrNull()?.let { QUOTED.find(it)?.groupValues?.get(1) }?.let(byLabel::get)
-            Log.i(TAG, "q=$question app=$app buttons=${byLabel.size} source=${result.source} step=${result.steps.firstOrNull()} found=${target != null}")
+            Log.e(TAG, "q=$question app=$app buttons=${byLabel.size} source=${result.source} step=${result.steps.firstOrNull()} found=${target != null}")
 
             clearGuide()
             // Lumipat na si Nanay sa ibang app habang nag-iisip si Gemma: luma na ang sagot, huwag ituro.

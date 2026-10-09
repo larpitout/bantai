@@ -3,6 +3,13 @@
 
     <!-- Babala sa ibabaw ng ibang app -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- Gabay: pakikinig sa tanong ni Nanay -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
 
     <!-- Crucial for Android 11+ to discover and bind to Google TextToSpeech engine -->
     <queries>
@@ -40,6 +47,15 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
         </service>
+
+        <!-- Pakikinig para sa Gabay: walang itsura, hiwalay na task para bumalik agad sa app ni Nanay -->
+        <activity
+            android:name="com.bantai.ui.VoiceActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <!-- Setup and Onboarding Activity -->
         <activity

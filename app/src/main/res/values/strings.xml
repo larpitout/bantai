@@ -69,4 +69,7 @@
     <string name="gabay_opt_search">🔍 Find a person</string>
     <string name="gabay_close">Close</string>
     <string name="gabay_thinking">One moment, let me look at your screen…</string>
+    <string name="gabay_speak">🎤 Speak</string>
+    <string name="gabay_listening">🎤 Listening… say what you need.</string>
+    <string name="gabay_not_heard">I didn\'t hear you. Tap 🎤 to try again.</string>
 </resources>
