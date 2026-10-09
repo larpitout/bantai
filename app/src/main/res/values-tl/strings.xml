@@ -152,4 +152,6 @@
     <string name="field_decided_by">Sinuri ng</string>
     <string name="decided_by_ai_model">AI sa phone (%1$s)</string>
     <string name="chip_ai">AI</string>
+    <string name="day_today">Ngayon</string>
+    <string name="day_yesterday">Kahapon</string>
 </resources>
