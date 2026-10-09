@@ -1,53 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Setup screen. Disenyo: "Setup" ng bantai_ui (SetupScreen.tsx), pero mas malaki ang text
+     para kay Nanay, at ang "Protection Preferences" ay ang totoong mga permission. -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FA"
+    android:background="@color/bantai_bg"
     android:fillViewport="true">
 
     <LinearLayout
+        android:id="@+id/setupContent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:paddingStart="20dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="32dp">
 
-        <TextView
-            android:id="@+id/tvTitle"
-            android:layout_width="wrap_content"
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/app_name"
-            android:textColor="#212529"
-            android:textSize="28sp"
-            android:textStyle="bold" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/tvTagline"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="@string/app_tagline"
-            android:textColor="#0D6EFD"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            <FrameLayout
+                android:id="@+id/logoFrame"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_card">
 
-        <TextView
-            android:id="@+id/tvSubtitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="@string/setup_subtitle"
-            android:textColor="#6C757D"
-            android:textSize="14sp" />
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="@string/welcome_logo_desc"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/bantai_logo" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
+                    android:letterSpacing="-0.01"
+                    android:text="@string/setup_title"
+                    android:textColor="@color/bantai_text"
+                    android:textSize="22sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="@string/setup_header_subtitle"
+                    android:textColor="@color/bantai_text_muted"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_pill"
+                android:paddingStart="12dp"
+                android:paddingTop="4dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="4dp"
+                android:text="@string/setup_step_pill"
+                android:textColor="@color/bantai_primary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="14dp"
+            android:background="@color/bantai_border" />
 
         <!-- Master Protection Switch Card -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:background="#FFFFFF"
-            android:elevation="1dp"
-            android:orientation="horizontal"
+            android:background="@drawable/bg_card"
             android:gravity="center_vertical"
+            android:orientation="horizontal"
             android:padding="16dp">
 
             <LinearLayout
@@ -60,7 +106,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/switch_protection_title"
-                    android:textColor="#212529"
+                    android:textColor="@color/bantai_text"
                     android:textSize="17sp"
                     android:textStyle="bold" />
 
@@ -70,8 +116,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="@string/switch_protection_active"
-                    android:textColor="#198754"
-                    android:textSize="14sp"
+                    android:textColor="@color/bantai_primary"
+                    android:textSize="15sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
@@ -79,352 +125,339 @@
                 android:id="@+id/switchProtection"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="true" />
+                android:checked="true"
+                android:minWidth="48dp"
+                android:minHeight="48dp"
+                app:thumbTint="#FFFFFF"
+                app:trackTint="@color/switch_track" />
         </LinearLayout>
 
-        <View
+        <!-- Required Permissions Card ("Protection Preferences" sa bantai_ui) -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="1dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:layout_marginBottom="20dp"
-            android:background="#DEE2E6" />
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp">
 
-        <!-- Trusted Contact Details -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Trusted Contact Details"
-            android:textColor="#343A40"
-            android:textSize="17sp"
-            android:textStyle="bold" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:letterSpacing="0.05"
+                android:text="@string/setup_perm_section_title"
+                android:textAllCaps="true"
+                android:textColor="@color/bantai_text_muted"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
-        <EditText
-            android:id="@+id/etApoName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:background="@android:drawable/editbox_background_normal"
-            android:hint="@string/setup_apo_name_hint"
-            android:inputType="textPersonName"
-            android:minHeight="48dp"
-            android:padding="12dp"
-            android:textColor="#212529"
-            android:textSize="16sp" />
+            <!-- Notification Access Row -->
+            <LinearLayout
+                android:id="@+id/layoutNotificationPerm"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_row"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:orientation="horizontal"
+                android:padding="12dp">
 
-        <EditText
-            android:id="@+id/etApoPhone"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:background="@android:drawable/editbox_background_normal"
-            android:hint="@string/setup_apo_phone_hint"
-            android:inputType="phone"
-            android:minHeight="48dp"
-            android:padding="12dp"
-            android:textColor="#212529"
-            android:textSize="16sp" />
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_bell" />
 
-        <Button
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setup_perm_notification_title"
+                        android:textColor="@color/bantai_text"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/setup_perm_notification_desc"
+                        android:textColor="@color/bantai_text_muted"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switchNotification"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="false"
+                    app:thumbTint="#FFFFFF"
+                    app:trackTint="@color/switch_track" />
+            </LinearLayout>
+
+            <!-- Display Over Other Apps Row -->
+            <LinearLayout
+                android:id="@+id/layoutOverlayPerm"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_row"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_layers" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setup_perm_overlay_title"
+                        android:textColor="@color/bantai_text"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/setup_perm_overlay_desc"
+                        android:textColor="@color/bantai_text_muted"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switchOverlay"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="false"
+                    app:thumbTint="#FFFFFF"
+                    app:trackTint="@color/switch_track" />
+            </LinearLayout>
+
+            <!-- Accessibility Service Row -->
+            <LinearLayout
+                android:id="@+id/layoutAccessibilityPerm"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_row"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_accessibility" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setup_perm_accessibility_title"
+                        android:textColor="@color/bantai_text"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/setup_perm_accessibility_desc"
+                        android:textColor="@color/bantai_text_muted"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switchAccessibility"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="false"
+                    app:thumbTint="#FFFFFF"
+                    app:trackTint="@color/switch_track" />
+            </LinearLayout>
+
+            <!-- Battery: Unrestricted Row -->
+            <LinearLayout
+                android:id="@+id/layoutBatteryPerm"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_row"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_check_circle" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setup_perm_battery_title"
+                        android:textColor="@color/bantai_text"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/setup_perm_battery_desc"
+                        android:textColor="@color/bantai_text_muted"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switchBattery"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="false"
+                    app:thumbTint="#FFFFFF"
+                    app:trackTint="@color/switch_track" />
+            </LinearLayout>
+
+            <!-- Babala sa Tawag Row -->
+            <LinearLayout
+                android:id="@+id/layoutCallPerm"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_row"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_bell" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setup_perm_call_title"
+                        android:textColor="@color/bantai_text"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/setup_perm_call_desc"
+                        android:textColor="@color/bantai_text_muted"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switchCall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="false"
+                    app:thumbTint="#FFFFFF"
+                    app:trackTint="@color/switch_track" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Finish Button -->
+        <LinearLayout
             android:id="@+id/btnSave"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:backgroundTint="#0D6EFD"
-            android:minHeight="48dp"
-            android:text="@string/setup_btn_save"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
             android:layout_marginTop="24dp"
-            android:layout_marginBottom="20dp"
-            android:background="#DEE2E6" />
-
-        <!-- Permission Status Section -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Required Permissions"
-            android:textColor="#343A40"
-            android:textSize="17sp"
-            android:textStyle="bold" />
-
-        <!-- Notification Access Row -->
-        <LinearLayout
-            android:id="@+id/layoutNotificationPerm"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:background="#FFFFFF"
+            android:background="@drawable/bg_btn_finish"
             android:clickable="true"
-            android:elevation="1dp"
+            android:elevation="6dp"
             android:focusable="true"
-            android:orientation="vertical"
-            android:padding="14dp">
+            android:gravity="center"
+            android:minHeight="60dp"
+            android:orientation="horizontal"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/setup_perm_notification_title"
-                    android:textColor="#212529"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvNotificationStatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/status_not_granted"
-                    android:textColor="#DC3545"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_check_circle" />
 
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/setup_perm_notification_desc"
-                android:textColor="#6C757D"
-                android:textSize="13sp" />
+                android:layout_marginStart="8dp"
+                android:fontFamily="sans-serif-black"
+                android:text="@string/setup_btn_finish"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp" />
         </LinearLayout>
-
-        <!-- Accessibility Service Row -->
-        <LinearLayout
-            android:id="@+id/layoutAccessibilityPerm"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:background="#FFFFFF"
-            android:clickable="true"
-            android:elevation="1dp"
-            android:focusable="true"
-            android:orientation="vertical"
-            android:padding="14dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/setup_perm_accessibility_title"
-                    android:textColor="#212529"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvAccessibilityStatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/status_not_granted"
-                    android:textColor="#DC3545"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/setup_perm_accessibility_desc"
-                android:textColor="#6C757D"
-                android:textSize="13sp" />
-        </LinearLayout>
-
-        <!-- Display Over Other Apps Row -->
-        <LinearLayout
-            android:id="@+id/layoutOverlayPerm"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:background="#FFFFFF"
-            android:clickable="true"
-            android:elevation="1dp"
-            android:focusable="true"
-            android:orientation="vertical"
-            android:padding="14dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/setup_perm_overlay_title"
-                    android:textColor="#212529"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvOverlayStatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/status_not_granted"
-                    android:textColor="#DC3545"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/setup_perm_overlay_desc"
-                android:textColor="#6C757D"
-                android:textSize="13sp" />
-        </LinearLayout>
-
-        <!-- Battery: Unrestricted Row -->
-        <LinearLayout
-            android:id="@+id/layoutBatteryPerm"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:background="#FFFFFF"
-            android:clickable="true"
-            android:elevation="1dp"
-            android:focusable="true"
-            android:orientation="vertical"
-            android:padding="14dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/setup_perm_battery_title"
-                    android:textColor="#212529"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvBatteryStatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/status_not_granted"
-                    android:textColor="#DC3545"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/setup_perm_battery_desc"
-                android:textColor="#6C757D"
-                android:textSize="13sp" />
-        </LinearLayout>
-
-        <!-- Babala sa Tawag Row -->
-        <LinearLayout
-            android:id="@+id/layoutCallPerm"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:background="#FFFFFF"
-            android:clickable="true"
-            android:elevation="1dp"
-            android:focusable="true"
-            android:orientation="vertical"
-            android:padding="14dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/setup_perm_call_title"
-                    android:textColor="#212529"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvCallStatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/status_not_granted"
-                    android:textColor="#DC3545"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/setup_perm_call_desc"
-                android:textColor="#6C757D"
-                android:textSize="13sp" />
-        </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="20dp"
-            android:background="#DEE2E6" />
-
-        <!-- Test Scam Action -->
-        <Button
-            android:id="@+id/btnTest"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:backgroundTint="#198754"
-            android:minHeight="48dp"
-            android:text="@string/setup_btn_test"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp" />
-
-        <!-- Mga na-flag na mensahe (para kay Apo) -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
-            android:text="@string/history_title"
-            android:textColor="#343A40"
-            android:textSize="17sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/tvHistory"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:background="#FFFFFF"
-            android:lineSpacingExtra="4dp"
-            android:padding="14dp"
-            android:text="@string/history_empty"
-            android:textColor="#495057"
-            android:textSize="14sp" />
 
     </LinearLayout>
 </ScrollView>

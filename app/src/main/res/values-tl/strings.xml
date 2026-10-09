@@ -43,21 +43,17 @@
     <string name="signal_account_parcel">Account / OTP / Parcel</string>
     <string name="signal_urgency">Apura / Emergency</string>
 
-    <!-- Setup Screen (Trusted Contact Onboarding) -->
+    <!-- Setup Screen (Onboarding) -->
     <string name="setup_title">Setup ng Bantai</string>
-    <string name="setup_subtitle">Isang beses lang na paghahanda para sa kaligtasan ni Nanay</string>
-    <string name="setup_apo_name_hint">Pangalan ng Trusted Contact</string>
-    <string name="setup_apo_phone_hint">Cellphone Number ng Trusted Contact</string>
+    <string name="setup_header_subtitle">Mabilis na 1 minutong setup</string>
+    <string name="setup_step_pill">Hakbang 2 ng 2</string>
+    <string name="setup_perm_section_title">Mga Kailangang Pahintulot</string>
+    <string name="setup_btn_finish">Tapusin ang Setup</string>
+    <string name="setup_toast_done">Tapos na ang setup. Nagbabantay na si Bantai.</string>
     <string name="setup_perm_notification_title">Notification Access</string>
     <string name="setup_perm_notification_desc">Pinapayagan si Bantai na suriin ang bagong SMS at chats laban sa scam.</string>
     <string name="setup_perm_overlay_title">Display Over Other Apps</string>
     <string name="setup_perm_overlay_desc">Para lumabas ang babala kahit nasa ibang app si Nanay.</string>
-    <string name="setup_btn_save">I-save ang Settings</string>
-    <string name="setup_btn_test">I-test ang Babala</string>
-    <string name="status_granted">Naka-enable na</string>
-    <string name="status_not_granted">Pindutin para I-enable</string>
-    <string name="setup_toast_saved">Matagumpay na na-save ang settings.</string>
-    <string name="setup_toast_fill_fields">Pakilagay ang pangalan at cellphone number ng trusted contact.</string>
     <string name="setup_test_alert_triggered">Sinusubukan ang babala laban sa scam...</string>
     <string name="switch_protection_title">Proteksyon ni Bantai</string>
     <string name="switch_protection_active">Aktibo</string>

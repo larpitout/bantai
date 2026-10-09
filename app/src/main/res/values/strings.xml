@@ -43,21 +43,17 @@
     <string name="signal_account_parcel">Account / OTP / Parcel</string>
     <string name="signal_urgency">Urgency / Emergency</string>
 
-    <!-- Setup Screen (Trusted Contact Onboarding) -->
+    <!-- Setup Screen (Onboarding) -->
     <string name="setup_title">Bantai Setup</string>
-    <string name="setup_subtitle">One-time setup for Nanay\'s safety</string>
-    <string name="setup_apo_name_hint">Trusted Contact Name</string>
-    <string name="setup_apo_phone_hint">Trusted Contact Phone Number</string>
+    <string name="setup_header_subtitle">Quick 1-minute configuration</string>
+    <string name="setup_step_pill">Step 2 of 2</string>
+    <string name="setup_perm_section_title">Required Permissions</string>
+    <string name="setup_btn_finish">Finish Setup</string>
+    <string name="setup_toast_done">Setup complete. Bantai is on guard.</string>
     <string name="setup_perm_notification_title">Notification Access</string>
     <string name="setup_perm_notification_desc">Allows Bantai to inspect incoming SMS and chats for scams.</string>
     <string name="setup_perm_overlay_title">Display Over Other Apps</string>
     <string name="setup_perm_overlay_desc">Lets Bantai show the scam warning on top of any app.</string>
-    <string name="setup_btn_save">Save Settings</string>
-    <string name="setup_btn_test">Test Scam Alert</string>
-    <string name="status_granted">Granted</string>
-    <string name="status_not_granted">Tap to Grant</string>
-    <string name="setup_toast_saved">Settings saved successfully.</string>
-    <string name="setup_toast_fill_fields">Please enter both trusted contact name and phone number.</string>
     <string name="setup_test_alert_triggered">Triggering test scam alert...</string>
     <string name="switch_protection_title">Bantai Protection</string>
     <string name="switch_protection_active">Active</string>
