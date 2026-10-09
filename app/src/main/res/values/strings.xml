@@ -137,7 +137,6 @@
     <string name="check_desc">Paste a suspicious text or link. Bantai checks it on this phone, offline.</string>
     <string name="check_hint">Paste the message or link here</string>
     <string name="btn_check">Check</string>
-    <string name="check_ai_thinking">On-device AI is also checking…</string>
     <string name="check_ai_done">Checked by on-device AI</string>
     <string name="check_ai_unavailable">Checked by Bantai rules (AI did not answer in time)</string>
     <string name="card_protection">Protection</string>

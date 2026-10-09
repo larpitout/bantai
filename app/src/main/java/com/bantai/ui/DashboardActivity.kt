@@ -457,7 +457,7 @@ class DashboardActivity : AppCompatActivity() {
             })
         }
 
-        show(initialIsScam, initialReason, initialAction, if (hasAi) getString(R.string.check_ai_thinking) else null)
+        show(initialIsScam, initialReason, initialAction, null)
         if (!hasAi) return
 
         // AI sa phone: may allowAiDowngrade para sa Check tab upang marinig ang totoong desisyon ng AI.

@@ -51,7 +51,8 @@ class ScamPipeline(
             return@flow
         }
 
-        val ruleVerdict = RuleFilter.createInstantWarning(rule)
+        // Walang rule signal: ligtas ang fallback kapag hindi sumagot ang model.
+        val ruleVerdict = if (rule.score == 0) SAFE_VERDICT else RuleFilter.createInstantWarning(rule)
         val confirmedByRules = rule.score >= 2 && !allowAiDowngrade
         if (confirmedByRules) {
             emit(ScamCheck(rule, ruleVerdict, VerdictSource.RULES, isFinal = false))

@@ -117,6 +117,16 @@ class ScamPipelineTest {
     }
 
     @Test
+    fun scoreZeroStaysSafeWhenTheModelDoesNotAnswer() = runTest {
+        val engine = StubEngine(initial = EngineState.IDLE)
+        val results = ScamPipeline(engine, allowAiDowngrade = true).check(SAFE_TEXT).toList()
+
+        assertEquals(1, results.size)
+        assertEquals(VerdictSource.RULES, results[0].source)
+        assertFalse(results[0].verdict.isScam)
+    }
+
+    @Test
     fun engineErrorFallsBackToRuleVerdict() = runTest {
         val results = ScamPipeline(StubEngine { error("inference failed") }).check(ONE_SIGNAL_TEXT).toList()
 
