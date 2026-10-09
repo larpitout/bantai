@@ -68,21 +68,25 @@ Pumili kung Virtual Device o Physical Device ang gagamitin:
   - Kapag na-install na ang APK: Pumunta sa Settings -> Apps -> Bantay -> Tatlong tuldok sa taas -> Allow Restricted Settings para ma-enable ang Notification Access at Accessibility Service.
 
 ### Lane C: App Shell at UI (ON HOLD - Hinihintay ang UI/UX)
-- [ ] **C1. Core Contracts & Data Models** (~15 min) · Pwedeng ilatag kahit walang UI
+- [x] **C1. Core Contracts & Data Models** (~15 min) · Pwedeng ilatag kahit walang UI
   - LlmEngine interface, data classes (RuleResult, ScamVerdict, ScreenContext), at FakeEngine.
 - [ ] *(Deferred)* **C2. Manifest at Services Setup** · Gagawin kapag may baseline layout na
 - [ ] *(Deferred)* **C3. Babala Card Overlay Views** · Gagawin kapag tapos na ang Figma/UI design
 
 ### Lane A: AI Core (Backend Dev 1)
-- [ ] **A2. I-download ang Gemma 3 1B `.litertlm` Model** (~15 min)
+- [x] **A2. I-download ang Gemma 3 1B `.litertlm` Model** (~15 min)
   - Hugging Face: tanggapin ang Gemma license sa `litert-community/Gemma3-1B-IT`.
   - I-download ang int4 `.litertlm` file sa laptop (~550 MB).
-- [ ] **A3. `LiteRtEngine` Implementation** (~40 min) · Kailangan: A2, C1
+- [x] **A3. `LiteRtEngine` Implementation** (~40 min) · Kailangan: A2, C1
   - Idagdag ang dependency `com.google.ai.edge.litertlm:litertlm-android`.
   - Ipatupad ang `LiteRtEngine : LlmEngine` na may `Mutex` at CPU backend.
   - I-push ang model file: `adb push <model>.litertlm /data/local/tmp/llm/`.
-- [ ] **A4. Smoke Test at Version Pinning** (~15 min) · Kailangan: A3
+- [x] **A4. Smoke Test at Version Pinning** (~15 min) · Kailangan: A3
   - Sukatin ang load time at inference latency. I-pin ang LiteRT version sa Gradle.
+  - Resulta (Oct 9, Infinix X6835B, Android 13, 8 GB RAM, CPU backend): load 15.4 s (cold); generate 7.6 s, 5.3 s, 5.2 s.
+  - Naka-pin: `litertlm-android` 0.18.0 sa `gradle/libs.versions.toml`.
+  - Paalala: mali ang sagot sa 2 sa 3 raw prompt (walang few-shot); kailangan ang prompt template ng B1 at ang RuleFilter.
+  - Few-shot prompt (~450 token): 48–50 s kada sagot at mali ang hatol sa 2 scam (kinopya ang mga halimbawa). Kailangang maikli ang prompt sa A5 para pumasok sa 15 s timeout.
 
 ### Lane B: Android Services & Rules (Backend Dev 2)
 - [ ] **B1. I-validate ang Scam Prompt Template** (~25 min)
