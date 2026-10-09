@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Identity -->
+    <string name="app_name">Bantai</string>
+    <string name="app_tagline">Your Pocket Guardian Against Scams</string>
+
+    <!-- Overlay Warning Dialog Buttons -->
+    <string name="btn_read_aloud">Read</string>
+    <string name="btn_dismiss">Got it</string>
+    <string name="btn_call_apo">Call Apo</string>
+
+    <!-- Overlay Warning Headers -->
+    <string name="warning_title">Warning: Potential Scam Detected</string>
+    <string name="warning_title_safe">Message Verified Safe</string>
+
+    <!-- Scam Warning Reasons -->
+    <string name="warning_impersonation_reason">Someone appears to be impersonating a relative asking for money from an unfamiliar number.</string>
+    <string name="warning_account_otp_reason">Suspicious link detected requesting sensitive account information, PIN, or OTP.</string>
+    <string name="warning_prize_reason">Unsolicited prize or lottery claim detected, which is commonly a scam.</string>
+    <string name="warning_link_reason">Message contains an unverified external link. Do not tap or open it.</string>
+    <string name="warning_generic_reason">This message contains multiple common scam indicators.</string>
+    <string name="warning_safe_reason">This message appears to be safe and normal.</string>
+
+    <!-- Scam Warning Recommended Actions -->
+    <string name="warning_impersonation_action">Do not send money. Contact the person directly using their existing verified contact number.</string>
+    <string name="warning_account_otp_action">Never share your OTP or PIN, and do not click the link.</string>
+    <string name="warning_prize_action">Do not reply or provide any personal details to claim unverified prizes.</string>
+    <string name="warning_link_action">Do not click the link or provide any personal details.</string>
+    <string name="warning_generic_action">Do not send money or sensitive personal information. Verify with a family member first.</string>
+    <string name="warning_safe_action">No action required.</string>
+
+    <!-- Signal Names -->
+    <string name="signal_money_request">Money Request</string>
+    <string name="signal_new_number">New Number / Impersonation</string>
+    <string name="signal_suspicious_link">Suspicious Link</string>
+    <string name="signal_prize_raffle">Prize / Raffle</string>
+    <string name="signal_account_parcel">Account / OTP / Parcel</string>
+    <string name="signal_urgency">Urgency / Emergency</string>
+
+    <!-- Setup Screen (Apo Onboarding) -->
+    <string name="setup_title">Bantai Setup</string>
+    <string name="setup_subtitle">One-time setup for Nanay\'s safety</string>
+    <string name="setup_apo_name_hint">Guardian Name (Apo)</string>
+    <string name="setup_apo_phone_hint">Guardian Phone Number</string>
+    <string name="setup_perm_notification_title">Notification Access</string>
+    <string name="setup_perm_notification_desc">Allows Bantai to inspect incoming SMS and chats for scams.</string>
+    <string name="setup_perm_accessibility_title">Accessibility Service</string>
+    <string name="setup_perm_accessibility_desc">Allows Bantai to display warning overlays and assist on screen.</string>
+    <string name="setup_btn_save">Save Settings</string>
+    <string name="setup_btn_test">Test Scam Alert</string>
+</resources>
