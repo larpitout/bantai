@@ -3,23 +3,6 @@
 
     <!-- Babala sa ibabaw ng ibang app -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <!-- Gabay: pakikinig sa tanong ni Nanay -->
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <queries>
-        <intent>
-            <action android:name="android.speech.RecognitionService" />
-        </intent>
-        <!-- Gabay: alamin kung anong apps ang naka-install, kahit nasa folder -->
-        <intent>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent>
-        <!-- Gabay: alamin kung alin ang Home screen app -->
-        <intent>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.HOME" />
-        </intent>
-    </queries>
 
     <!-- Crucial for Android 11+ to discover and bind to Google TextToSpeech engine -->
     <queries>
@@ -44,28 +27,6 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
-
-        <!-- Accessibility Service for screen context reading and global actions -->
-        <service
-            android:name="com.bantai.service.BantaiAccessibilityService"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/accessibility_service_config" />
-        </service>
-
-        <!-- Pakikinig para sa Gabay: walang itsura, hiwalay na task para bumalik agad sa app ni Nanay -->
-        <activity
-            android:name="com.bantai.ui.VoiceActivity"
-            android:excludeFromRecents="true"
-            android:exported="false"
-            android:noHistory="true"
-            android:taskAffinity=""
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <!-- Setup and Onboarding Activity -->
         <activity

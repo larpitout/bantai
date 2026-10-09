@@ -2,7 +2,6 @@ package com.bantai
 
 import android.content.Context
 import android.util.Log
-import com.bantai.pipeline.GabayPipeline
 import com.bantai.pipeline.ScamPipeline
 import com.bantai.service.Speaker
 import com.bantay.app.ai.LiteRtEngine
@@ -15,7 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Iisang Gemma para sa buong app: Scam Alert at Gabay ang gumagamit.
+ * Iisang Gemma para sa buong app: Scam Alert ang gumagamit.
  * ponytail: nananatiling naka-load (~575 MB) habang buhay ang process; i-unload kapag matagal walang gamit
  * kung pinapatay ng low-memory killer sa 4 GB na phone.
  */
@@ -73,11 +72,10 @@ object Bantai {
 
     private var speaker: Speaker? = null
 
-    /** Iisang TextToSpeech para sa babala at Gabay. */
+    /** Iisang TextToSpeech para sa babala. */
     fun speaker(context: Context): Speaker =
         speaker ?: Speaker(context.applicationContext).also { speaker = it }
 
     fun scamPipeline(context: Context) = ScamPipeline(engine(context))
 
-    fun gabayPipeline(context: Context) = GabayPipeline(engine(context))
 }

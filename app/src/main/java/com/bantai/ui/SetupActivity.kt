@@ -21,7 +21,7 @@ import com.bantai.util.PermissionHelper
  *
  * Responsibilities:
  * - Enter and persist Apo contact details (Name and Phone)
- * - Display live status of Notification Access and Accessibility permissions
+ * - Display live status of Notification Access and overlay permissions
  * - Provide 1-tap navigation to system settings to grant permissions
  * - Test Scam Alert trigger verifying rule filter & TTS speech
  */
@@ -33,9 +33,7 @@ class SetupActivity : AppCompatActivity() {
     private lateinit var etApoPhone: EditText
     private lateinit var btnSave: Button
     private lateinit var tvNotificationStatus: TextView
-    private lateinit var tvAccessibilityStatus: TextView
     private lateinit var layoutNotificationPerm: android.view.View
-    private lateinit var layoutAccessibilityPerm: android.view.View
     private lateinit var tvOverlayStatus: TextView
     private lateinit var layoutOverlayPerm: android.view.View
     private lateinit var switchProtection: androidx.appcompat.widget.SwitchCompat
@@ -48,10 +46,6 @@ class SetupActivity : AppCompatActivity() {
 
         prefs = GuardianPreferences(this)
         Bantai.warmUp(this)
-        // Para sa Gabay: makapagsalita si Nanay.
-        if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO), 1)
-        }
 
         initViews()
         loadPreferences()
@@ -68,9 +62,7 @@ class SetupActivity : AppCompatActivity() {
         etApoPhone = findViewById(R.id.etApoPhone)
         btnSave = findViewById(R.id.btnSave)
         tvNotificationStatus = findViewById(R.id.tvNotificationStatus)
-        tvAccessibilityStatus = findViewById(R.id.tvAccessibilityStatus)
         layoutNotificationPerm = findViewById(R.id.layoutNotificationPerm)
-        layoutAccessibilityPerm = findViewById(R.id.layoutAccessibilityPerm)
         tvOverlayStatus = findViewById(R.id.tvOverlayStatus)
         layoutOverlayPerm = findViewById(R.id.layoutOverlayPerm)
         switchProtection = findViewById(R.id.switchProtection)
@@ -105,10 +97,6 @@ class SetupActivity : AppCompatActivity() {
 
         layoutNotificationPerm.setOnClickListener {
             startActivity(PermissionHelper.getNotificationAccessSettingsIntent())
-        }
-
-        layoutAccessibilityPerm.setOnClickListener {
-            startActivity(PermissionHelper.getAccessibilitySettingsIntent())
         }
 
         layoutOverlayPerm.setOnClickListener {
@@ -152,15 +140,6 @@ class SetupActivity : AppCompatActivity() {
         } else {
             tvNotificationStatus.setText(R.string.status_not_granted)
             tvNotificationStatus.setTextColor(Color.parseColor("#DC3545"))
-        }
-
-        val a11yGranted = PermissionHelper.isAccessibilityServiceEnabled(this)
-        if (a11yGranted) {
-            tvAccessibilityStatus.setText(R.string.status_granted)
-            tvAccessibilityStatus.setTextColor(Color.parseColor("#198754"))
-        } else {
-            tvAccessibilityStatus.setText(R.string.status_not_granted)
-            tvAccessibilityStatus.setTextColor(Color.parseColor("#DC3545"))
         }
     }
 

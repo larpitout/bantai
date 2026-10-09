@@ -5,6 +5,7 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import com.bantai.Bantai
+import com.bantai.data.GuardianPreferences
 import com.bantai.pipeline.VerdictSource
 import com.bantai.rules.RuleFilter
 import com.bantai.ui.ScamAlertOverlay

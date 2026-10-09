@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.text.TextUtils
-import com.bantai.service.BantaiAccessibilityService
 import com.bantai.service.BantaiNotificationListener
 
 /**
@@ -34,28 +33,6 @@ object PermissionHelper {
         return false
     }
 
-    /**
-     * Checks if BantaiAccessibilityService has been enabled in Accessibility settings.
-     */
-    fun isAccessibilityServiceEnabled(context: Context): Boolean {
-        val expectedService = ComponentName(context, BantaiAccessibilityService::class.java)
-        val flat = Settings.Secure.getString(
-            context.contentResolver,
-            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-        )
-        if (!flat.isNullOrEmpty()) {
-            val colonSplitter = TextUtils.SimpleStringSplitter(':')
-            colonSplitter.setString(flat)
-            while (colonSplitter.hasNext()) {
-                val componentNameString = colonSplitter.next()
-                val enabledService = ComponentName.unflattenFromString(componentNameString)
-                if (enabledService != null && enabledService == expectedService) {
-                    return true
-                }
-            }
-        }
-        return false
-    }
 
     /**
      * Creates an Intent to open the Notification Listener settings screen.
@@ -64,10 +41,4 @@ object PermissionHelper {
         return Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
     }
 
-    /**
-     * Creates an Intent to open the Accessibility settings screen.
-     */
-    fun getAccessibilitySettingsIntent(): Intent {
-        return Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-    }
 }

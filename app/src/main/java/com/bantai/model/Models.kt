@@ -26,8 +26,3 @@ data class ScamVerdict(
     val dahilan: String get() = reason
     val gawin: String get() = action
 }
-
-data class ScreenContext(
-    val appName: String,
-    val labels: List<String>
-)
