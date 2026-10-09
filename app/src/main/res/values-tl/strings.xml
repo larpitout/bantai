@@ -71,4 +71,6 @@
     <string name="tell_apo_body">Apo, may natanggap akong kahina-hinalang text: \"%1$s\". Totoo ba ito?</string>
     <string name="history_title">Mga na-flag na mensahe</string>
     <string name="history_empty">Wala pang na-flag na mensahe.</string>
+    <string name="why_flagged">Bakit na-flag?</string>
+    <string name="signal_dangerous_link">Mapanganib na Link (peke o nakatagong website)</string>
 </resources>

@@ -42,6 +42,23 @@ class BantaiNotificationListener : NotificationListenerService() {
         return text.getString(reasonRes) to text.getString(actionRes)
     }
 
+    /** Mga senyales mula sa rules, sa wika ng babala. */
+    private fun signalNames(signals: List<String>): List<String> {
+        val text = Bantai.localized(this)
+        return signals.mapNotNull { s ->
+            when (s) {
+                "Money Request" -> R.string.signal_money_request
+                "New Number / Impersonation" -> R.string.signal_new_number
+                "Suspicious Link" -> R.string.signal_suspicious_link
+                "Dangerous Link" -> R.string.signal_dangerous_link
+                "Prize / Raffle" -> R.string.signal_prize_raffle
+                "Account / OTP / Parcel" -> R.string.signal_account_parcel
+                "Urgency / Emergency" -> R.string.signal_urgency
+                else -> null
+            }?.let(text::getString)
+        }
+    }
+
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
         if (sbn == null) return
@@ -105,14 +122,15 @@ class BantaiNotificationListener : NotificationListenerService() {
                     if (shown && !fromAi) return@collect
                     // Tagalog template mula sa rules ang laging ipinapakita; si Gemma ang nagpapasya kung scam.
                     val (reason, action) = warningText(message, check.rule)
+                    val signals = signalNames(check.rule.signals)
                     if (!shown) com.bantai.data.ScamHistory.add(this@BantaiNotificationListener, sender, message, reason)
                     val a11y = BantaiAccessibilityService.instance
                     if (a11y != null) {
                         // Walang biglang popup: lalabas ang babala kapag binuksan ni Nanay ang mensahe.
-                        Bantai.flag(message, reason, action, fromAi)
+                        Bantai.flag(message, reason, action, fromAi, signals)
                         a11y.recheck()
                     } else {
-                        ScamAlertOverlay.show(this@BantaiNotificationListener, reason, action, fromAi, message)
+                        ScamAlertOverlay.show(this@BantaiNotificationListener, reason, action, fromAi, message, signals)
                     }
                     shown = true
                 }

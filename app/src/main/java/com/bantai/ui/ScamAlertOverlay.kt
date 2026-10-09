@@ -35,13 +35,13 @@ object ScamAlertOverlay {
     fun canShow(context: Context) = Settings.canDrawOverlays(context)
 
     /** Popup agad (fallback kapag walang Accessibility). */
-    fun show(context: Context, reason: String, action: String, fromAi: Boolean = false, message: String = "") {
+    fun show(context: Context, reason: String, action: String, fromAi: Boolean = false, message: String = "", signals: List<String> = emptyList()) {
         val app = context.applicationContext
         if (!canShow(app)) {
             Log.w(TAG, "Walang 'Display over other apps' permission, hindi maipakita ang babala")
             return
         }
-        present(app, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, reason, action, fromAi, message, bottomOffsetDp = 0) { dismiss(app) }
+        present(app, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, reason, action, fromAi, message, signals, bottomOffsetDp = 0) { dismiss(app) }
     }
 
     /** Banner sa loob ng bukas na chat, para sa mensaheng na-flag. */
@@ -49,7 +49,7 @@ object ScamAlertOverlay {
         if (current != null && currentFlag === flag && currentFromAi == flag.fromAi) return // nakalabas na
         present(
             service, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-            flag.reason, flag.action, flag.fromAi, flag.message,
+            flag.reason, flag.action, flag.fromAi, flag.message, flag.signals,
             // Nasa itaas ng text box ng chat, para makapag-type pa rin si Nanay.
             bottomOffsetDp = 72,
         ) {
@@ -68,6 +68,7 @@ object ScamAlertOverlay {
         action: String,
         fromAi: Boolean,
         message: String,
+        signals: List<String>,
         bottomOffsetDp: Int,
         onDismiss: () -> Unit,
     ) {
@@ -81,6 +82,14 @@ object ScamAlertOverlay {
         view.findViewById<TextView>(R.id.tvAlertReason).text = reason
         view.findViewById<TextView>(R.id.tvAlertAction).text = action
         view.findViewById<View>(R.id.tvAlertAiBadge).visibility = if (fromAi) View.VISIBLE else View.GONE
+
+        // "Bakit na-flag?": ang mga nakitang senyales, para may paliwanag at hindi lang "scam".
+        val why = view.findViewById<TextView>(R.id.tvAlertWhy)
+        why.text = signals.joinToString("\n") { "• $it" }
+        view.findViewById<View>(R.id.btnAlertWhy).apply {
+            visibility = if (signals.isEmpty()) View.GONE else View.VISIBLE
+            setOnClickListener { why.visibility = if (why.visibility == View.VISIBLE) View.GONE else View.VISIBLE }
+        }
 
         view.findViewById<View>(R.id.btnAlertListen).setOnClickListener {
             tts.speak("${Bantai.localized(app).getString(R.string.warning_title)}. $reason $action")

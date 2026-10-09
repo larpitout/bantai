@@ -71,4 +71,6 @@
     <string name="tell_apo_body">Hi, I received a suspicious message: \"%1$s\". Is this real?</string>
     <string name="history_title">Flagged messages</string>
     <string name="history_empty">No flagged messages yet.</string>
+    <string name="why_flagged">Why was this flagged?</string>
+    <string name="signal_dangerous_link">Dangerous Link (fake or hidden website)</string>
 </resources>

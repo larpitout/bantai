@@ -80,6 +80,29 @@
         android:textSize="19sp"
         android:textStyle="bold" />
 
+    <TextView
+        android:id="@+id/btnAlertWhy"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:minHeight="40dp"
+        android:gravity="center_vertical"
+        android:text="@string/why_flagged"
+        android:textColor="@color/bantai_text_muted"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvAlertWhy"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_btn_secondary"
+        android:lineSpacingExtra="4dp"
+        android:padding="12dp"
+        android:textColor="@color/bantai_text_muted"
+        android:textSize="16sp"
+        android:visibility="gone" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

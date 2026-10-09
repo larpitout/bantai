@@ -113,7 +113,9 @@ object Bantai {
     val MESSAGING_APPS: Set<String> = NotificationExtractor.ALLOWED_PACKAGES
 
     /** Na-flag na mensahe; ipapakita ang babala kapag nakita ito sa bukas na chat. */
-    class Flagged(val key: String, val reason: String, val action: String, var fromAi: Boolean, val message: String) {
+    class Flagged(
+        val key: String, val reason: String, val action: String, var fromAi: Boolean, val message: String, val signals: List<String>,
+    ) {
         var dismissed = false
     }
 
@@ -123,11 +125,11 @@ object Bantai {
     private fun keyOf(text: String) = text.lowercase().replace(Regex("\\s+"), " ").trim().take(40)
 
     /** Itabi o i-update ang babala para sa [message]. */
-    fun flag(message: String, reason: String, action: String, fromAi: Boolean): Flagged {
+    fun flag(message: String, reason: String, action: String, fromAi: Boolean, signals: List<String>): Flagged {
         val key = keyOf(message)
         flagged.firstOrNull { it.key == key }?.let { it.fromAi = it.fromAi || fromAi; return it }
         if (flagged.size >= 20) flagged.removeFirst()
-        return Flagged(key, reason, action, fromAi, message).also(flagged::addLast)
+        return Flagged(key, reason, action, fromAi, message, signals).also(flagged::addLast)
     }
 
     /** Ang na-flag na mensaheng nakikita sa screen ngayon, kung meron. */
