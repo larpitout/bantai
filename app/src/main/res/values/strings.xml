@@ -76,8 +76,8 @@
     <string name="gabay_bye">Okay. I\'m here if you need me.</string>
     <string name="gabay_go_home">What we need is not here. Go to Home first: swipe up from the bottom, or tap the circle at the bottom.</string>
     <string name="gabay_tap">Tap "%1$s".</string>
-    <string name="gabay_search_app">Tap "%1$s", then type %2$s.</string>
     <string name="gabay_open_drawer">Swipe up from the middle of the screen to see all your apps.</string>
     <string name="gabay_scroll">Scroll down: slide your finger up in the middle of the screen.</string>
     <string name="gabay_cannot_see">I can\'t see this screen.</string>
+    <string name="gabay_cannot_find">I can\'t find %1$s. Do you want to call your trusted contact?</string>
 </resources>
