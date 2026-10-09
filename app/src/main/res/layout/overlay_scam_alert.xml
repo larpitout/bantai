@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Babala card sa ibabaw ng kahit anong app. Disenyo: "SMS Gentle Banner" ng bantai_ui,
      pero mas malaki ang text at buttons para kay Nanay. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- FrameLayout + padding: hindi sinusunod ng WindowManager ang layout_margin ng root. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="12dp"
+    android:padding="12dp">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:background="@drawable/bg_alert_card"
     android:elevation="12dp"
     android:orientation="vertical"
@@ -91,3 +96,4 @@
             android:textStyle="bold" />
     </LinearLayout>
 </LinearLayout>
+</FrameLayout>
