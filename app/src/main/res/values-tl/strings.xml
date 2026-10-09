@@ -5,6 +5,7 @@
     <string name="app_tagline">Ang Apo sa Bulsa ni Nanay</string>
 
     <!-- Overlay Warning Dialog Buttons -->
+    <string name="alert_ai_badge">🧠 Sinuri ng AI sa phone</string>
     <string name="btn_read_aloud">Basahin</string>
     <string name="btn_dismiss">Sige po</string>
     <string name="btn_call_apo">Tawagan si Apo</string>

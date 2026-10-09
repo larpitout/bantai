@@ -10,6 +10,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.bantai.Bantai
 import com.bantai.R
 import com.bantai.data.GuardianPreferences
 import com.bantai.rules.RuleFilter
@@ -44,6 +45,7 @@ class SetupActivity : AppCompatActivity() {
         setContentView(R.layout.activity_setup)
 
         prefs = GuardianPreferences(this)
+        Bantai.warmUp(this)
 
         initViews()
         loadPreferences()

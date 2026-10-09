@@ -4,25 +4,21 @@ import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
-import com.bantai.model.RuleResult
+import com.bantai.Bantai
+import com.bantai.pipeline.VerdictSource
 import com.bantai.rules.RuleFilter
 import com.bantai.ui.ScamAlertOverlay
+import kotlinx.coroutines.launch
 
 class BantaiNotificationListener : NotificationListenerService() {
 
     companion object {
         private const val TAG = "BantaiNotifListener"
+    }
 
-        var scamCandidateListener: ScamCandidateListener? = null
-
-        fun interface ScamCandidateListener {
-            fun onScamCandidate(
-                packageName: String,
-                sender: String,
-                message: String,
-                ruleResult: RuleResult
-            )
-        }
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        Bantai.warmUp(this)
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -68,15 +64,21 @@ class BantaiNotificationListener : NotificationListenerService() {
         val ruleResult = RuleFilter.score(message, sender)
         Log.d(TAG, "Notification from [$packageName] ($sender): score=${ruleResult.score}, signals=${ruleResult.signals}")
 
-        // 7. Dispatch if score >= 1 (suspicious or confirmed scam)
+        // 7. Score >= 1: rules + Gemma (ScamPipeline). Lalabas agad ang babala kapag score >= 2;
+        //    kapag score 1, si Gemma ang magdedesisyon (rules ang fallback kapag mabagal o pumalya).
         if (ruleResult.score >= 1) {
-            val pipeline = scamCandidateListener
-            if (pipeline != null) {
-                pipeline.onScamCandidate(packageName, sender, message, ruleResult)
-            } else {
-                // Rules-only fallback habang wala pang LLM pipeline (o kapag pumalya ito).
-                val (reasonRes, actionRes) = RuleFilter.instantWarningRes(ruleResult)
-                ScamAlertOverlay.show(this, getString(reasonRes), getString(actionRes))
+            Bantai.scope.launch {
+                var shown = false
+                Bantai.scamPipeline(this@BantaiNotificationListener).check(message, sender).collect { check ->
+                    Log.d(TAG, "verdict scam=${check.verdict.isScam} source=${check.source} final=${check.isFinal}")
+                    if (!check.verdict.isScam) return@collect
+                    val fromAi = check.source == VerdictSource.LLM
+                    if (shown && !fromAi) return@collect
+                    // Tagalog template mula sa rules ang laging ipinapakita; si Gemma ang nagpapasya kung scam.
+                    val (reasonRes, actionRes) = RuleFilter.instantWarningRes(check.rule)
+                    ScamAlertOverlay.show(this@BantaiNotificationListener, getString(reasonRes), getString(actionRes), fromAi)
+                    shown = true
+                }
             }
         }
     }

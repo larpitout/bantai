@@ -31,7 +31,7 @@ object ScamAlertOverlay {
     fun canShow(context: Context) = Settings.canDrawOverlays(context)
 
     @SuppressLint("InflateParams")
-    fun show(context: Context, reason: String, action: String) {
+    fun show(context: Context, reason: String, action: String, fromAi: Boolean = false) {
         val app = context.applicationContext
         if (!canShow(app)) {
             Log.w(TAG, "Walang 'Display over other apps' permission, hindi maipakita ang babala")
@@ -45,6 +45,7 @@ object ScamAlertOverlay {
 
         view.findViewById<TextView>(R.id.tvAlertReason).text = reason
         view.findViewById<TextView>(R.id.tvAlertAction).text = action
+        view.findViewById<View>(R.id.tvAlertAiBadge).visibility = if (fromAi) View.VISIBLE else View.GONE
 
         view.findViewById<View>(R.id.btnAlertListen).setOnClickListener {
             tts.speak("${app.getString(R.string.warning_title)}. $reason $action")
