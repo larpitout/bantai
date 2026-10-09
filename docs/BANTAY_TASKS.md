@@ -1,159 +1,152 @@
 # Bantay: Task List
 
-**Oras:** Oct 9, 8:40 PM hanggang Oct 10, 5:00 AM. Deadline 10:00 AM.
-**Prinsipyo:** Local AI ang una dahil ito ang puso ng system. Tatlong lane ang sabay tumatakbo sa bawat phase, at may isang gate ang bawat phase bago lumipat.
-
-## Mga lane
-
-| Lane | Saklaw |
-|---|---|
-| **A: AI core** | Gemma sa A54, engine, prompts, pipelines. Ito ang may hawak ng A54. |
-| **B: Android services** | Rules, notification listener, accessibility, TTS, setup screen. |
-| **C: App shell at UI** | Project, kontrata, overlay, bubble, README, at video. |
-
-> **Isang A54 lang ang meron.** LLM lang ang nangangailangan nito, kaya nasa Lane A ang phone hanggang 10 PM. Sa ibang Android phone o emulator muna ang services at overlay, gamit ang `FakeEngine`.
->
-> Kung dalawa lang kayo, pagsamahin ang B at C. Kung mag-isa, sundin ang A, tapos B, tapos C sa bawat phase.
-
-Ang "Kailangan" ay mga task na dapat tapos muna. Kapag walang nakasulat, pwede nang simulan agad.
+**Oras:** Oct 9, 9:05 PM hanggang Oct 10, 5:00 AM. Deadline 10:00 AM.  
+**Prinsipyo:** Local AI ang puso ng system. Tatlong developer ang magtutulungan sa tatlong lane, may kanya-kanyang pananagutan, at may malinaw na gate bago lumipat sa susunod na phase.
 
 ---
 
-## Phase 0: Local AI, ang puso (8:40 – 10:00 PM)
+## Hatian ng Gawain sa Team (3 Developers)
 
-**Gate, 10:00 PM:** sumasagot ang Gemma 3 1B sa A54 sa format na HATOL, DAHILAN, GAWIN, mula sa sarili ninyong app. Kapag hindi pa, lumipat sa MediaPipe `tasks-genai` gamit ang `.task` file ng parehong model.
+Paalala: Pag-uusapan pa ng team ang eksaktong toka sa bawat lane.
 
-### Lane A: AI core
+| Lane | Saklaw | Status |
+|---|---|---|
+| **Lane A: AI Core** | Gemma 3 1B model, LiteRtEngine, Prompts, at Pipelines | Priority (Backend / AI) |
+| **Lane B: Android Services & Rules** | RuleFilter, Notification Listener, Accessibility, Speaker (TTS) | Priority (Backend / AI) |
+| **Lane C: App Shell at UI** | Overlay UI, Bubble View, SetupActivity Screen | ON HOLD (Hinihintay ang UI/UX Design) |
 
-- [ ] **A1. Subukan ang Gemma 3 1B sa AI Edge Gallery** (~15 min)
-  I-install ang app sa A54, i-download ang model, i-paste ang scam prompt. Itala ang segundo ng sagot at kung maayos ang Tagalog.
-- [ ] **A2. I-download ang `.litertlm` file sa laptop** (~10 min, isabay sa A1)
-  Hugging Face account, i-accept ang Gemma license, kunin ang Gemma3-1B-IT mula sa `litert-community`.
-- [ ] **A3. `LiteRtEngine`: sagot ng Gemma sa sariling app** (~40 min) · Kailangan: A2, C1
-  Idagdag ang `litertlm-android`, `adb push` ang model, isang button na nagpapadala ng prompt at nagpapakita ng sagot.
-- [ ] **A4. Sukatin at i-pin** (~15 min) · Kailangan: A3
-  Itala ang load time at segundo kada scam check sa A54. I-pin ang version na na-resolve ng `latest.release`.
-
-### Lane B: Android services (AI rin ang ginagawa rito sa Phase 0)
-
-- [ ] **B1. I-tune ang scam prompt sa Ollama** (~30 min)
-  Gamitin ang `gemma3:1b` sa laptop para kapareho ng model sa phone. Dapat laging lumabas ang HATOL, DAHILAN, GAWIN.
-- [ ] **B2. Test set: 30 mensahe** (~20 min)
-  15 scam at 15 ligtas, Tagalog at Taglish, may tamang sagot kada isa. Isang file na mababasa ng app at ng Ollama script.
-- [ ] **B3. `RuleFilter` at `ScamParser`, may unit tests** (~30 min) · Kailangan: C1
-  Pure Kotlin, tumatakbo sa JVM kaya hindi kailangan ng phone. Anim na signal, isang puntos kada tama.
-
-### Lane C: App shell at UI
-
-- [ ] **C1. Project, repo, at mga kontrata** (~20 min) · **UNAHIN, hinihintay ng A3 at B3**
-  `LlmEngine` interface, tatlong data class, at `FakeEngine` na may `delay(2000)`.
-- [ ] **C2. Manifest at dalawang walang-lamang service** (~25 min) · Kailangan: C1
-  Notification listener at accessibility service, na-o-on sa Settings. I-check ang restricted settings sa Android 13 pataas.
-- [ ] **C3. Babala card bilang overlay** (~35 min) · Kailangan: C2
-  Malaking text, tatlong button, lumalabas sa ibabaw ng ibang app. `FakeEngine` muna ang pinagkukunan ng text.
+> Tandaan sa Device:
+> Universal Android: Pwedeng Virtual Device (Android Emulator) o kahit anong Physical Android Phone (Samsung, Xiaomi, Pixel, Oppo, Vivo, Motorola, atbp.).
+> Kapag Emulator ang gamit, gamitin ang `adb emu sms send` para sa mga SMS test. Kapag physical phone, parehong APK at standard Android APIs ang tatakbo.
+> 
+> Paalala sa Diskarte: 
+> Dahil ginagawa pa ang UI/UX sa ngayon, huwag munang gumawa ng kahit anong UI views o screens (Lane C) para walang masayang na layout code.
+> Ang pokus muna ay ang Lane A (Gemma model at LiteRT) at Lane B (Rules at Unit Tests) na gumagana nang walang UI.
 
 ---
 
-## Phase 1: Scam Alert (10:00 PM – 1:00 AM)
+## Phase 0: Foundation & Local AI Setup (9:05 – 10:15 PM)
 
-**Gate, 1:00 AM:** totoong Messenger o SMS na scam, lumalabas ang babala at binabasa nang malakas, naka-off ang Wi-Fi at data. Kapag hindi pa, tapusin muna ito at paikliin ang Gabay sa tatlong quick button.
+Gate, 10:15 PM: Sumasagot ang Gemma 3 1B at gumagana ang RuleFilter unit tests.
 
-### Lane A: AI core
+### Lane C: App Shell at UI (ON HOLD - Hinihintay ang UI/UX)
+- [ ] **C1. Core Contracts & Data Models** (~15 min) · Pwedeng ilatag kahit walang UI
+  - LlmEngine interface, data classes (RuleResult, ScamVerdict, ScreenContext), at FakeEngine.
+- [ ] *(Deferred)* **C2. Manifest at Services Setup** · Gagawin kapag may baseline layout na
+- [ ] *(Deferred)* **C3. Babala Card Overlay Views** · Gagawin kapag tapos na ang Figma/UI design
 
+### Lane A: AI Core (Backend Dev 1)
+- [ ] **A2. I-download ang Gemma 3 1B `.litertlm` Model** (~15 min)
+  - Hugging Face: tanggapin ang Gemma license sa `litert-community/Gemma3-1B-IT`.
+  - I-download ang int4 `.litertlm` file sa laptop (~550 MB).
+- [ ] **A3. `LiteRtEngine` Implementation** (~40 min) · Kailangan: A2, C1
+  - Idagdag ang dependency `com.google.ai.edge.litertlm:litertlm-android`.
+  - Ipatupad ang `LiteRtEngine : LlmEngine` na may `Mutex` at CPU backend.
+  - I-push ang model file: `adb push <model>.litertlm /data/local/tmp/llm/`.
+- [ ] **A4. Smoke Test at Version Pinning** (~15 min) · Kailangan: A3
+  - Sukatin ang load time at inference latency. I-pin ang LiteRT version sa Gradle.
+
+### Lane B: Android Services & Rules (Backend Dev 2)
+- [ ] **B1. I-validate ang Scam Prompt Template** (~25 min)
+  - Gamitin ang test prompt mula sa `SYSTEM_DESIGN.md` na may few-shot examples.
+  - Siguraduhing konsistent ang format: `HATOL`, `DAHILAN`, `GAWIN`.
+- [ ] **B2. Gumawa ng 30 Test Messages (Ground Truth)** (~20 min)
+  - 15 scam at 15 ligtas na Tagalog/Taglish messages na may tamang sagot.
+  - Ilagay sa isang JSON o Kotlin test file para magamit sa automated tests.
+- [ ] **B3. `RuleFilter` at `ScamParser` na may Unit Tests** (~30 min) · Kailangan: C1
+  - Pure Kotlin JVM unit tests (hindi kailangan ng emulator/phone).
+  - 6 signals (hingi ng pera, bagong number, link, premyo, OTP, apura) at 3 tiers (0, 1, 2+).
+
+---
+
+## Phase 1: Scam Alert End-to-End (10:15 PM – 1:00 AM)
+
+**Gate, 1:00 AM:** Kapag may pumasok na scam SMS o notification, agad lumalabas ang babala at binabasa nang malakas via TTS.
+
+### Lane A: AI Core (Backend Dev 1)
 - [ ] **A5. `PromptBuilder` at `ScamPipeline`** (~60 min) · Kailangan: A3, B3
-  Tatlong tier ayon sa score, 15 segundong timeout, at rules-only kapag `FAILED` ang engine.
-- [ ] **A6. Patakbuhin ang test set sa A54** (~45 min) · Kailangan: A5, B2
-  Itala ang tunay na accuracy at oras. Ayusin ang prompt kasama ang Lane B kung maraming mali.
+  - Tatlong tiers ayon sa score, 15-segundong timeout, at automatic fallback sa rules kapag `FAILED` ang engine.
+- [ ] **A6. Patakbuhin ang Test Set** (~45 min) · Kailangan: A5, B2
+  - Sukatin ang accuracy laban sa 30 test messages. Itala ang tunay na resulta para sa pitch.
 
-### Lane B: Android services
+### Lane B: Android Services (Backend Dev 2)
+- [ ] **B4. `BantayNotificationListener` Implementation** (~60 min) · Kailangan: C2
+  - Universal allowlist: Google Messages (`com.google.android.apps.messaging`), Samsung Messages (`com.samsung.android.messaging`), AOSP SMS (`com.android.mms`, `com.android.messaging`), Messenger (`com.facebook.orca`), Viber (`com.viber.voip`), WhatsApp (`com.whatsapp`).
+  - Kunin ang `EXTRA_TITLE` at `EXTRA_BIG_TEXT` / `EXTRA_TEXT`.
+  - Dedupe sa huling 50 notification hashes.
+- [ ] **B5. `Speaker`: Offline TextToSpeech fil-PH** (~30 min)
+  - I-setup ang Android `TextToSpeech` gamit ang `Locale("fil", "PH")`.
+  - Idagdag ang `<queries>` intent para sa `TTS_SERVICE` sa `AndroidManifest.xml`.
 
-- [ ] **B4. Notification listener** (~60 min) · Kailangan: C2
-  Allowlist ng limang package, `EXTRA_BIG_TEXT`, dedupe sa huling 50, pasa sa `ScamPipeline`.
-- [ ] **B5. `Speaker`: TextToSpeech fil-PH** (~30 min)
-  I-download ang Filipino voice data habang may Wi-Fi. Idagdag ang `<queries>` entry para sa `TTS_SERVICE`.
+### Lane C: App Shell at UI (Fullstack / Frontend Dev)
+- [ ] **C4. Final Babala Card Overlay** (~50 min) · Kailangan: C3
+  - Mabilis na paglabas (Score 2+ generic text), tapos asynchronous update kapag natapos ang LLM.
+  - Buttons: [Basahin], [Sige po], at [Tawagan si Apo].
+- [ ] **C5. `Prefs` at Direct Call Action** (~20 min)
+  - SharedPreferences para sa number ni Apo; `ACTION_DIAL` intent kapag pinindot ang tawag.
 
-### Lane C: App shell at UI
-
-- [ ] **C4. Babala card, final** (~50 min) · Kailangan: C3
-  Lumalabas agad mula sa rules, tapos napapalitan ang DAHILAN at GAWIN pagdating ng sagot ng LLM. Basahin, Tawagan si Apo, Sige po.
-- [ ] **C5. `Prefs` at Tawagan si Apo** (~20 min)
-  Pangalan at number sa `SharedPreferences`, `ACTION_DIAL` sa button.
-
-### Lahat
-
-- [ ] **X1. 12:30 AM: pagsamahin at i-test nang end to end** (~30 min) · Kailangan: A5, B4, B5, C4
-  Totoong mensahe mula sa pangalawang phone, naka-off ang Wi-Fi at data sa A54.
+### Lahat (Team Integration)
+- [ ] **X1. 12:45 AM: End-to-End Test Run** (~25 min) · Kailangan: A5, B4, B5, C4
+  - Mag-send ng simulated scam text via ADB:
+    ```bash
+    adb emu sms send 09951234567 "Ma si Junjun to bagong number ko padala ka 5k gcash"
+    ```
+  - I-verify: Notification -> Rule -> Overlay pop-up -> Text-to-Speech -> AI explanation update.
 
 ---
 
-## Phase 2: Gabay (1:00 – 3:30 AM)
+## Phase 2: Gabay sa Phone (1:00 – 3:30 AM)
 
-**Gate, 3:30 AM:** pinindot ang bubble sa Messenger, nagtanong, at tinuro ng Bantay ang tamang pipindutin gamit ang mga label na nasa screen.
+**Gate, 3:30 AM:** Pag-tap sa bubble, nababasa ang kasalukuyang screen labels at nagbibigay ng maikling gabay si Bantay.
 
-### Lane B: Android services (ito ang mauuna sa phase na ito)
+### Lane B: Android Services (Backend Dev 2)
+- [ ] **B6. `ScreenContextReader`** (~40 min) · Kailangan: C2 · **UNAHIN sa Phase 2**
+  - Kunin ang `rootInActiveWindow`, lakarin ang tree, limitahan sa 30 labels o 600 characters.
+  - I-filter ang empty o invisible nodes.
+- [ ] **B7. Bumalik at Home Actions** (~15 min)
+  - `performGlobalAction(GLOBAL_ACTION_BACK)` at `GLOBAL_ACTION_HOME`.
 
-- [ ] **B6. `ScreenContextReader`** (~40 min) · Kailangan: C2 · **UNAHIN, hinihintay ng A7**
-  Hanggang 30 label o 600 character. I-dump sa Logcat ang mga label ng Messenger para magamit ng A7.
-- [ ] **B7. Bumalik at Home** (~15 min)
-  `performGlobalAction` mula sa accessibility service.
-
-### Lane A: AI core
-
-- [ ] **A7. I-tune ang Gabay prompt sa totoong labels** (~40 min) · Kailangan: B6
-  Sa Ollama muna gamit ang dump ng B6. Hindi hihigit sa tatlong hakbang, at mga label na nasa screen lang ang babanggitin.
-  *Habang hinihintay ang B6: ituloy ang A6 o ayusin ang scam prompt.*
+### Lane A: AI Core (Backend Dev 1)
+- [ ] **A7. I-tune ang Gabay Prompt gamit ang Screen Labels** (~40 min) · Kailangan: B6
+  - Limitahan sa 3 simpleng hakbang, magalang (may "po"), at bawal magbanggit ng buttons na wala sa screen.
 - [ ] **A8. `GabayPipeline`** (~45 min) · Kailangan: A7
-  Fixed na sagot kapag walang label. 20 segundong timeout na nag-aalok na tawagan si Apo.
+  - Fixed fallback kapag walang labels (hal. banking app): *"Hindi ko po makita ang screen na ito"*.
+  - 20-segundong timeout na nag-aalok na tawagan si Apo.
 
-### Lane C: App shell at UI
+### Lane C: App Shell at UI (Fullstack / Frontend Dev)
+- [ ] **C6. Floating Bubble at Gabay Panel** (~60 min) · Kailangan: C3
+  - Floating chathead icon gamit ang `TYPE_ACCESSIBILITY_OVERLAY`.
+  - Panel na may quick buttons (*"Paano mag-send ng picture?"*, *"Bumalik sa Facebook"*), Bumalik, at Home.
+- [ ] **C7. Ikabit ang Panel sa `GabayPipeline` at `Speaker`** (~30 min) · Kailangan: C6, A8, B5
 
-- [ ] **C6. Bubble at Gabay panel** (~60 min) · Kailangan: C3
-  Apat na state. Text box at tatlong quick button. Basahin ang screen bago ipakita ang panel.
-- [ ] **C7. Ikabit ang panel sa `GabayPipeline` at `Speaker`** (~30 min) · Kailangan: C6, A8, B5
-  Sagot sa panel, tapos binabasa nang malakas kapag kumpleto.
-
-### Lahat
-
-- [ ] **X2. 3:10 AM: i-test ang Gabay sa Messenger at Gallery** (~20 min) · Kailangan: C7, B7
-  Kasama ang isang app na humaharang sa pagbasa ng screen, para makita ang fallback.
-
----
-
-## Phase 3: Submission (3:30 – 5:00 AM)
-
-**Gate, 5:00 AM:** kumpleto ang submission checklist. Ang natitira hanggang 10 AM ay buffer at tulog.
-
-### Lane A: AI core
-
-- [ ] **A9. Huling accuracy run** (~30 min) · Kailangan: A6
-  Tunay na numero lang ang isusulat sa README, kasama ang bilang ng mali.
-
-### Lane B: Android services
-
-- [ ] **B8. `SetupActivity`** (~50 min)
-  Pangalan at number ni Apo, status ng bawat permission, at test button na tumatawag sa `ScamPipeline.check()`.
-
-### Lane C: App shell at UI
-
-- [ ] **C8. README at disclosures** (~30 min)
-  Palitan ang MediaPipe ng LiteRT-LM sa listahan ng frameworks. Ilista ang ginamit na AI dev tools.
-- [ ] **C9. Demo video at post** (~40 min) · Kailangan: X1, X2
-  Mga isang minuto: kwento, offline, scam alert, gabay.
-
-### Lahat
-
-- [ ] **X3. 4:40 AM: buong demo run at submission checklist** (~20 min) · Kailangan: B8, C8, C9, A9
-  Naka-off ang Wi-Fi at data, Unrestricted ang battery ng Bantay, at may charge ang A54.
+### Lahat (Team Integration)
+- [ ] **X2. 3:15 AM: Gabay End-to-End Test** (~15 min) · Kailangan: C7, B7
+  - Test sa Messenger o Settings screen gamit ang emulator.
 
 ---
 
-## Ano ang tatanggalin kapag naipit
+## Phase 3: Polish, Submission, at Video (3:30 – 5:00 AM)
 
-Sa ganitong pagkakasunod, mula sa unang isasakripisyo:
+**Gate, 5:00 AM:** Kumpleto ang submission sa portal (Public GitHub repo, README, at 1-min demo video). Buffer hanggang 10:00 AM deadline.
 
-1. Boses bilang input ng Gabay (wala na ito sa listahan; text at quick buttons lang).
-2. Ganda ng `SetupActivity` (B8): sapat na ang gumaganang form at test button.
-3. Text box ng Gabay (C6): tatlong quick button na lang na may nakahandang tanong.
-4. `Backend.GPU()` at anumang pagpapabilis: CPU lang.
+### Lane A: AI Core (Backend Dev 1)
+- [ ] **A9. Huling Accuracy Run at Benchmark Table** (~30 min) · Kailangan: A6
+  - Itala ang tunay na accuracy (walang imbento) para sa README at pitch presentation.
 
-**Huwag galawin:** A3, A5, B4, C4, at X1. Ito ang Scam Alert, at ito ang bida ng demo.
+### Lane B: Android Services (Backend Dev 2)
+- [ ] **B8. `SetupActivity` (Apo Onboarding Screen)** (~45 min)
+  - Simple form: Pangalan at Number ni Apo.
+  - Status indicators para sa Notification Access at Accessibility Service.
+  - "I-test ang Bantay" button na tumatawag sa `ScamPipeline.check()`.
+
+### Lane C: App Shell at UI (Fullstack / Frontend Dev)
+- [ ] **C8. README.md at Submission Disclosures** (~35 min)
+  - Arkitektura, LiteRT-LM framework, zero internet explanation, at accuracy table.
+- [ ] **C9. 1-Minute Demo Video Recording** (~40 min) · Kailangan: X1, X2
+  - I-record ang screen ng emulator gamit ang simulated SMS scam at Gabay.
+
+### Lahat (Final Check)
+- [ ] **X3. 4:45 AM: Submission Checklist Verification** (~15 min)
+  - GitHub repo ay Public.
+  - Zero cloud API keys na naka-expose (100% local).
+  - Submit sa portal bago mag-5:00 AM.
