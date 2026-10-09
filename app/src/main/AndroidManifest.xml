@@ -29,6 +29,19 @@
             </intent-filter>
         </service>
 
+        <!-- Babala sa loob ng chat: messaging apps lang ang tinitingnan -->
+        <service
+            android:name="com.bantai.service.BantaiAccessibilityService"
+            android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
         <!-- Setup and Onboarding Activity -->
         <activity
             android:name="com.bantai.ui.SetupActivity"

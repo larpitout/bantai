@@ -57,4 +57,11 @@
     <string name="switch_protection_title">Bantai Protection</string>
     <string name="switch_protection_active">Active</string>
     <string name="switch_protection_inactive">Paused</string>
+    <string name="setup_perm_accessibility_title">Accessibility (Messages only)</string>
+    <string name="setup_perm_accessibility_desc">Lets Bantai notice when you open a flagged message, to show the warning there.</string>
+    <string name="accessibility_service_description">Bantai checks only messaging apps, on this phone, to show a scam warning when you open a flagged message.</string>
+    <string name="warning_link_fake_brand">This link is not the official %1$s website. It may be a fake site that steals your account.</string>
+    <string name="warning_link_shortener">This link hides where it really goes (shortened link). Scammers use these to hide fake sites.</string>
+    <string name="warning_link_risky_ending">This link goes to an unknown website often used by scammers.</string>
+    <string name="warning_link_fake_site">This link points to a fake-looking website, not a real company.</string>
 </resources>

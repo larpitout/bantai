@@ -7,6 +7,8 @@ import android.util.Log
 import com.bantai.Bantai
 import com.bantai.data.GuardianPreferences
 import com.bantai.pipeline.VerdictSource
+import com.bantai.R
+import com.bantai.rules.LinkChecker
 import com.bantai.rules.RuleFilter
 import com.bantai.ui.ScamAlertOverlay
 import kotlinx.coroutines.launch
@@ -20,6 +22,24 @@ class BantaiNotificationListener : NotificationListenerService() {
     override fun onListenerConnected() {
         super.onListenerConnected()
         Bantai.warmUp(this)
+    }
+
+    /** Tagalog na babala; kapag mapanganib ang link, sinasabi kung bakit (hal. "hindi opisyal na website ng GCash"). */
+    private fun warningText(message: String, rule: com.bantai.model.RuleResult): Pair<String, String> {
+        val text = Bantai.localized(this)
+        val link = LinkChecker.check(message)
+        if (link != null) {
+            val reason = when (link.kind) {
+                LinkChecker.Kind.FAKE_BRAND ->
+                    text.getString(R.string.warning_link_fake_brand, LinkChecker.displayBrand(link.brand!!))
+                LinkChecker.Kind.SHORTENER -> text.getString(R.string.warning_link_shortener)
+                LinkChecker.Kind.RISKY_ENDING -> text.getString(R.string.warning_link_risky_ending)
+                LinkChecker.Kind.IP_ADDRESS, LinkChecker.Kind.LOOKALIKE -> text.getString(R.string.warning_link_fake_site)
+            }
+            return reason to text.getString(R.string.warning_link_action)
+        }
+        val (reasonRes, actionRes) = RuleFilter.instantWarningRes(rule)
+        return text.getString(reasonRes) to text.getString(actionRes)
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -84,9 +104,15 @@ class BantaiNotificationListener : NotificationListenerService() {
                     val fromAi = check.source == VerdictSource.LLM
                     if (shown && !fromAi) return@collect
                     // Tagalog template mula sa rules ang laging ipinapakita; si Gemma ang nagpapasya kung scam.
-                    val (reasonRes, actionRes) = RuleFilter.instantWarningRes(check.rule)
-                    val text = Bantai.localized(this@BantaiNotificationListener)
-                    ScamAlertOverlay.show(this@BantaiNotificationListener, text.getString(reasonRes), text.getString(actionRes), fromAi)
+                    val (reason, action) = warningText(message, check.rule)
+                    val a11y = BantaiAccessibilityService.instance
+                    if (a11y != null) {
+                        // Walang biglang popup: lalabas ang babala kapag binuksan ni Nanay ang mensahe.
+                        Bantai.flag(message, reason, action, fromAi)
+                        a11y.recheck()
+                    } else {
+                        ScamAlertOverlay.show(this@BantaiNotificationListener, reason, action, fromAi)
+                    }
                     shown = true
                 }
             }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Messaging apps lang: dito lang tinitingnan kung bukas ang na-flag na mensahe. -->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/accessibility_service_description"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged|typeViewScrolled"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:canRetrieveWindowContent="true"
+    android:notificationTimeout="300"
+    android:packageNames="com.google.android.apps.messaging,com.samsung.android.messaging,com.android.mms,com.android.messaging,com.facebook.orca,com.viber.voip,com.whatsapp"
+    android:settingsActivity="com.bantai.ui.SetupActivity" />

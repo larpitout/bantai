@@ -57,4 +57,11 @@
     <string name="switch_protection_title">Proteksyon ni Bantai</string>
     <string name="switch_protection_active">Aktibo</string>
     <string name="switch_protection_inactive">Naka-pause</string>
+    <string name="setup_perm_accessibility_title">Accessibility (Messages lang)</string>
+    <string name="setup_perm_accessibility_desc">Para malaman ni Bantai kapag binuksan ang na-flag na mensahe, at doon ipakita ang babala.</string>
+    <string name="accessibility_service_description">Sa mga messaging app lang tumitingin si Bantai, sa loob ng phone, para ipakita ang babala kapag binuksan ang kahina-hinalang mensahe.</string>
+    <string name="warning_link_fake_brand">Hindi po opisyal na website ng %1$s ang link na ito. Baka pekeng site ito na nagnanakaw ng account.</string>
+    <string name="warning_link_shortener">Nakatago po kung saan talaga pupunta ang link na ito (pinaikling link). Ginagamit ito ng mga scammer.</string>
+    <string name="warning_link_risky_ending">Hindi kilalang website po ang link na ito, at madalas itong gamitin ng mga scammer.</string>
+    <string name="warning_link_fake_site">Mukhang pekeng website po ang link na ito, hindi ng totoong kumpanya.</string>
 </resources>
