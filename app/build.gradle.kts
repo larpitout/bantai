@@ -23,12 +23,21 @@ android {
 
     buildTypes {
         release {
+            // Para sa judges: sideload na APK, kaya debug key muna ang pirma.
+            signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
+    }
+
+    // Release lang ang may Gemma sa loob (~584 MB). Ilagay ang model sa ../models/ (naka-gitignore).
+    // Ang debug ay kumukuha pa rin sa /data/local/tmp/llm para mabilis ang install habang nagde-develop.
+    sourceSets.getByName("release").assets.srcDir("../models")
+    androidResources {
+        noCompress += "litertlm"
     }
 
     compileOptions {
