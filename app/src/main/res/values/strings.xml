@@ -56,6 +56,9 @@
     <string name="setup_toast_saved">Settings saved successfully.</string>
     <string name="setup_toast_fill_fields">Please enter both trusted contact name and phone number.</string>
     <string name="setup_test_alert_triggered">Triggering test scam alert...</string>
+    <string name="switch_protection_title">Bantai Protection</string>
+    <string name="switch_protection_active">Active</string>
+    <string name="switch_protection_inactive">Paused</string>
 
     <!-- Accessibility Service -->
     <string name="accessibility_service_description">Bantai reads visible screen text to detect scams and provides safety navigation actions for seniors.</string>

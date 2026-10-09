@@ -56,6 +56,9 @@
     <string name="setup_toast_saved">Matagumpay na na-save ang settings.</string>
     <string name="setup_toast_fill_fields">Pakilagay ang pangalan at cellphone number ng trusted contact.</string>
     <string name="setup_test_alert_triggered">Sinusubukan ang babala laban sa scam...</string>
+    <string name="switch_protection_title">Proteksyon ni Bantai</string>
+    <string name="switch_protection_active">Aktibo</string>
+    <string name="switch_protection_inactive">Naka-pause</string>
 
     <!-- Accessibility Service -->
     <string name="accessibility_service_description">Binabasa ni Bantai ang text sa screen para maka-detect ng scam at tulungan ang nakatatanda.</string>

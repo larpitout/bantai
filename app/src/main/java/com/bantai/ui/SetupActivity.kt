@@ -38,6 +38,8 @@ class SetupActivity : AppCompatActivity() {
     private lateinit var layoutAccessibilityPerm: android.view.View
     private lateinit var tvOverlayStatus: TextView
     private lateinit var layoutOverlayPerm: android.view.View
+    private lateinit var switchProtection: androidx.appcompat.widget.SwitchCompat
+    private lateinit var tvProtectionStatus: TextView
     private lateinit var btnTest: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,12 +69,17 @@ class SetupActivity : AppCompatActivity() {
         layoutAccessibilityPerm = findViewById(R.id.layoutAccessibilityPerm)
         tvOverlayStatus = findViewById(R.id.tvOverlayStatus)
         layoutOverlayPerm = findViewById(R.id.layoutOverlayPerm)
+        switchProtection = findViewById(R.id.switchProtection)
+        tvProtectionStatus = findViewById(R.id.tvProtectionStatus)
         btnTest = findViewById(R.id.btnTest)
     }
 
     private fun loadPreferences() {
         etApoName.setText(prefs.apoName)
         etApoPhone.setText(prefs.apoPhone)
+        val isEnabled = prefs.isProtectionEnabled
+        switchProtection.isChecked = isEnabled
+        updateSwitchUi(isEnabled)
     }
 
     private fun setupListeners() {
@@ -106,8 +113,23 @@ class SetupActivity : AppCompatActivity() {
             )
         }
 
+        switchProtection.setOnCheckedChangeListener { _, isChecked ->
+            prefs.isProtectionEnabled = isChecked
+            updateSwitchUi(isChecked)
+        }
+
         btnTest.setOnClickListener {
             triggerTestScamAlert()
+        }
+    }
+
+    private fun updateSwitchUi(isEnabled: Boolean) {
+        if (isEnabled) {
+            tvProtectionStatus.setText(R.string.switch_protection_active)
+            tvProtectionStatus.setTextColor(Color.parseColor("#198754"))
+        } else {
+            tvProtectionStatus.setText(R.string.switch_protection_inactive)
+            tvProtectionStatus.setTextColor(Color.parseColor("#6C757D"))
         }
     }
 

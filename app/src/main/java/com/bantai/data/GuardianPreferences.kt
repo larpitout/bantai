@@ -16,7 +16,12 @@ class GuardianPreferences(context: Context) {
         private const val KEY_APO_NAME = "apo_name"
         private const val KEY_APO_PHONE = "apo_phone"
         private const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
+        private const val KEY_PROTECTION_ENABLED = "protection_enabled"
     }
+
+    var isProtectionEnabled: Boolean
+        get() = prefs.getBoolean(KEY_PROTECTION_ENABLED, true)
+        set(value) = prefs.edit().putBoolean(KEY_PROTECTION_ENABLED, value).apply()
 
     var apoName: String
         get() = prefs.getString(KEY_APO_NAME, "").orEmpty()

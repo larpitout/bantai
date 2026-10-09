@@ -25,6 +25,11 @@ class BantaiNotificationListener : NotificationListenerService() {
         super.onNotificationPosted(sbn)
         if (sbn == null) return
 
+        // 0. Master protection toggle check
+        if (!GuardianPreferences(this).isProtectionEnabled) {
+            return
+        }
+
         val packageName = sbn.packageName ?: return
 
         // 1. Package allowlist check
