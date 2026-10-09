@@ -345,21 +345,40 @@ class DashboardActivity : AppCompatActivity() {
         val loc = Bantai.localized(this)
         val rule = RuleFilter.score(message)
         val link = LinkChecker.check(message)
-        val (reason, action) = when {
-            link?.kind == LinkChecker.Kind.FAKE_BRAND ->
-                loc.getString(R.string.warning_link_fake_brand, LinkChecker.displayBrand(link.brand!!)) to loc.getString(R.string.warning_link_action)
-            link != null -> loc.getString(R.string.warning_link_risky_ending) to loc.getString(R.string.warning_link_action)
-            rule.score > 0 -> RuleFilter.instantWarningRes(rule).let { loc.getString(it.first) to loc.getString(it.second) }
-            else -> loc.getString(R.string.warning_safe_reason) to loc.getString(R.string.warning_safe_action)
-        }
-        val ruleScam = rule.score > 0
+        val initialReason: String
+        val initialAction: String
+        val initialIsScam: Boolean
 
-        fun show(isScam: Boolean, note: String?) {
+        when {
+            link?.kind == LinkChecker.Kind.FAKE_BRAND -> {
+                initialReason = loc.getString(R.string.warning_link_fake_brand, LinkChecker.displayBrand(link.brand!!))
+                initialAction = loc.getString(R.string.warning_link_action)
+                initialIsScam = true
+            }
+            link != null -> {
+                initialReason = loc.getString(R.string.warning_link_risky_ending)
+                initialAction = loc.getString(R.string.warning_link_action)
+                initialIsScam = true
+            }
+            rule.score > 0 -> {
+                val (rRes, aRes) = RuleFilter.instantWarningRes(rule)
+                initialReason = loc.getString(rRes)
+                initialAction = loc.getString(aRes)
+                initialIsScam = true
+            }
+            else -> {
+                initialReason = loc.getString(R.string.warning_safe_reason)
+                initialAction = loc.getString(R.string.warning_safe_action)
+                initialIsScam = false
+            }
+        }
+
+        fun show(isScam: Boolean, reasonText: String, actionText: String, note: String?) {
             out.removeAllViews()
             out.addView(card {
                 addView(row(getString(R.string.field_verdict), verdictChip(isScam)))
-                addView(row(getString(R.string.field_reason), text(reason, 15f, color = INK)))
-                addView(row(getString(R.string.field_action), text(action, 15f, bold = true, color = if (isScam) RED else INK)))
+                addView(row(getString(R.string.field_reason), text(reasonText, 15f, color = INK)))
+                addView(row(getString(R.string.field_action), text(actionText, 15f, bold = true, color = if (isScam) RED else INK)))
                 if (rule.signals.isNotEmpty()) {
                     addView(row(getString(R.string.field_signals), text(rule.signals.joinToString(", "), 14f, color = MUTED)))
                 }
@@ -368,16 +387,32 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         val hasAi = Bantai.modelName() != null
-        show(ruleScam, if (hasAi) getString(R.string.check_ai_thinking) else null)
+        show(initialIsScam, initialReason, initialAction, if (hasAi) getString(R.string.check_ai_thinking) else null)
         if (!hasAi) return
 
-        // AI sa phone: parehong ScamPipeline ng mga notification (rules ang fallback).
+        // AI sa phone: may allowAiDowngrade para sa Check tab upang marinig ang totoong desisyon ng AI.
         checkJob?.cancel()
         checkJob = Bantai.scope.launch {
-            Bantai.scamPipeline(this@DashboardActivity).check(message).collect { c ->
+            Bantai.scamPipeline(this@DashboardActivity, allowAiDowngrade = true).check(message).collect { c ->
                 if (!c.isFinal) return@collect
                 val ai = c.source == VerdictSource.LLM
-                show(c.verdict.isScam || ruleScam, getString(if (ai) R.string.check_ai_done else R.string.check_ai_unavailable))
+                // Kung pekeng brand link (phishing), laging scam; kung hindi, sundin ang hatol ng AI
+                val isScam = if (link?.kind == LinkChecker.Kind.FAKE_BRAND) true else c.verdict.isScam
+                val finalReason = if (ai && c.verdict.reason.isNotBlank()) {
+                    c.verdict.reason
+                } else if (!isScam) {
+                    loc.getString(R.string.warning_safe_reason)
+                } else {
+                    initialReason
+                }
+                val finalAction = if (ai && c.verdict.action.isNotBlank()) {
+                    c.verdict.action
+                } else if (!isScam) {
+                    loc.getString(R.string.warning_safe_action)
+                } else {
+                    initialAction
+                }
+                show(isScam, finalReason, finalAction, getString(if (ai) R.string.check_ai_done else R.string.check_ai_unavailable))
             }
         }
     }

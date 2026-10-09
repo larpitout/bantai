@@ -48,7 +48,10 @@ object ScamAlertOverlay {
         if (view != null && currentFlag === flag && currentFromAi == flag.fromAi) {
             // Nakalabas na: sundan lang ang bubble kapag nag-scroll si Nanay.
             val params = view.layoutParams as? WindowManager.LayoutParams ?: return
-            if (placeUnder(service, params, bubble)) runCatching { currentWm?.updateViewLayout(view, params) }
+            val h = if (view.height > 0) view.height else view.measuredHeight
+            if (placeUnder(service, params, bubble, h, bottomOffsetDp = 72)) {
+                runCatching { currentWm?.updateViewLayout(view, params) }
+            }
             return
         }
         present(
@@ -88,16 +91,18 @@ object ScamAlertOverlay {
 
         view.findViewById<TextView>(R.id.tvAlertReason).text = reason
         view.findViewById<TextView>(R.id.tvAlertAction).text = action
-        view.findViewById<View>(R.id.tvAlertAiBadge).visibility = if (fromAi) View.VISIBLE else View.GONE
         // Audit: gaano kapanganib at sino ang nagpasya (rules o AI sa phone).
         val loc = Bantai.localized(app)
+        val hasRisk = score > 0
         view.findViewById<TextView>(R.id.tvAlertRisk).apply {
-            visibility = if (score > 0) View.VISIBLE else View.GONE
+            visibility = if (hasRisk) View.VISIBLE else View.GONE
             val level = loc.getString(
                 when { score >= 3 -> R.string.risk_high; score == 2 -> R.string.risk_medium; else -> R.string.risk_low }
             )
             text = loc.getString(R.string.risk_line, level, loc.getString(if (fromAi) R.string.decided_by_ai else R.string.decided_by_rules))
         }
+        // Ipakita lang ang hiwalay na badge kung walang risk line para hindi doble ang "checked by AI"
+        view.findViewById<View>(R.id.tvAlertAiBadge).visibility = if (fromAi && !hasRisk) View.VISIBLE else View.GONE
 
         // "Bakit na-flag?": ang mga nakitang senyales, para may paliwanag at hindi lang "scam".
         val why = view.findViewById<TextView>(R.id.tvAlertWhy)
@@ -112,17 +117,22 @@ object ScamAlertOverlay {
         }
         view.findViewById<View>(R.id.btnAlertDismiss).setOnClickListener { onDismiss() }
 
+        // Sukatin ang view para makuha ang totoong pixel height bago ipuwesto
+        val metrics = app.resources.displayMetrics
+        view.measure(
+            View.MeasureSpec.makeMeasureSpec(metrics.widthPixels, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(metrics.heightPixels, View.MeasureSpec.AT_MOST)
+        )
+        val measuredHeight = view.measuredHeight
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             type,
-            // Hindi kinukuha ang keyboard focus; gumagana pa rin ang app sa likod.
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            // Hindi kinukuha ang keyboard focus; layout in screen para tugma sa getBoundsInScreen coordinates.
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT,
         ).apply {
-            gravity = Gravity.BOTTOM
-            y = (bottomOffsetDp * app.resources.displayMetrics.density).toInt()
-            placeUnder(app, this, anchor)
+            placeUnder(app, this, anchor, measuredHeight, bottomOffsetDp)
         }
 
         wm.addView(view, params)
@@ -131,17 +141,48 @@ object ScamAlertOverlay {
     }
 
     /**
-     * Ilagay ang babala sa mismong ilalim ng bubble ng scammer. Kapag nasa ibabang bahagi ng screen ang bubble
-     * (walang sapat na espasyo sa ilalim), sa ibaba ng chat na lang, sa itaas ng text box.
-     * Ibinabalik kung nagbago ang puwesto.
+     * Ilagay ang babala kaugnay sa bubble ng scammer nang hindi tinatakpan ang mensahe:
+     * - Kung kasya sa ibaba: sa mismong ilalim ng bubble (bubble.bottom + margin).
+     * - Kung nasa ibaba na ng screen ang bubble (malapit sa text box ng chat): ilagay sa ITAAS ng bubble
+     *   (bubble.top - height - margin) para manatiling kitang-kita ni Nanay ang mensahe at hindi matakpan!
+     * - Kapag nag-scroll si Nanay at umusad ang bubble, susunod ang babala.
      */
-    private fun placeUnder(ctx: Context, params: WindowManager.LayoutParams, bubble: Rect?): Boolean {
+    private fun placeUnder(
+        ctx: Context,
+        params: WindowManager.LayoutParams,
+        bubble: Rect?,
+        measuredHeight: Int = 0,
+        bottomOffsetDp: Int = 0,
+    ): Boolean {
         val metrics = ctx.resources.displayMetrics
-        val (gravity, y) = if (bubble != null && bubble.bottom < metrics.heightPixels * 0.5) {
-            (Gravity.TOP) to (bubble.bottom + (4 * metrics.density).toInt())
+        val density = metrics.density
+        val margin = (6 * density).toInt()
+        val composerOffset = ((if (bottomOffsetDp > 0) bottomOffsetDp else 72) * density).toInt()
+        val statusBarOffset = (36 * density).toInt()
+        val height = if (measuredHeight > 0) measuredHeight else (260 * density).toInt()
+
+        val (gravity, y) = if (bubble != null) {
+            val spaceBelow = metrics.heightPixels - bubble.bottom - composerOffset
+            val spaceAbove = bubble.top - statusBarOffset
+
+            if (spaceBelow >= height) {
+                // May sapat na espasyo sa ibaba ng bubble: sa mismong ilalim ilagay
+                (Gravity.TOP or Gravity.START) to (bubble.bottom + margin)
+            } else if (spaceAbove >= height) {
+                // Nasa ibaba ng screen ang bubble: ilagay sa ITAAS ng bubble para hindi matakpan ang message!
+                (Gravity.TOP or Gravity.START) to (bubble.top - height - margin).coerceAtLeast(statusBarOffset)
+            } else {
+                // Kung mas malaki ang espasyo sa itaas kaysa sa ibaba
+                if (spaceAbove >= spaceBelow) {
+                    (Gravity.TOP or Gravity.START) to (bubble.top - height - margin).coerceAtLeast(statusBarOffset)
+                } else {
+                    (Gravity.TOP or Gravity.START) to (bubble.bottom + margin)
+                }
+            }
         } else {
-            Gravity.BOTTOM to (72 * metrics.density).toInt()
+            Gravity.BOTTOM to composerOffset
         }
+
         if (params.gravity == gravity && params.y == y) return false
         params.gravity = gravity
         params.y = y
