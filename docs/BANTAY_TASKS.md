@@ -151,7 +151,8 @@ Pumili kung Virtual Device o Physical Device ang gagamitin:
 ### Lane A: AI Core (Backend Dev 1)
 - [ ] **A7. I-tune ang Gabay Prompt gamit ang Screen Labels** (~40 min) · Kailangan: B6
   - Limitahan sa 3 simpleng hakbang, magalang (may "po"), at bawal magbanggit ng buttons na wala sa screen.
-- [ ] **A8. `GabayPipeline`** (~45 min) · Kailangan: A7
+  - Nakasulat na ang `buildGabayPrompt` at `GabayParser` (ipinapatupad sa code ang 3 hakbang, "po", at labels lang ng screen). Hindi pa nasusukat sa device: patakbuhin ang `GabayPipelineEvalTest` at itala rito ang resulta bago i-check.
+- [x] **A8. `GabayPipeline`** (~45 min) · Kailangan: A7
   - Fixed fallback kapag walang labels (hal. banking app): *"Hindi ko po makita ang screen na ito"*.
   - 20-segundong timeout na nag-aalok na tawagan si Apo.
 

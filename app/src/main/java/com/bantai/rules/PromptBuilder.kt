@@ -24,4 +24,42 @@ HATOL: SCAM or LIGTAS
 DAHILAN: one short sentence
 GAWIN: one short tip"""
     }
+
+    const val MAX_QUESTION_CHARS = 100
+    const val MAX_GABAY_LABELS = 12
+    const val MAX_LABEL_CHARS = 24
+    const val MAX_GABAY_LABEL_CHARS = 200
+
+    /**
+     * The screen labels that go into the Gabay prompt. The reader allows 600 characters of labels,
+     * which alone is ~15 s of prefill on the Infinix, so only the first few short ones are kept.
+     * The reply is validated against this same list: the model is only held to labels it was shown.
+     */
+    fun gabayLabels(labels: List<String>): List<String> {
+        val kept = mutableListOf<String>()
+        var total = 0
+        for (label in labels) {
+            val clean = label.replace('"', '\'').replace(Regex("\\s+"), " ").trim().take(MAX_LABEL_CHARS).trim()
+            if (clean.isEmpty() || kept.any { it.equals(clean, ignoreCase = true) }) continue
+            if (kept.size == MAX_GABAY_LABELS || total + clean.length > MAX_GABAY_LABEL_CHARS) break
+            kept += clean
+            total += clean.length
+        }
+        return kept
+    }
+
+    /**
+     * Builds the Gabay prompt from the senior's question and the labels of [gabayLabels].
+     * Same layout as the scam prompt: data first, format last, English instructions, Tagalog reply.
+     * Button names are asked for in quotes so [GabayParser] can check them against the screen.
+     */
+    fun buildGabayPrompt(question: String, labels: List<String>): String {
+        val cleanQuestion = question.replace('"', '\'').replace(Regex("\\s+"), " ").trim().take(MAX_QUESTION_CHARS)
+        val buttons = labels.joinToString(", ") { "\"$it\"" }
+
+        return """Screen buttons: $buttons
+Question: "$cleanQuestion"
+Answer in polite Tagalog with "po". At most 3 short numbered steps.
+Put button names in quotes. Use only buttons from the list."""
+    }
 }
