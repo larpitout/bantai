@@ -47,12 +47,12 @@ object RuleFilter {
         val signals = mutableListOf<String>()
 
         // 1. Money Request
-        if (MONEY_PATTERNS.any { lowerText.contains(it) }) {
+        if (MONEY_PATTERNS.any { lowerText.hasWord(it) }) {
             signals.add("Money Request")
         }
 
         // 2. New Number / Impersonation
-        val hasNewNumberText = NEW_NUMBER_PATTERNS.any { lowerText.contains(it) } ||
+        val hasNewNumberText = NEW_NUMBER_PATTERNS.any { lowerText.hasWord(it) } ||
                 NEW_NUMBER_REGEX.matcher(lowerText).find()
         if (hasNewNumberText) {
             signals.add("New Number / Impersonation")
@@ -64,17 +64,17 @@ object RuleFilter {
         }
 
         // 4. Prize / Raffle
-        if (PRIZE_PATTERNS.any { lowerText.contains(it) }) {
+        if (PRIZE_PATTERNS.any { lowerText.hasWord(it) }) {
             signals.add("Prize / Raffle")
         }
 
         // 5. Account, OTP, or Parcel
-        if (ACCOUNT_PARCEL_PATTERNS.any { lowerText.contains(it) }) {
+        if (ACCOUNT_PARCEL_PATTERNS.any { lowerText.hasWord(it) }) {
             signals.add("Account / OTP / Parcel")
         }
 
         // 6. Urgency / Emergency
-        if (URGENCY_PATTERNS.any { lowerText.contains(it) }) {
+        if (URGENCY_PATTERNS.any { lowerText.hasWord(it) }) {
             signals.add("Urgency / Emergency")
         }
 
@@ -129,3 +129,7 @@ object RuleFilter {
         )
     }
 }
+
+// Buong salita lang, para hindi tumama ang "maya" sa "mamaya" o ang "pin" sa "pinsan".
+private fun String.hasWord(word: String) =
+    Regex("\\b${Regex.escape(word)}\\b").containsMatchIn(this)

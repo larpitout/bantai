@@ -136,7 +136,7 @@ class SetupActivity : AppCompatActivity() {
         val sampleScamText = "Congratulations! Nanalo ka ng P50,000 sa ayuda promo. I-click ang bit.ly/claim-ayuda agad bago ma-expire!"
 
         val result = RuleFilter.score(sampleScamText)
-        val warning = RuleFilter.getImmediateWarning(result)
+        val warning = RuleFilter.createInstantWarning(result)
 
         val reasonText = warning?.reason ?: getString(R.string.warning_generic_reason)
         val actionText = warning?.action ?: getString(R.string.warning_generic_action)
