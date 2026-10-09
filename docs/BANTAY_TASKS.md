@@ -106,7 +106,7 @@ Pumili kung Virtual Device o Physical Device ang gagamitin:
 **Gate, 1:00 AM:** Kapag may pumasok na scam SMS o notification, agad lumalabas ang babala at binabasa nang malakas via TTS.
 
 ### Lane A: AI Core (Backend Dev 1)
-- [ ] **A5. `PromptBuilder` at `ScamPipeline`** (~60 min) · Kailangan: A3, B3
+- [x] **A5. `PromptBuilder` at `ScamPipeline`** (~60 min) · Kailangan: A3, B3
   - Tatlong tiers ayon sa score, 15-segundong timeout, at automatic fallback sa rules kapag `FAILED` ang engine.
 - [ ] **A6. Patakbuhin ang Test Set** (~45 min) · Kailangan: A5, B2
   - Sukatin ang accuracy laban sa 30 test messages. Itala ang tunay na resulta para sa pitch.
