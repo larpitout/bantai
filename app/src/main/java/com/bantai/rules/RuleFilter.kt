@@ -63,6 +63,10 @@ object RuleFilter {
         if (URL_REGEX.matcher(lowerText).find()) {
             signals.add("Suspicious Link")
         }
+        // 3b. Mapanganib na link (pekeng brand, shortener, murang domain, IP): sapat na para magbabala agad.
+        if (LinkChecker.check(text) != null) {
+            signals.add("Dangerous Link")
+        }
 
         // 4. Prize / Raffle
         if (PRIZE_PATTERNS.any { lowerText.hasWord(it) }) {

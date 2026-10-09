@@ -48,10 +48,6 @@ class SetupActivity : AppCompatActivity() {
 
         prefs = GuardianPreferences(this)
         Bantai.warmUp(this)
-        // Para sa Gabay: makapagsalita si Nanay.
-        if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO), 1)
-        }
 
         initViews()
         loadPreferences()

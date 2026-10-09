@@ -45,8 +45,6 @@
     <string name="setup_apo_phone_hint">Trusted Contact Phone Number</string>
     <string name="setup_perm_notification_title">Notification Access</string>
     <string name="setup_perm_notification_desc">Allows Bantai to inspect incoming SMS and chats for scams.</string>
-    <string name="setup_perm_accessibility_title">Accessibility Service</string>
-    <string name="setup_perm_accessibility_desc">Allows Bantai to display warning overlays and assist on screen.</string>
     <string name="setup_perm_overlay_title">Display Over Other Apps</string>
     <string name="setup_perm_overlay_desc">Lets Bantai show the scam warning on top of any app.</string>
     <string name="setup_btn_save">Save Settings</string>
@@ -59,28 +57,11 @@
     <string name="switch_protection_title">Bantai Protection</string>
     <string name="switch_protection_active">Active</string>
     <string name="switch_protection_inactive">Paused</string>
-
-    <!-- Accessibility Service -->
-    <string name="accessibility_service_description">Bantai reads visible screen text to detect scams and provides safety navigation actions for seniors.</string>
-    <!-- Gabay -->
-    <string name="gabay_bubble_desc">Bantai helper</string>
-    <string name="gabay_panel_title">What do you need help with?</string>
-    <string name="gabay_opt_message">Send a message</string>
-    <string name="gabay_opt_video">Video call</string>
-    <string name="gabay_opt_photo">Send a picture</string>
-    <string name="gabay_opt_search">Find a person</string>
-    <string name="gabay_close">Close</string>
-    <string name="gabay_thinking">One moment, let me look at your screen…</string>
-    <string name="gabay_speak">Speak</string>
-    <string name="gabay_listening">Listening… say what you need.</string>
-    <string name="gabay_not_heard">I didn\'t hear you. Tap Speak to try again.</string>
-    <string name="gabay_reached">We are now in %1$s.</string>
-    <string name="gabay_anything_else">Anything else?</string>
-    <string name="gabay_bye">Okay. I\'m here if you need me.</string>
-    <string name="gabay_go_home">What we need is not here. Go to Home first: swipe up from the bottom, or tap the circle at the bottom.</string>
-    <string name="gabay_tap">Tap "%1$s".</string>
-    <string name="gabay_search_app">Tap "%1$s", then type %2$s.</string>
-    <string name="gabay_open_drawer">Swipe up from the middle of the screen to see all your apps.</string>
-    <string name="gabay_scroll">Scroll down: slide your finger up in the middle of the screen.</string>
-    <string name="gabay_cannot_see">I can\'t see this screen.</string>
+    <string name="setup_perm_accessibility_title">Accessibility (Messages only)</string>
+    <string name="setup_perm_accessibility_desc">Lets Bantai notice when you open a flagged message, to show the warning there.</string>
+    <string name="accessibility_service_description">Bantai checks only messaging apps, on this phone, to show a scam warning when you open a flagged message.</string>
+    <string name="warning_link_fake_brand">This link is not the official %1$s website. It may be a fake site that steals your account.</string>
+    <string name="warning_link_shortener">This link hides where it really goes (shortened link). Scammers use these to hide fake sites.</string>
+    <string name="warning_link_risky_ending">This link goes to an unknown website often used by scammers.</string>
+    <string name="warning_link_fake_site">This link points to a fake-looking website, not a real company.</string>
 </resources>

@@ -45,8 +45,6 @@
     <string name="setup_apo_phone_hint">Cellphone Number ng Trusted Contact</string>
     <string name="setup_perm_notification_title">Notification Access</string>
     <string name="setup_perm_notification_desc">Pinapayagan si Bantai na suriin ang bagong SMS at chats laban sa scam.</string>
-    <string name="setup_perm_accessibility_title">Accessibility Service</string>
-    <string name="setup_perm_accessibility_desc">Pinapayagan si Bantai na maglabas ng babala at gumabay sa screen.</string>
     <string name="setup_perm_overlay_title">Display Over Other Apps</string>
     <string name="setup_perm_overlay_desc">Para lumabas ang babala kahit nasa ibang app si Nanay.</string>
     <string name="setup_btn_save">I-save ang Settings</string>
@@ -59,28 +57,11 @@
     <string name="switch_protection_title">Proteksyon ni Bantai</string>
     <string name="switch_protection_active">Aktibo</string>
     <string name="switch_protection_inactive">Naka-pause</string>
-
-    <!-- Accessibility Service -->
-    <string name="accessibility_service_description">Binabasa ni Bantai ang text sa screen para maka-detect ng scam at tulungan ang nakatatanda.</string>
-    <!-- Gabay -->
-    <string name="gabay_bubble_desc">Katulong na si Bantai</string>
-    <string name="gabay_panel_title">Ano po ang kailangan ninyo, Nay?</string>
-    <string name="gabay_opt_message">Mag-message</string>
-    <string name="gabay_opt_video">Mag-video call</string>
-    <string name="gabay_opt_photo">Mag-send ng picture</string>
-    <string name="gabay_opt_search">Maghanap ng tao</string>
-    <string name="gabay_close">Isara</string>
-    <string name="gabay_thinking">Sandali lang po, tinitingnan ko ang screen…</string>
-    <string name="gabay_speak">Magsalita po</string>
-    <string name="gabay_listening">Nakikinig po… sabihin lang po ang kailangan.</string>
-    <string name="gabay_not_heard">Hindi ko po kayo narinig. Pindutin po ang Magsalita para ulitin.</string>
-    <string name="gabay_reached">Nandito na po tayo sa %1$s.</string>
-    <string name="gabay_anything_else">May iba pa po ba?</string>
-    <string name="gabay_bye">Sige po, nandito lang po ako kapag kailangan ninyo.</string>
-    <string name="gabay_go_home">Wala po rito ang hinahanap natin. Pumunta muna po tayo sa Home: i-swipe pataas mula sa ibaba, o pindutin ang bilog sa ibaba.</string>
-    <string name="gabay_tap">Pindutin po ang "%1$s".</string>
-    <string name="gabay_search_app">Pindutin po ang "%1$s", tapos i-type po ang %2$s.</string>
-    <string name="gabay_open_drawer">I-swipe pataas po mula sa gitna ng screen para makita ang lahat ng apps.</string>
-    <string name="gabay_scroll">Mag-scroll po pababa: i-slide pataas ang daliri sa gitna ng screen.</string>
-    <string name="gabay_cannot_see">Hindi ko po makita ang screen na ito.</string>
+    <string name="setup_perm_accessibility_title">Accessibility (Messages lang)</string>
+    <string name="setup_perm_accessibility_desc">Para malaman ni Bantai kapag binuksan ang na-flag na mensahe, at doon ipakita ang babala.</string>
+    <string name="accessibility_service_description">Sa mga messaging app lang tumitingin si Bantai, sa loob ng phone, para ipakita ang babala kapag binuksan ang kahina-hinalang mensahe.</string>
+    <string name="warning_link_fake_brand">Hindi po opisyal na website ng %1$s ang link na ito. Baka pekeng site ito na nagnanakaw ng account.</string>
+    <string name="warning_link_shortener">Nakatago po kung saan talaga pupunta ang link na ito (pinaikling link). Ginagamit ito ng mga scammer.</string>
+    <string name="warning_link_risky_ending">Hindi kilalang website po ang link na ito, at madalas itong gamitin ng mga scammer.</string>
+    <string name="warning_link_fake_site">Mukhang pekeng website po ang link na ito, hindi ng totoong kumpanya.</string>
 </resources>
