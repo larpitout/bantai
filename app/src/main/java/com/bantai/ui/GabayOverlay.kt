@@ -205,6 +205,14 @@ object GabayOverlay {
             val byLabel = LinkedHashMap<String, Rect>()
             for (b in buttons) PromptBuilder.gabayLabels(listOf(b.label)).firstOrNull()?.let { byLabel.putIfAbsent(it, b.bounds) }
             val labels = byLabel.keys.toList()
+
+            // Pagbukas ng app na naka-install pero wala sa screen (nasa folder o ibang pahina): sa listahan ng lahat ng apps.
+            val wantedApp = installedAppIn(svc, g)
+            if (wantedApp != null && app == launcherPackage(svc)) {
+                clearGuide()
+                guideToApp(svc, wantedApp, byLabel)
+                return@launch
+            }
             val candidates = GabayRanker.candidates(g, labels)
 
             // Walang kahit anong tugma sa screen ng isang app: ituro muna ang Home, doon nagsisimula ang lahat.
@@ -233,6 +241,56 @@ object GabayOverlay {
                 Bantai.speaker(svc).speak(result.spokenText)
             }
         }
+    }
+
+    /**
+     * Nasa Home o listahan ng apps, at alam kung aling app ang hinahanap:
+     * nakikita → bilugan; may "Search for apps" → ituro ito at ang ita-type; wala pa → ituro ang pag-swipe pataas.
+     * Walang "click" kapag nag-swipe o nag-type, kaya binabantayan ang screen hanggang magbago.
+     */
+    private suspend fun guideToApp(svc: BantaiAccessibilityService, appName: String, byLabel: Map<String, Rect>) {
+        val visible = byLabel.entries.firstOrNull { it.key.equals(appName, ignoreCase = true) }
+        val search = byLabel.entries.firstOrNull { it.key.contains("search", true) && it.key.contains("app", true) }
+        val (rect, text) = when {
+            visible != null -> visible.value to svc.getString(R.string.gabay_tap, appName)
+            search != null -> search.value to svc.getString(R.string.gabay_search_app, search.key, appName)
+            else -> drawerArea(svc) to svc.getString(R.string.gabay_open_drawer)
+        }
+        Log.e(TAG, "app=$appName visible=${visible != null} search=${search != null}")
+        showHighlight(rect, text)
+        Bantai.speaker(svc).speak(text)
+        if (visible != null) return // pipindutin ni Nanay → onScreenChanged
+
+        val g = goal
+        val before = byLabel.keys
+        repeat(15) {
+            delay(1_500)
+            if (goal != g) return
+            val now = svc.readButtons().second.map { it.label }.toSet()
+            if (now != before && (now.any { it.equals(appName, true) } || search == null)) {
+                clearGuide()
+                step()
+                return
+            }
+        }
+    }
+
+    /** Pangalan ng naka-install na app na binanggit ni Nanay (hal. "go to facebook" → "Facebook"). */
+    private fun installedAppIn(ctx: Context, goal: String): String? {
+        val wanted = WORDS.findAll(goal.lowercase()).map { it.value }.filter { it.length > 2 && it !in ACTION_WORDS }.toSet()
+        if (wanted.isEmpty()) return null
+        val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        return ctx.packageManager.queryIntentActivities(launcher, 0)
+            .map { it.loadLabel(ctx.packageManager).toString() }
+            .filter { label -> WORDS.findAll(label.lowercase()).any { it.value in wanted } }
+            .minByOrNull { it.length } // "Facebook" bago "Facebook Lite"
+    }
+
+    /** Gitna ng screen, kung saan nagsisimula ang pag-swipe pataas para sa listahan ng lahat ng apps. */
+    private fun drawerArea(ctx: Context): Rect {
+        val w = ctx.resources.displayMetrics.widthPixels
+        val h = ctx.resources.displayMetrics.heightPixels
+        return Rect(w / 2 - ctx.dp(60), h * 6 / 10, w / 2 + ctx.dp(60), h * 6 / 10 + ctx.dp(120))
     }
 
     /** Pangalan ng app kung ito na ang hinahanap ni Nanay (hal. "go to facebook" at bukas ang Facebook). */

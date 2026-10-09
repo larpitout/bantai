@@ -9,6 +9,11 @@
         <intent>
             <action android:name="android.speech.RecognitionService" />
         </intent>
+        <!-- Gabay: alamin kung anong apps ang naka-install, kahit nasa folder -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
     </queries>
 
     <!-- Crucial for Android 11+ to discover and bind to Google TextToSpeech engine -->

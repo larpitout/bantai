@@ -76,4 +76,7 @@
     <string name="gabay_anything_else">May iba pa po ba?</string>
     <string name="gabay_bye">Sige po, nandito lang po ako kapag kailangan ninyo.</string>
     <string name="gabay_go_home">Wala po rito ang hinahanap natin. Pumunta muna po tayo sa Home: i-swipe pataas mula sa ibaba, o pindutin ang bilog sa ibaba.</string>
+    <string name="gabay_tap">Pindutin po ang "%1$s".</string>
+    <string name="gabay_search_app">Pindutin po ang "%1$s", tapos i-type po ang %2$s.</string>
+    <string name="gabay_open_drawer">I-swipe pataas po mula sa gitna ng screen para makita ang lahat ng apps.</string>
 </resources>
