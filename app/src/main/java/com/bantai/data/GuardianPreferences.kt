@@ -13,8 +13,6 @@ class GuardianPreferences(context: Context) {
 
     companion object {
         private const val PREFS_NAME = "bantai_guardian_prefs"
-        private const val KEY_APO_NAME = "apo_name"
-        private const val KEY_APO_PHONE = "apo_phone"
         private const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
         private const val KEY_PROTECTION_ENABLED = "protection_enabled"
     }
@@ -23,19 +21,7 @@ class GuardianPreferences(context: Context) {
         get() = prefs.getBoolean(KEY_PROTECTION_ENABLED, true)
         set(value) = prefs.edit().putBoolean(KEY_PROTECTION_ENABLED, value).apply()
 
-    var apoName: String
-        get() = prefs.getString(KEY_APO_NAME, "").orEmpty()
-        set(value) = prefs.edit().putString(KEY_APO_NAME, value.trim()).apply()
-
-    var apoPhone: String
-        get() = prefs.getString(KEY_APO_PHONE, "").orEmpty()
-        set(value) = prefs.edit().putString(KEY_APO_PHONE, value.trim()).apply()
-
     var isOnboardingCompleted: Boolean
         get() = prefs.getBoolean(KEY_ONBOARDING_COMPLETED, false)
         set(value) = prefs.edit().putBoolean(KEY_ONBOARDING_COMPLETED, value).apply()
-
-    fun isConfigured(): Boolean {
-        return apoName.isNotBlank() && apoPhone.isNotBlank()
-    }
 }

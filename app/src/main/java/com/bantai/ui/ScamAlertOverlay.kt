@@ -3,10 +3,8 @@ package com.bantai.ui
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.graphics.PixelFormat
 import android.graphics.Rect
-import android.net.Uri
 import android.provider.Settings
 import android.util.Log
 import android.view.Gravity
@@ -16,7 +14,6 @@ import android.view.WindowManager
 import android.widget.TextView
 import com.bantai.Bantai
 import com.bantai.R
-import com.bantai.data.GuardianPreferences
 
 /**
  * Ang babala, sa dalawang paraan:
@@ -114,35 +111,6 @@ object ScamAlertOverlay {
             tts.speak("${Bantai.localized(app).getString(R.string.warning_title)}. $reason $action")
         }
         view.findViewById<View>(R.id.btnAlertDismiss).setOnClickListener { onDismiss() }
-
-        val apoPhone = GuardianPreferences(app).apoPhone
-        view.findViewById<View>(R.id.btnAlertCallApo).apply {
-            visibility = if (apoPhone.isBlank()) View.GONE else View.VISIBLE
-            setOnClickListener {
-                onDismiss()
-                // ACTION_DIAL: bubuksan lang ang dialer, si Nanay pa rin ang pipindot ng tawag.
-                app.startActivity(
-                    Intent(Intent.ACTION_DIAL, Uri.parse("tel:$apoPhone"))
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                )
-            }
-        }
-
-        // "Sabihan si Apo": bubuksan ang SMS kay Apo na may nakahandang text; si Nanay pa rin ang magse-send.
-        view.findViewById<TextView>(R.id.btnAlertTellApo).apply {
-            val name = GuardianPreferences(app).apoName.ifBlank { null }
-            visibility = if (apoPhone.isBlank() || message.isBlank()) View.GONE else View.VISIBLE
-            name?.let { text = Bantai.localized(app).getString(R.string.btn_tell_apo_named, it) }
-            setOnClickListener {
-                onDismiss()
-                val body = Bantai.localized(app).getString(R.string.tell_apo_body, message.take(160))
-                app.startActivity(
-                    Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:$apoPhone"))
-                        .putExtra("sms_body", body)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                )
-            }
-        }
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
