@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Identity -->
+    <string name="app_name">Bantai</string>
+    <string name="app_tagline">Ang Apo sa Bulsa ni Nanay</string>
+
+    <!-- Overlay Warning Dialog Buttons -->
+    <string name="btn_read_aloud">Basahin</string>
+    <string name="btn_dismiss">Sige po</string>
+    <string name="btn_call_apo">Tawagan si Apo</string>
+
+    <!-- Overlay Warning Headers -->
+    <string name="warning_title">Babala: Mukhang SCAM po ito</string>
+    <string name="warning_title_safe">Ligtas po ang Mensahe</string>
+
+    <!-- Scam Warning Reasons -->
+    <string name="warning_impersonation_reason">May nagpapanggap na kamag-anak at humihingi ng pera gamit ang hindi kilalang numero.</string>
+    <string name="warning_account_otp_reason">May kahina-hinalang link na humihingi ng sensitibong impormasyon, PIN, o OTP.</string>
+    <string name="warning_prize_reason">Walang totoong premyo o raffle na humihingi ng bayad o personal na impormasyon.</string>
+    <string name="warning_link_reason">May kasamang kahina-hinalang link ang mensahe. Huwag po itong buksan.</string>
+    <string name="warning_generic_reason">Mukhang kahina-hinala po ang mensaheng ito dahil may mga senyales ng scam.</string>
+    <string name="warning_safe_reason">Ligtas po at karaniwang mensahe lamang ito.</string>
+
+    <!-- Scam Warning Recommended Actions -->
+    <string name="warning_impersonation_action">Huwag po munang magpadala ng pera. Tawagan muna siya sa dati niyang number para kumpirmahin.</string>
+    <string name="warning_account_otp_action">Huwag pong ibigay ang OTP o PIN kahit kanino, at huwag i-click ang link.</string>
+    <string name="warning_prize_action">Huwag pong pansinin at huwag magbigay ng kahit anong detalye para sa hindi inaasahang premyo.</string>
+    <string name="warning_link_action">Huwag pong pindutin ang link at huwag magbigay ng impormasyon.</string>
+    <string name="warning_generic_action">Huwag pong magpadala ng pera o magbigay ng impormasyon. Tawagan muna si Apo.</string>
+    <string name="warning_safe_action">Walang kailangang gawin.</string>
+
+    <!-- Signal Names -->
+    <string name="signal_money_request">Hingi ng Pera</string>
+    <string name="signal_new_number">Bagong Numero / Pagpapanggap</string>
+    <string name="signal_suspicious_link">Kahina-hinalang Link</string>
+    <string name="signal_prize_raffle">Premyo / Raffle</string>
+    <string name="signal_account_parcel">Account / OTP / Parcel</string>
+    <string name="signal_urgency">Apura / Emergency</string>
+
+    <!-- Setup Screen (Apo Onboarding) -->
+    <string name="setup_title">Setup ng Bantai</string>
+    <string name="setup_subtitle">Isang beses lang na paghahanda para sa kaligtasan ni Nanay</string>
+    <string name="setup_apo_name_hint">Pangalan ni Apo</string>
+    <string name="setup_apo_phone_hint">Cellphone Number ni Apo</string>
+    <string name="setup_perm_notification_title">Notification Access</string>
+    <string name="setup_perm_notification_desc">Pinapayagan si Bantai na suriin ang bagong SMS at chats laban sa scam.</string>
+    <string name="setup_perm_accessibility_title">Accessibility Service</string>
+    <string name="setup_perm_accessibility_desc">Pinapayagan si Bantai na maglabas ng babala at gumabay sa screen.</string>
+    <string name="setup_btn_save">I-save ang Settings</string>
+    <string name="setup_btn_test">I-test ang Babala</string>
+</resources>

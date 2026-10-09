@@ -4,15 +4,15 @@ plugins {
 }
 
 android {
-    namespace = "com.bantay.app"
-    compileSdk = 36
+    namespace = "com.bantai"
+    compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.bantay.app"
+        applicationId = "com.bantai"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -21,25 +21,39 @@ android {
         }
     }
 
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-}
 
-kotlin {
-    compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    kotlinOptions {
+        jvmTarget = "17"
     }
 }
 
 dependencies {
+    // LiteRT LM
     implementation(libs.litertlm.android)
     implementation(libs.kotlinx.coroutines.android)
 
+    // AndroidX & Material UI
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.android.material:material:1.12.0")
+
+    // Testing
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
-
     androidTestImplementation(libs.junit)
     androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.test.runner)
