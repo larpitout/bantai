@@ -5,10 +5,10 @@
     <string name="app_tagline">Your Pocket Guardian Against Scams</string>
 
     <!-- Overlay Warning Dialog Buttons -->
-    <string name="alert_ai_badge">🧠 Checked by on-device AI</string>
+    <string name="alert_ai_badge">Checked by on-device AI</string>
     <string name="btn_read_aloud">Read</string>
     <string name="btn_dismiss">Got it</string>
-    <string name="btn_call_apo">Call Apo</string>
+    <string name="btn_call_apo">Call Trusted Contact</string>
 
     <!-- Overlay Warning Headers -->
     <string name="warning_title">Warning: Potential Scam Detected</string>
@@ -38,11 +38,11 @@
     <string name="signal_account_parcel">Account / OTP / Parcel</string>
     <string name="signal_urgency">Urgency / Emergency</string>
 
-    <!-- Setup Screen (Apo Onboarding) -->
+    <!-- Setup Screen (Trusted Contact Onboarding) -->
     <string name="setup_title">Bantai Setup</string>
     <string name="setup_subtitle">One-time setup for Nanay\'s safety</string>
-    <string name="setup_apo_name_hint">Guardian Name (Apo)</string>
-    <string name="setup_apo_phone_hint">Guardian Phone Number</string>
+    <string name="setup_apo_name_hint">Trusted Contact Name</string>
+    <string name="setup_apo_phone_hint">Trusted Contact Phone Number</string>
     <string name="setup_perm_notification_title">Notification Access</string>
     <string name="setup_perm_notification_desc">Allows Bantai to inspect incoming SMS and chats for scams.</string>
     <string name="setup_perm_accessibility_title">Accessibility Service</string>
@@ -54,7 +54,7 @@
     <string name="status_granted">Granted</string>
     <string name="status_not_granted">Tap to Grant</string>
     <string name="setup_toast_saved">Settings saved successfully.</string>
-    <string name="setup_toast_fill_fields">Please enter both Apo name and phone number.</string>
+    <string name="setup_toast_fill_fields">Please enter both trusted contact name and phone number.</string>
     <string name="setup_test_alert_triggered">Triggering test scam alert...</string>
 
     <!-- Accessibility Service -->
