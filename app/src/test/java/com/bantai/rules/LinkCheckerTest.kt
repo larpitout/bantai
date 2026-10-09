@@ -39,4 +39,38 @@ class LinkCheckerTest {
         assertNull(kind("Tingnan mo to https://www.google.com"))
         assertNull(kind("Bili tayo sa smartphones.com mamaya"))
     }
+
+    @Test
+    fun safeDomainRecognition() {
+        org.junit.Assert.assertTrue(LinkChecker.isSafeDomain("google.com"))
+        org.junit.Assert.assertTrue(LinkChecker.isSafeDomain("www.google.com"))
+        org.junit.Assert.assertTrue(LinkChecker.isSafeDomain("google.com.ph"))
+        org.junit.Assert.assertTrue(LinkChecker.isSafeDomain("facebook.com"))
+        org.junit.Assert.assertTrue(LinkChecker.isSafeDomain("m.facebook.com"))
+        org.junit.Assert.assertTrue(LinkChecker.isSafeDomain("youtube.com"))
+        org.junit.Assert.assertTrue(LinkChecker.isSafeDomain("youtu.be"))
+        org.junit.Assert.assertTrue(LinkChecker.isSafeDomain("gcash.com"))
+        org.junit.Assert.assertTrue(LinkChecker.isSafeDomain("help.gcash.com"))
+        org.junit.Assert.assertTrue(LinkChecker.isSafeDomain("bdo.com.ph"))
+        org.junit.Assert.assertTrue(LinkChecker.isSafeDomain("online.bdo.com.ph"))
+        org.junit.Assert.assertTrue(LinkChecker.isSafeDomain("doh.gov.ph"))
+        org.junit.Assert.assertTrue(LinkChecker.isSafeDomain("up.edu.ph"))
+
+        org.junit.Assert.assertFalse(LinkChecker.isSafeDomain("gcash-verify.com"))
+        org.junit.Assert.assertFalse(LinkChecker.isSafeDomain("bdo-secure.online"))
+        org.junit.Assert.assertFalse(LinkChecker.isSafeDomain("sim-registration-portal.com"))
+        org.junit.Assert.assertFalse(LinkChecker.isSafeDomain("bit.ly"))
+    }
+
+    @Test
+    fun unverifiedLinkDetection() {
+        org.junit.Assert.assertFalse(LinkChecker.hasUnverifiedLink("www.google.com"))
+        org.junit.Assert.assertFalse(LinkChecker.hasUnverifiedLink("Bisitahin ang https://www.gcash.com/help"))
+        org.junit.Assert.assertFalse(LinkChecker.hasUnverifiedLink("Tingnan mo to https://www.google.com"))
+        org.junit.Assert.assertFalse(LinkChecker.hasUnverifiedLink("Panoorin sa https://youtu.be/abc"))
+
+        org.junit.Assert.assertTrue(LinkChecker.hasUnverifiedLink("http://bit.ly/claim-prize"))
+        org.junit.Assert.assertTrue(LinkChecker.hasUnverifiedLink("http://sim-registration-portal.com"))
+        org.junit.Assert.assertTrue(LinkChecker.hasUnverifiedLink("http://gcash-verify.com/login"))
+    }
 }

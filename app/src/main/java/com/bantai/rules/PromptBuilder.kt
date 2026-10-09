@@ -16,7 +16,7 @@ object PromptBuilder {
         val hint = if (signals.isEmpty()) "" else "Hints from a keyword filter: ${signals.joinToString(", ")}\n"
         return """You check text messages sent to an elderly person in the Philippines.
 A scam asks for money, load, an OTP, PIN or account details, claims a new number, offers a prize, or has a suspicious link.
-A message that only says money was already sent or paid, or normal family talk, is SAFE.
+A message that only says money was already sent or paid, normal family talk, or a safe/normal website link, is SAFE.
 
 Message: "Lola bagong number ko to, padala ka 3k sa gcash ngayon na"
 VERDICT: SCAM

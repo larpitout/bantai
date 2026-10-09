@@ -65,4 +65,22 @@ class RuleFilterTest {
             RuleFilter.instantWarningRes(result)
         )
     }
+
+    @Test
+    fun testSafeUrlsDoNotTriggerSignals() {
+        val safeUrls = listOf(
+            "www.google.com",
+            "https://www.google.com",
+            "google.com",
+            "https://www.youtube.com/watch?v=123",
+            "https://www.gcash.com/help",
+            "https://online.bdo.com.ph",
+            "Nay tingnan mo to https://www.google.com",
+            "Bisitahin ang https://doh.gov.ph para sa advisory"
+        )
+        for (url in safeUrls) {
+            val res = RuleFilter.score(url)
+            assertEquals("Expected $url to have score 0, got ${res.score} (${res.signals})", 0, res.score)
+        }
+    }
 }
