@@ -2,48 +2,83 @@ package com.bantai.ui
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.text.InputType
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.View
+import android.widget.EditText
+import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import com.bantai.Bantai
 import com.bantai.R
 import com.bantai.data.GuardianPreferences
 import com.bantai.data.ScamHistory
+import com.bantai.pipeline.VerdictSource
+import com.bantai.rules.LinkChecker
+import com.bantai.rules.RuleFilter
 import java.text.DateFormat
 import java.util.Date
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 /**
- * Dashboard para kay Apo: proteksyon, bilang ng nasuri at na-flag, insights, at listahan ng mga babala.
- * Binubuksan ng Welcome screen pagkatapos ng onboarding, at ng "Posibleng scam" na notification.
+ * Pangunahing screen ni Apo, may header at bottom navbar (disenyo: Dashboard ng bantai_ui).
+ * Mga tab: Home (status, huling scan, trusted contact), Babala (insights + audit), Suriin (i-paste at suriin),
+ * Settings (setup). Binubuksan ng Welcome pagkatapos ng onboarding, at ng "Posibleng scam" na notification.
  */
 class DashboardActivity : AppCompatActivity() {
 
-    // Iisang wika sa buong app: Tagalog kung walang pinili (pareho ng babala).
-    override fun attachBaseContext(newBase: android.content.Context) {
-        super.attachBaseContext(com.bantai.Bantai.localized(newBase))
-    }
+    private enum class Tab { HOME, ALERTS, CHECK }
 
-    private lateinit var root: LinearLayout
+    private lateinit var content: LinearLayout
+    private lateinit var statusPill: TextView
+    private lateinit var navItems: Map<Tab, Pair<ImageView, TextView>>
+    private var tab = Tab.HOME
+    private var checkJob: Job? = null
+
+    // Iisang wika sa buong app (pareho ng babala).
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(Bantai.localized(newBase))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        root = LinearLayout(this).apply {
+        Bantai.warmUp(this)
+
+        content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            val pad = dp(20)
-            setPadding(pad, pad + dp(24), pad, pad)
+            setPadding(dp(18), dp(4), dp(18), dp(24))
         }
-        setContentView(ScrollView(this).apply {
-            setBackgroundColor(color(R.color.bantai_bg))
-            addView(root)
-        })
+        val screen = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.parseColor("#F4F8FE"))
+            addView(header())
+            addView(ScrollView(context).apply {
+                addView(content)
+                layoutParams = LinearLayout.LayoutParams(-1, 0, 1f)
+            })
+            addView(bottomNav())
+        }
+        // Edge-to-edge (Android 15+): huwag matakpan ng status at navigation bar.
+        ViewCompat.setOnApplyWindowInsetsListener(screen) { v, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.updatePadding(top = bars.top, bottom = bars.bottom)
+            insets
+        }
+        setContentView(screen)
     }
 
     override fun onResume() {
@@ -51,71 +86,257 @@ class DashboardActivity : AppCompatActivity() {
         render()
     }
 
+    // ---------- Header: logo · BANTAI · status ----------
+
+    private fun header() = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        setPadding(dp(18), dp(14), dp(18), dp(12))
+        addView(FrameLayout(context).apply {
+            background = rounded(Color.WHITE, 14, BORDER)
+            clipToOutline = true
+            addView(ImageView(context).apply {
+                setImageResource(R.drawable.bantai_logo)
+                scaleType = ImageView.ScaleType.CENTER_CROP
+            })
+            layoutParams = LinearLayout.LayoutParams(dp(40), dp(40))
+        })
+        addView(text("BANTAI", 21f, bold = true, color = INK).apply {
+            letterSpacing = 0.2f
+            layoutParams = LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = dp(10) }
+        })
+        statusPill = text("", 13f, bold = true, color = GREEN).apply {
+            setPadding(dp(12), dp(6), dp(12), dp(6))
+            layoutParams = LinearLayout.LayoutParams(-2, -2)
+        }
+        addView(statusPill)
+    }
+
+    private fun updateHeader() {
+        val on = GuardianPreferences(this).isProtectionEnabled
+        statusPill.text = getString(if (on) R.string.status_protected else R.string.status_paused)
+        statusPill.setTextColor(if (on) GREEN else MUTED)
+        statusPill.background = rounded(
+            Color.parseColor(if (on) "#ECFDF5" else "#F1F5F9"), 999,
+            if (on) Color.parseColor("#A7F3D0") else BORDER,
+        )
+    }
+
+    // ---------- Bottom navbar ----------
+
+    private fun bottomNav(): View {
+        val bar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setBackgroundColor(Color.WHITE)
+            elevation = dp(12).toFloat()
+            setPadding(0, dp(6), 0, dp(6))
+        }
+        fun item(icon: Int, label: Int, onClick: () -> Unit): Pair<ImageView, TextView> {
+            val img = ImageView(this).apply {
+                setImageResource(icon)
+                imageTintList = ColorStateList.valueOf(MUTED)
+                layoutParams = LinearLayout.LayoutParams(dp(26), dp(26))
+            }
+            val txt = text(getString(label), 13f, bold = true, color = MUTED).apply {
+                gravity = Gravity.CENTER
+                layoutParams = LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(2) }
+            }
+            bar.addView(LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                minimumHeight = dp(56)
+                isClickable = true
+                contentDescription = getString(label)
+                setOnClickListener { onClick() }
+                addView(img)
+                addView(txt)
+                layoutParams = LinearLayout.LayoutParams(0, -2, 1f)
+            })
+            return img to txt
+        }
+        navItems = mapOf(
+            Tab.HOME to item(R.drawable.ic_nav_home, R.string.nav_home) { switchTo(Tab.HOME) },
+            Tab.ALERTS to item(R.drawable.ic_nav_list, R.string.nav_alerts) { switchTo(Tab.ALERTS) },
+            Tab.CHECK to item(R.drawable.ic_nav_search, R.string.nav_check) { switchTo(Tab.CHECK) },
+        )
+        item(R.drawable.ic_nav_tune, R.string.nav_settings) { startActivity(Intent(this, SetupActivity::class.java)) }
+        return bar
+    }
+
+    private fun switchTo(t: Tab) {
+        tab = t
+        render()
+    }
+
     private fun render() {
-        root.removeAllViews()
+        updateHeader()
+        navItems.forEach { (t, v) ->
+            val c = if (t == tab) BLUE else MUTED
+            v.first.imageTintList = ColorStateList.valueOf(c)
+            v.second.setTextColor(c)
+        }
+        content.removeAllViews()
+        when (tab) {
+            Tab.HOME -> renderHome()
+            Tab.ALERTS -> renderAlerts()
+            Tab.CHECK -> renderCheck()
+        }
+    }
+
+    // ---------- Home ----------
+
+    private fun renderHome() {
         val prefs = GuardianPreferences(this)
         val items = ScamHistory.list(this)
-        val flaggedToday = items.count { ScamHistory.isToday(it.time) }
-
-        root.addView(text(getString(R.string.dashboard_title), 28f, bold = true, color = R.color.bantai_text))
-        root.addView(text(getString(R.string.app_tagline), 15f, color = R.color.bantai_text_muted))
-
-        // Proteksyon
         val on = prefs.isProtectionEnabled
-        root.addView(pill(getString(if (on) R.string.dashboard_protection_on else R.string.dashboard_protection_off), on))
 
-        // Mga bilang
-        root.addView(LinearLayout(this).apply {
+        content.addView(card {
+            addView(label(getString(R.string.card_status)))
+            addView(text(getString(if (on) R.string.status_active else R.string.status_paused), 26f, bold = true, color = if (on) GREEN else MUTED))
+            addView(text(Bantai.modelName()?.let { getString(R.string.status_ai_model, it) } ?: getString(R.string.status_rules_only), 14f, color = MUTED))
+        })
+
+        content.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) }
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) }
             addView(stat(ScamHistory.scannedToday(this@DashboardActivity), getString(R.string.dashboard_scanned_today)))
-            addView(stat(flaggedToday, getString(R.string.dashboard_flagged_today)))
+            addView(stat(items.count { ScamHistory.isToday(it.time) }, getString(R.string.dashboard_flagged_today)))
             addView(stat(items.size, getString(R.string.dashboard_flagged_total)))
         })
 
-        // Insights
-        root.addView(section(getString(insightsTitle())))
-        root.addView(card(insights(items).joinToString("\n\n") { "• $it" }))
+        content.addView(card {
+            addView(label(getString(R.string.card_latest_scan)))
+            val last = items.firstOrNull()
+            if (last == null) {
+                addView(text(getString(R.string.history_empty), 16f, color = MUTED))
+            } else {
+                addView(row(getString(R.string.field_verdict), verdictChip(true)))
+                addView(row(getString(R.string.field_from), text(last.sender, 15f, bold = true, color = INK)))
+                addView(row(getString(R.string.field_reason), text(last.reason, 15f, color = INK)))
+                addView(row(getString(R.string.field_kind), chip(last.kind, ROSE_BG, ROSE)))
+            }
+        })
 
-        // Mga uri ng scam
-        if (items.isNotEmpty()) {
-            root.addView(section(getString(R.string.dashboard_by_kind)))
-            val byKind = items.groupingBy { it.kind }.eachCount().entries.sortedByDescending { it.value }
-            root.addView(card(byKind.joinToString("\n") { "${it.value}×  ${it.key}" }))
+        if (prefs.apoName.isNotBlank() || prefs.apoPhone.isNotBlank()) {
+            content.addView(card {
+                addView(label(getString(R.string.card_trusted_contact)))
+                addView(text("${prefs.apoName}  •  ${prefs.apoPhone}", 17f, bold = true, color = INK))
+            })
         }
 
-        // Kasaysayan (audit)
-        root.addView(section(getString(R.string.dashboard_history)))
-        if (items.isEmpty()) root.addView(card(getString(R.string.history_empty)))
-        val fmt = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
-        for (item in items) {
-            val risk = getString(
-                when { item.score >= 3 -> R.string.risk_high; item.score == 2 -> R.string.risk_medium; else -> R.string.risk_low }
-            )
-            root.addView(card("${fmt.format(Date(item.time))} · ${item.sender}\n\"${item.message}\"\n\n${item.kind} · $risk\n→ ${item.reason}"))
-        }
-
-        root.addView(TextView(this).apply {
-            text = getString(R.string.dashboard_open_setup)
-            gravity = Gravity.CENTER
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
-            setTypeface(typeface, Typeface.BOLD)
-            setTextColor(Color.WHITE)
-            setBackgroundResource(R.drawable.bg_btn_primary)
-            minHeight = dp(56)
-            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(24) }
-            setOnClickListener { startActivity(Intent(this@DashboardActivity, SetupActivity::class.java)) }
+        content.addView(button(getString(R.string.btn_test_alert), RED) {
+            val loc = Bantai.localized(this)
+            val (reason, action) = RuleFilter.instantWarningRes(RuleFilter.score(SAMPLE_SCAM))
+            ScamAlertOverlay.show(this, loc.getString(reason), loc.getString(action), message = SAMPLE_SCAM)
         })
     }
 
-    /** "AI Insights" lang kapag talagang tumatakbo si Gemma sa phone; kung hindi, "Insights". */
-    private fun insightsTitle() =
-        if (Bantai.hasRamForAi(this)) R.string.dashboard_ai_insights else R.string.dashboard_insights
+    // ---------- Babala: insights + audit ----------
 
-    /**
-     * Mga obserbasyon mula sa mga na-flag na mensahe sa phone na ito.
-     * ponytail: binibilang lang (pinakamadalas na uri, hindi kilalang numero, pinakahuli); walang modelong sumusulat.
-     */
+    private fun renderAlerts() {
+        val items = ScamHistory.list(this)
+        content.addView(card {
+            addView(label(getString(if (Bantai.modelName() != null) R.string.dashboard_ai_insights else R.string.dashboard_insights)))
+            addView(text(insights(items).joinToString("\n\n") { "• $it" }, 16f, color = INK))
+        })
+        if (items.isNotEmpty()) {
+            content.addView(card {
+                addView(label(getString(R.string.dashboard_by_kind)))
+                items.groupingBy { it.kind }.eachCount().entries.sortedByDescending { it.value }.forEach {
+                    addView(text("${it.value}×  ${it.key}", 16f, color = INK))
+                }
+            })
+        }
+        content.addView(sectionTitle(getString(R.string.dashboard_history)))
+        if (items.isEmpty()) content.addView(card { addView(text(getString(R.string.history_empty), 16f, color = MUTED)) })
+        val fmt = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+        for (item in items) {
+            content.addView(card {
+                addView(text("${fmt.format(Date(item.time))}  ·  ${item.sender}", 13f, color = MUTED))
+                addView(text("\"${item.message}\"", 16f, color = INK).apply { setPadding(0, dp(6), 0, dp(8)) })
+                addView(LinearLayout(context).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    addView(chip(item.kind, ROSE_BG, ROSE))
+                    addView(chip(riskLabel(item.score), AMBER_BG, AMBER).apply {
+                        (layoutParams as LinearLayout.LayoutParams).marginStart = dp(6)
+                    })
+                })
+                addView(text("→ ${item.reason}", 15f, color = INK).apply { setPadding(0, dp(8), 0, 0) })
+            })
+        }
+    }
+
+    // ---------- Suriin: i-paste ang text o link ----------
+
+    private fun renderCheck() {
+        val input = EditText(this).apply {
+            hint = getString(R.string.check_hint)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            minLines = 4
+            gravity = Gravity.TOP
+            background = rounded(Color.WHITE, 16, BORDER)
+            setPadding(dp(14), dp(12), dp(14), dp(12))
+            layoutParams = LinearLayout.LayoutParams(-1, -2)
+        }
+        val result = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        content.addView(card {
+            addView(label(getString(R.string.check_title)))
+            addView(text(getString(R.string.check_desc), 15f, color = MUTED).apply { setPadding(0, 0, 0, dp(10)) })
+            addView(input)
+        })
+        content.addView(button(getString(R.string.btn_check), BLUE) {
+            val msg = input.text.toString().trim()
+            if (msg.isNotEmpty()) analyze(msg, result)
+        })
+        content.addView(result)
+    }
+
+    /** Rules at link check agad; saka ang AI sa phone (kung meron) bilang pangalawang tingin. */
+    private fun analyze(message: String, out: LinearLayout) {
+        val loc = Bantai.localized(this)
+        val rule = RuleFilter.score(message)
+        val link = LinkChecker.check(message)
+        val (reason, action) = when {
+            link?.kind == LinkChecker.Kind.FAKE_BRAND ->
+                loc.getString(R.string.warning_link_fake_brand, LinkChecker.displayBrand(link.brand!!)) to loc.getString(R.string.warning_link_action)
+            link != null -> loc.getString(R.string.warning_link_risky_ending) to loc.getString(R.string.warning_link_action)
+            rule.score > 0 -> RuleFilter.instantWarningRes(rule).let { loc.getString(it.first) to loc.getString(it.second) }
+            else -> loc.getString(R.string.warning_safe_reason) to loc.getString(R.string.warning_safe_action)
+        }
+        val ruleScam = rule.score > 0
+
+        fun show(isScam: Boolean, note: String?) {
+            out.removeAllViews()
+            out.addView(card {
+                addView(row(getString(R.string.field_verdict), verdictChip(isScam)))
+                addView(row(getString(R.string.field_reason), text(reason, 15f, color = INK)))
+                addView(row(getString(R.string.field_action), text(action, 15f, bold = true, color = if (isScam) RED else INK)))
+                if (rule.signals.isNotEmpty()) {
+                    addView(row(getString(R.string.field_signals), text(rule.signals.joinToString(", "), 14f, color = MUTED)))
+                }
+                note?.let { addView(text(it, 14f, bold = true, color = BLUE).apply { setPadding(0, dp(8), 0, 0) }) }
+            })
+        }
+
+        val hasAi = Bantai.modelName() != null
+        show(ruleScam, if (hasAi) getString(R.string.check_ai_thinking) else null)
+        if (!hasAi) return
+
+        // AI sa phone: parehong ScamPipeline ng mga notification (rules ang fallback).
+        checkJob?.cancel()
+        checkJob = Bantai.scope.launch {
+            Bantai.scamPipeline(this@DashboardActivity).check(message).collect { c ->
+                if (!c.isFinal) return@collect
+                val ai = c.source == VerdictSource.LLM
+                show(c.verdict.isScam || ruleScam, getString(if (ai) R.string.check_ai_done else R.string.check_ai_unavailable))
+            }
+        }
+    }
+
+    // ---------- Insights ----------
+
+    /** Binibilang mula sa mga na-flag sa phone (pinakamadalas na uri, hindi kilalang numero, 7 araw, payo). */
     private fun insights(items: List<ScamHistory.Item>): List<String> {
         if (items.isEmpty()) return listOf(getString(R.string.insight_none))
         val out = mutableListOf<String>()
@@ -123,8 +344,7 @@ class DashboardActivity : AppCompatActivity() {
         out += getString(R.string.insight_top_kind, top.key, top.value)
         val unknown = items.count { it.sender.any(Char::isDigit) }
         if (unknown > 0) out += getString(R.string.insight_unknown_numbers, unknown, items.size)
-        val week = items.count { System.currentTimeMillis() - it.time < 7L * 24 * 60 * 60 * 1000 }
-        out += getString(R.string.insight_week, week)
+        out += getString(R.string.insight_week, items.count { System.currentTimeMillis() - it.time < 7L * 24 * 60 * 60 * 1000 })
         out += getString(
             when (top.key) {
                 getString(R.string.kind_link) -> R.string.tip_link
@@ -137,55 +357,97 @@ class DashboardActivity : AppCompatActivity() {
         return out
     }
 
-    private fun section(title: String) = text(title, 18f, bold = true, color = R.color.bantai_text).apply {
-        (layoutParams as LinearLayout.LayoutParams).topMargin = dp(24)
+    // ---------- Mga piraso ng UI ----------
+
+    private fun riskLabel(score: Int) = getString(
+        when { score >= 3 -> R.string.risk_high; score == 2 -> R.string.risk_medium; else -> R.string.risk_low }
+    )
+
+    private fun card(build: LinearLayout.() -> Unit) = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(dp(18), dp(16), dp(18), dp(16))
+        background = rounded(Color.WHITE, 22, BORDER)
+        layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) }
+        build()
     }
 
-    private fun card(body: String) = text(body, 16f, color = R.color.bantai_text).apply {
-        val pad = dp(16)
-        setPadding(pad, pad, pad, pad)
-        setLineSpacing(0f, 1.15f)
-        background = GradientDrawable().apply {
-            setColor(Color.WHITE)
-            cornerRadius = dp(16).toFloat()
-            setStroke(dp(1), color(R.color.bantai_border))
-        }
-        (layoutParams as LinearLayout.LayoutParams).topMargin = dp(10)
+    private fun label(value: String) = text(value.uppercase(), 12f, bold = true, color = MUTED).apply {
+        letterSpacing = 0.15f
+        setPadding(0, 0, 0, dp(8))
+    }
+
+    private fun sectionTitle(value: String) = text(value, 18f, bold = true, color = INK).apply {
+        setPadding(dp(4), dp(20), 0, 0)
+    }
+
+    private fun row(name: String, value: View) = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        setPadding(0, dp(5), 0, dp(5))
+        addView(text(name.uppercase(), 12f, bold = true, color = MUTED).apply {
+            layoutParams = LinearLayout.LayoutParams(dp(84), -2)
+        })
+        value.layoutParams = LinearLayout.LayoutParams(0, -2, 1f)
+        addView(value)
+    }
+
+    private fun verdictChip(scam: Boolean) = LinearLayout(this).apply {
+        addView(chip(getString(if (scam) R.string.verdict_scam else R.string.verdict_safe), if (scam) RED else GREEN, Color.WHITE))
+    }
+
+    private fun chip(value: String, bg: Int, fg: Int) = text(value, 13f, bold = true, color = fg).apply {
+        setPadding(dp(10), dp(4), dp(10), dp(4))
+        background = rounded(bg, 10, bg)
+        layoutParams = LinearLayout.LayoutParams(-2, -2)
     }
 
     private fun stat(value: Int, label: String) = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         gravity = Gravity.CENTER
-        val pad = dp(12)
-        setPadding(pad, pad, pad, pad)
-        background = GradientDrawable().apply {
-            setColor(Color.WHITE)
-            cornerRadius = dp(16).toFloat()
-            setStroke(dp(1), color(R.color.bantai_border))
-        }
+        setPadding(dp(8), dp(14), dp(8), dp(14))
+        background = rounded(Color.WHITE, 20, BORDER)
         layoutParams = LinearLayout.LayoutParams(0, -2, 1f).apply { marginEnd = dp(8) }
-        addView(text(value.toString(), 28f, bold = true, color = R.color.bantai_primary).apply { gravity = Gravity.CENTER })
-        addView(text(label, 13f, color = R.color.bantai_text_muted).apply { gravity = Gravity.CENTER })
+        addView(text(value.toString(), 26f, bold = true, color = BLUE).apply { gravity = Gravity.CENTER })
+        addView(text(label, 12f, color = MUTED).apply { gravity = Gravity.CENTER })
     }
 
-    private fun pill(label: String, on: Boolean) = text(label, 15f, bold = true, color = if (on) R.color.bantai_primary else R.color.caution_text).apply {
-        setPadding(dp(14), dp(6), dp(14), dp(6))
-        background = GradientDrawable().apply {
-            setColor(color(if (on) R.color.bantai_pale else R.color.bantai_bg))
-            cornerRadius = dp(999).toFloat()
-            setStroke(dp(1), color(if (on) R.color.bantai_pale_border else R.color.caution_border))
-        }
-        layoutParams = LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(12) }
+    private fun button(value: String, color: Int, onClick: () -> Unit) = text(value.uppercase(), 16f, bold = true, color = Color.WHITE).apply {
+        letterSpacing = 0.12f
+        gravity = Gravity.CENTER
+        minHeight = dp(56)
+        background = rounded(color, 22, color)
+        layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) }
+        setOnClickListener { onClick() }
     }
 
     private fun text(value: String, sp: Float, bold: Boolean = false, color: Int) = TextView(this).apply {
         text = value
         setTextSize(TypedValue.COMPLEX_UNIT_SP, sp)
-        setTextColor(color(color))
+        setTextColor(color)
         if (bold) setTypeface(typeface, Typeface.BOLD)
         layoutParams = LinearLayout.LayoutParams(-1, -2)
     }
 
+    private fun rounded(fill: Int, radiusDp: Int, stroke: Int) = GradientDrawable().apply {
+        setColor(fill)
+        cornerRadius = dp(radiusDp).toFloat()
+        setStroke(dp(1), stroke)
+    }
+
     private fun Context.dp(v: Int) = (v * resources.displayMetrics.density).toInt()
-    private fun color(res: Int) = ContextCompat.getColor(this, res)
+
+    private val BLUE get() = ContextCompat.getColor(this, R.color.bantai_primary)
+
+    private companion object {
+        val INK = Color.parseColor("#0F172A")
+        val MUTED = Color.parseColor("#64748B")
+        val BORDER = Color.parseColor("#DCE6F4")
+        val GREEN = Color.parseColor("#059669")
+        val RED = Color.parseColor("#DC2626")
+        val ROSE = Color.parseColor("#BE123C")
+        val ROSE_BG = Color.parseColor("#FFF1F2")
+        val AMBER = Color.parseColor("#B45309")
+        val AMBER_BG = Color.parseColor("#FFFBEB")
+        const val SAMPLE_SCAM = "Ma si Junjun to bagong number ko padala ka 5k sa gcash emergency lang"
+    }
 }
