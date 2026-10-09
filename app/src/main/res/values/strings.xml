@@ -73,4 +73,7 @@
     <string name="history_empty">No flagged messages yet.</string>
     <string name="why_flagged">Why was this flagged?</string>
     <string name="signal_dangerous_link">Dangerous Link (fake or hidden website)</string>
+    <string name="notif_channel">Scam alerts</string>
+    <string name="notif_title">Possible scam from %1$s</string>
+    <string name="notif_tap_hint">Tap to open the message and see why.</string>
 </resources>

@@ -3,6 +3,8 @@
 
     <!-- Babala sa ibabaw ng ibang app -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- "Posibleng scam" na notification -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Para hindi patayin ng phone si Bantai sa background -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
@@ -43,6 +45,10 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
         </service>
+
+        <activity
+            android:name="com.bantai.ui.DashboardActivity"
+            android:exported="false" />
 
         <!-- Setup and Onboarding Activity -->
         <activity

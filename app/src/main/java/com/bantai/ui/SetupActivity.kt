@@ -50,6 +50,12 @@ class SetupActivity : AppCompatActivity() {
         setContentView(R.layout.activity_setup)
 
         prefs = GuardianPreferences(this)
+        // Android 13+: kailangan ng pahintulot para sa "Posibleng scam" na notification.
+        if (android.os.Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1)
+        }
         Bantai.warmUp(this)
 
         initViews()

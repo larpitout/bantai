@@ -73,4 +73,7 @@
     <string name="history_empty">Wala pang na-flag na mensahe.</string>
     <string name="why_flagged">Bakit na-flag?</string>
     <string name="signal_dangerous_link">Mapanganib na Link (peke o nakatagong website)</string>
+    <string name="notif_channel">Babala sa scam</string>
+    <string name="notif_title">Posibleng scam mula sa %1$s</string>
+    <string name="notif_tap_hint">Pindutin para buksan ang mensahe at makita kung bakit.</string>
 </resources>

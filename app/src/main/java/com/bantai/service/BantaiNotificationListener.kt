@@ -113,6 +113,7 @@ class BantaiNotificationListener : NotificationListenerService() {
         // 7. Score >= 1: rules + Gemma (ScamPipeline). Lalabas agad ang babala kapag score >= 2;
         //    kapag score 1, si Gemma ang magdedesisyon (rules ang fallback kapag mabagal o pumalya).
         if (ruleResult.score >= 1) {
+            val openChat = notification.contentIntent // para buksan ang mismong chat mula sa notification ni Bantai
             Bantai.scope.launch {
                 var shown = false
                 Bantai.scamPipeline(this@BantaiNotificationListener).check(message, sender).collect { check ->
@@ -123,7 +124,10 @@ class BantaiNotificationListener : NotificationListenerService() {
                     // Tagalog template mula sa rules ang laging ipinapakita; si Gemma ang nagpapasya kung scam.
                     val (reason, action) = warningText(message, check.rule)
                     val signals = signalNames(check.rule.signals)
-                    if (!shown) com.bantai.data.ScamHistory.add(this@BantaiNotificationListener, sender, message, reason)
+                    if (!shown) {
+                        com.bantai.data.ScamHistory.add(this@BantaiNotificationListener, sender, message, reason)
+                        ScamNotifier.notify(this@BantaiNotificationListener, sender, reason, openChat)
+                    }
                     val a11y = BantaiAccessibilityService.instance
                     if (a11y != null) {
                         // Walang biglang popup: lalabas ang babala kapag binuksan ni Nanay ang mensahe.
