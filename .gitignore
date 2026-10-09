@@ -1,0 +1,22 @@
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Environment Variables
+.env
+.env*.local
+!.env.example
+
+# Logs
+*.log
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary / Cache
+tmp/
+temp/
+.cache/
