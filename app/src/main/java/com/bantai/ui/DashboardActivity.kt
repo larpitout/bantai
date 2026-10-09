@@ -467,7 +467,11 @@ class DashboardActivity : AppCompatActivity() {
                 if (!c.isFinal) return@collect
                 val ai = c.source == VerdictSource.LLM
                 // Kung pekeng brand link (phishing), laging scam; kung hindi, sundin ang hatol ng AI
-                val isScam = if (link?.kind == LinkChecker.Kind.FAKE_BRAND) true else c.verdict.isScam
+                var isScam = if (link?.kind == LinkChecker.Kind.FAKE_BRAND) true else c.verdict.isScam
+                if (isScam && link?.kind != LinkChecker.Kind.FAKE_BRAND && c.verdict.action.isNotBlank() &&
+                    (c.verdict.action.contains("no action", ignoreCase = true) || c.verdict.action.contains("wala", ignoreCase = true))) {
+                    isScam = false
+                }
                 val ruleWarning = if (rule.score > 0) RuleFilter.instantWarningRes(rule) else null
                 val finalReason = if (ai && c.verdict.reason.isNotBlank()) {
                     c.verdict.reason
