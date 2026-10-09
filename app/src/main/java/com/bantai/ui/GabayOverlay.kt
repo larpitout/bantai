@@ -22,6 +22,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
@@ -39,7 +40,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 /**
- * Gabay: chathead (🛡️) → tanong ni Nanay → si Gemma ang pipili ng button → bibilugan ito + text + boses.
+ * Gabay: chathead (shield) → tanong ni Nanay → si Gemma ang pipili ng button → bibilugan ito + text + boses.
  * Hindi pumipindot si Bantai; si Nanay pa rin ang pipindot.
  * Usapan: tinatandaan ang layunin ni Nanay at kusang itinuturo ang susunod na hakbang pagkapindot niya,
  * hanggang makarating o sabihin niyang "okay na".
@@ -72,10 +73,9 @@ object GabayOverlay {
         service = svc
         if (bubble != null) return
         val size = svc.dp(64)
-        val view = TextView(svc).apply {
-            text = "🛡️"
-            gravity = Gravity.CENTER
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 30f)
+        val view = ImageView(svc).apply {
+            setImageResource(R.drawable.ic_shield)
+            scaleType = ImageView.ScaleType.CENTER
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor(svc.color(R.color.bantai_primary))
@@ -112,7 +112,7 @@ object GabayOverlay {
 
     private fun togglePanel() {
         if (panel != null) return closePanel()
-        goal = null // pinindot ni Nanay ang 🛡️: bagong usapan
+        goal = null // pinindot ni Nanay ang chathead: bagong usapan
         openPanel(service?.getString(R.string.gabay_panel_title) ?: return)
     }
 
@@ -147,7 +147,7 @@ object GabayOverlay {
         Bantai.speaker(svc).stop()
         status.text = svc.getString(R.string.gabay_listening)
         VoiceActivity.pending = VoiceActivity.Request(
-            onPartial = { status.text = "🎤 \"$it\"" },
+            onPartial = { status.text = "\"$it\"" },
             onText = { text ->
                 Log.e(TAG, "heard=$text")
                 if (STOP_WORDS.containsMatchIn(text.lowercase())) endSession() else startGoal(text)

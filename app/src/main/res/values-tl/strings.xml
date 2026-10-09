@@ -62,16 +62,15 @@
     <!-- Gabay -->
     <string name="gabay_bubble_desc">Katulong na si Bantai</string>
     <string name="gabay_panel_title">Ano po ang kailangan ninyo, Nay?</string>
-    <string name="gabay_next_step">➜ Susunod na hakbang</string>
-    <string name="gabay_opt_message">💬 Mag-message</string>
-    <string name="gabay_opt_video">📹 Mag-video call</string>
-    <string name="gabay_opt_photo">📸 Mag-send ng picture</string>
-    <string name="gabay_opt_search">🔍 Maghanap ng tao</string>
+    <string name="gabay_opt_message">Mag-message</string>
+    <string name="gabay_opt_video">Mag-video call</string>
+    <string name="gabay_opt_photo">Mag-send ng picture</string>
+    <string name="gabay_opt_search">Maghanap ng tao</string>
     <string name="gabay_close">Isara</string>
     <string name="gabay_thinking">Sandali lang po, tinitingnan ko ang screen…</string>
-    <string name="gabay_speak">🎤 Magsalita po</string>
-    <string name="gabay_listening">🎤 Nakikinig po… sabihin lang po ang kailangan.</string>
-    <string name="gabay_not_heard">Hindi ko po kayo narinig. Pindutin po ang 🎤 para ulitin.</string>
+    <string name="gabay_speak">Magsalita po</string>
+    <string name="gabay_listening">Nakikinig po… sabihin lang po ang kailangan.</string>
+    <string name="gabay_not_heard">Hindi ko po kayo narinig. Pindutin po ang Magsalita para ulitin.</string>
     <string name="gabay_reached">Nandito na po tayo sa %1$s.</string>
     <string name="gabay_anything_else">May iba pa po ba?</string>
     <string name="gabay_bye">Sige po, nandito lang po ako kapag kailangan ninyo.</string>
