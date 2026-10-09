@@ -40,7 +40,9 @@ import kotlin.math.abs
 
 /**
  * Gabay: chathead (🛡️) → tanong ni Nanay → si Gemma ang pipili ng button → bibilugan ito + text + boses.
- * Hindi pumipindot si Bantai; si Nanay pa rin ang pipindot. Isang hakbang bawat tanong.
+ * Hindi pumipindot si Bantai; si Nanay pa rin ang pipindot.
+ * Usapan: tinatandaan ang layunin ni Nanay at kusang itinuturo ang susunod na hakbang pagkapindot niya,
+ * hanggang makarating o sabihin niyang "okay na".
  * Lahat ng window ay TYPE_ACCESSIBILITY_OVERLAY mula sa accessibility service. Tawagin sa main thread.
  */
 object GabayOverlay {
@@ -56,8 +58,10 @@ object GabayOverlay {
     private var job: Job? = null
     private val main = Handler(Looper.getMainLooper())
 
-    /** Huling tanong, para sa "Susunod na hakbang" pagkatapos pumindot ni Nanay. */
-    private var lastQuestion: String? = null
+    /** Layunin ni Nanay sa kasalukuyang usapan (hal. "go to facebook"); null kapag walang usapan. */
+    private var goal: String? = null
+    private var steps = 0
+    private const val MAX_STEPS = 8
 
     private val wm get() = service!!.getSystemService(WindowManager::class.java)
 
@@ -95,15 +99,23 @@ object GabayOverlay {
         service = null
     }
 
-    /** Pumindot si Nanay o nagbago ang screen: alisin ang bilog; ang susunod na hakbang ay nasa panel na. */
+    /** Pumindot si Nanay o nagbago ang screen: tapos ang hakbang, ituro ang susunod kung may usapan pa. */
     fun onScreenChanged() {
         // Hindi pa nakikita ni Nanay ang bilog kung kalalabas lang; huwag agad alisin.
         if (highlight == null || SystemClock.uptimeMillis() - highlightShownAt < 1_000) return
         clearGuide()
+        if (goal != null) step()
     }
 
     private fun togglePanel() {
         if (panel != null) return closePanel()
+        goal = null // pinindot ni Nanay ang 🛡️: bagong usapan
+        openPanel(service?.getString(R.string.gabay_panel_title) ?: return)
+    }
+
+    /** Panel na nagtatanong ng [prompt] (sinasabi rin nang malakas), tapos nakikinig. */
+    private fun openPanel(prompt: String) {
+        closePanel()
         clearGuide()
         val svc = service ?: return
         val status = TextView(svc).apply {
@@ -111,10 +123,9 @@ object GabayOverlay {
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
             setPadding(0, svc.dp(8), 0, 0)
         }
-        val items = mutableListOf<View>(title(svc, svc.getString(R.string.gabay_panel_title)), status)
+        val items = mutableListOf<View>(title(svc, prompt), status)
         items += option(svc, svc.getString(R.string.gabay_speak), primary = true) { listen(status) }
-        lastQuestion?.let { q -> items += option(svc, svc.getString(R.string.gabay_next_step)) { ask(q) } }
-        for ((labelRes, question) in OPTIONS) items += option(svc, svc.getString(labelRes)) { ask(question) }
+        for ((labelRes, question) in OPTIONS) items += option(svc, svc.getString(labelRes)) { startGoal(question) }
         items += option(svc, svc.getString(R.string.gabay_close)) { closePanel() }
         val box = cardView(svc, items)
         val params = overlayParams(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT, touchable = true)
@@ -123,7 +134,7 @@ object GabayOverlay {
         panel = box
 
         // Two-way: magtatanong si Bantay, tapos makikinig pagkatapos niyang magsalita (para hindi niya marinig ang sarili).
-        Bantai.speaker(svc).speak(svc.getString(R.string.gabay_panel_title)) {
+        Bantai.speaker(svc).speak(prompt) {
             main.post { if (panel === box) listen(status) }
         }
     }
@@ -135,8 +146,8 @@ object GabayOverlay {
         VoiceActivity.pending = VoiceActivity.Request(
             onPartial = { status.text = "🎤 \"$it\"" },
             onText = { text ->
-                Log.i(TAG, "heard chars=${text.length}")
-                ask(text)
+                Log.e(TAG, "heard=$text")
+                if (STOP_WORDS.containsMatchIn(text.lowercase())) endSession() else startGoal(text)
             },
             onFail = { error ->
                 Log.e(TAG, "listen failed error=$error")
@@ -155,35 +166,94 @@ object GabayOverlay {
         panel = null
     }
 
-    private fun ask(question: String) {
+    private fun startGoal(text: String) {
+        goal = text
+        steps = 0
+        step()
+    }
+
+    private fun endSession() {
         val svc = service ?: return
+        goal = null
         closePanel()
         clearGuide()
-        lastQuestion = question
+        Bantai.speaker(svc).speak(svc.getString(R.string.gabay_bye))
+    }
+
+    /** Isang hakbang ng usapan: basahin ang screen, tapos ituro ang susunod na pipindutin. */
+    private fun step() {
+        val svc = service ?: return
+        val g = goal ?: return
+        closePanel()
+        clearGuide()
         showCard(svc.getString(R.string.gabay_thinking), offerCallApo = false)
         job?.cancel()
         job = Bantai.scope.launch {
             delay(700) // hayaang mawala muna ang panel at ang VoiceActivity bago basahin ang screen
             val (app, buttons) = svc.readButtons()
+
+            // Nakarating na (hal. bukas na ang Facebook) o masyado nang mahaba: tanungin kung may iba pa.
+            val reached = reachedApp(svc, app, g)
+            if (reached != null || ++steps > MAX_STEPS) {
+                clearGuide()
+                val done = reached?.let { svc.getString(R.string.gabay_reached, it) }.orEmpty()
+                openPanel("$done ${svc.getString(R.string.gabay_anything_else)}".trim())
+                return@launch
+            }
+
             // Parehong paglilinis ng label gaya ng nasa prompt, para mahanap ang button na pinili ni Gemma.
             val byLabel = LinkedHashMap<String, Rect>()
             for (b in buttons) PromptBuilder.gabayLabels(listOf(b.label)).firstOrNull()?.let { byLabel.putIfAbsent(it, b.bounds) }
+            val labels = byLabel.keys.toList()
+            val candidates = GabayRanker.candidates(g, labels)
+
+            // Walang kahit anong tugma sa screen ng isang app: ituro muna ang Home, doon nagsisimula ang lahat.
+            if (candidates === labels && app != launcherPackage(svc)) {
+                Log.e(TAG, "q=$g app=$app buttons=${labels.size} -> HOME")
+                clearGuide()
+                showHighlight(homeArea(svc), svc.getString(R.string.gabay_go_home))
+                Bantai.speaker(svc).speak(svc.getString(R.string.gabay_go_home))
+                return@launch
+            }
 
             val apoName = GuardianPreferences(svc).apoName
-            val result = Bantai.gabayPipeline(svc).guide(question, ScreenContext(app, GabayRanker.candidates(question, byLabel.keys.toList())), apoName)
+            val result = Bantai.gabayPipeline(svc).guide(g, ScreenContext(app, candidates), apoName)
             val target = result.steps.firstOrNull()?.let { QUOTED.find(it)?.groupValues?.get(1) }?.let(byLabel::get)
-            Log.e(TAG, "q=$question app=$app buttons=${byLabel.size} source=${result.source} step=${result.steps.firstOrNull()} found=${target != null}")
+            Log.e(TAG, "q=$g app=$app buttons=${labels.size} offered=${candidates.size} source=${result.source} step=${result.steps.firstOrNull()} found=${target != null}")
 
             clearGuide()
-            // Lumipat na si Nanay sa ibang app habang nag-iisip si Gemma: luma na ang sagot, huwag ituro.
+            // Lumipat na si Nanay sa ibang app habang nag-iisip si Gemma: luma na ang sagot; susunod na hakbang na lang.
             if (svc.readButtons().first != app) return@launch
             if (result.source == GabaySource.LLM && target != null) {
                 showHighlight(target, result.steps.first())
+                Bantai.speaker(svc).speak(result.steps.first())
             } else {
+                goal = null
                 showCard(result.spokenText, result.offerCallApo)
+                Bantai.speaker(svc).speak(result.spokenText)
             }
-            Bantai.speaker(svc).speak(if (target != null) result.steps.first() else result.spokenText)
         }
+    }
+
+    /** Pangalan ng app kung ito na ang hinahanap ni Nanay (hal. "go to facebook" at bukas ang Facebook). */
+    private fun reachedApp(ctx: Context, app: String, goal: String): String? {
+        if (app.isEmpty() || app == launcherPackage(ctx)) return null
+        val name = runCatching {
+            ctx.packageManager.getApplicationLabel(ctx.packageManager.getApplicationInfo(app, 0)).toString()
+        }.getOrNull() ?: return null
+        val wanted = WORDS.findAll(goal.lowercase()).map { it.value }.filter { it.length > 2 && it !in ACTION_WORDS }.toSet()
+        return name.takeIf { WORDS.findAll(it.lowercase()).any { w -> w.value in wanted } }
+    }
+
+    private fun launcherPackage(ctx: Context): String? =
+        ctx.packageManager.resolveActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), 0)
+            ?.activityInfo?.packageName
+
+    /** Gitna-ibaba ng screen: ang Home button o ang swipe bar. Wala ito sa accessibility tree ng app. */
+    private fun homeArea(ctx: Context): Rect {
+        val w = ctx.resources.displayMetrics.widthPixels
+        val h = ctx.resources.displayMetrics.heightPixels
+        return Rect(w / 2 - ctx.dp(70), h - ctx.dp(40), w / 2 + ctx.dp(70), h - ctx.dp(4))
     }
 
     /** Bilog sa paligid ng button + text. Hindi nito sinasalo ang pindot, kaya ang button mismo ang mapipindot ni Nanay. */
@@ -347,6 +417,15 @@ object GabayOverlay {
     }
 
     private val QUOTED = Regex("\"([^\"]+)\"")
+    private val WORDS = Regex("[a-z0-9]+")
+    private val STOP_WORDS = Regex("\\b(ok|okay|okey|tama na|salamat|thank|thanks|stop|done|enough|wala na)\\b")
+
+    // Mga salitang gawain, hindi pangalan ng app: ang "call" ay hindi ibig sabihing nasa Phone app na ang dulo.
+    private val ACTION_WORDS = setOf(
+        "call", "phone", "tawag", "tawagan", "dial", "message", "messages", "mensahe", "chat", "text",
+        "search", "hanap", "hanapin", "open", "the", "and", "app", "punta", "pumunta", "buksan", "gusto",
+        "please", "paano", "how", "send", "picture", "photo", "video", "grandson", "granddaughter", "apo",
+    )
 
     // Mga handang tanong. Ang tanong ay English dahil English ang prompt at karamihan ng button labels.
     private val OPTIONS = listOf(

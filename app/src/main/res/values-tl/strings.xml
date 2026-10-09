@@ -72,4 +72,8 @@
     <string name="gabay_speak">🎤 Magsalita po</string>
     <string name="gabay_listening">🎤 Nakikinig po… sabihin lang po ang kailangan.</string>
     <string name="gabay_not_heard">Hindi ko po kayo narinig. Pindutin po ang 🎤 para ulitin.</string>
+    <string name="gabay_reached">Nandito na po tayo sa %1$s.</string>
+    <string name="gabay_anything_else">May iba pa po ba?</string>
+    <string name="gabay_bye">Sige po, nandito lang po ako kapag kailangan ninyo.</string>
+    <string name="gabay_go_home">Wala po rito ang hinahanap natin. Pumunta muna po tayo sa Home: i-swipe pataas mula sa ibaba, o pindutin ang bilog sa ibaba.</string>
 </resources>

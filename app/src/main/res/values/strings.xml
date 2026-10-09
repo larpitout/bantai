@@ -72,4 +72,8 @@
     <string name="gabay_speak">🎤 Speak</string>
     <string name="gabay_listening">🎤 Listening… say what you need.</string>
     <string name="gabay_not_heard">I didn\'t hear you. Tap 🎤 to try again.</string>
+    <string name="gabay_reached">We are now in %1$s.</string>
+    <string name="gabay_anything_else">Anything else?</string>
+    <string name="gabay_bye">Okay. I\'m here if you need me.</string>
+    <string name="gabay_go_home">What we need is not here. Go to Home first: swipe up from the bottom, or tap the circle at the bottom.</string>
 </resources>
