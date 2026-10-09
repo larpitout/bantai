@@ -12,19 +12,18 @@ class GabayRankerTest {
     )
 
     @Test
-    fun tawagMovesPhoneIntoTheFirst12() {
-        val ranked = PromptBuilder.gabayLabels(GabayRanker.rank("gusto ko tawagan ang apo ko", home))
-        assertEquals("Phone", ranked.first { it == "Phone" })
-        assertEquals(true, ranked.indexOf("Phone") in 0..2)
+    fun callOnlyOffersPhoneButtons() {
+        assertEquals(listOf("Phone", "Phone Master"), GabayRanker.candidates("Call my grandson", home))
+        assertEquals(listOf("Phone", "Phone Master"), GabayRanker.candidates("gusto ko tawagan ang apo ko", home))
     }
 
     @Test
-    fun englishCameraPutsCameraFirst() {
-        assertEquals(true, GabayRanker.rank("open the camera", home).take(2).contains("Camera"))
+    fun cameraPrefersExactLabel() {
+        assertEquals(listOf("Camera", "Camera search"), GabayRanker.candidates("open the camera", home))
     }
 
     @Test
-    fun unrelatedQuestionKeepsScreenOrder() {
-        assertEquals(home, GabayRanker.rank("kumusta", home))
+    fun unrelatedQuestionOffersEveryButton() {
+        assertEquals(home, GabayRanker.candidates("kumusta", home))
     }
 }

@@ -34,13 +34,23 @@ object GabayRanker {
 
     private val WORD = Regex("[a-z0-9]+")
 
-    fun rank(question: String, labels: List<String>): List<String> {
+    /**
+     * Kapag may button na tumutugma sa tanong, iyon lang (hanggang [MAX_CANDIDATES]) ang ibibigay kay Gemma:
+     * sa 26 na button sa Home screen, "Weather" ang pinili niya para sa "Call my grandson".
+     * Kapag walang tumugma, lahat ng button (ayos mula itaas pababa).
+     */
+    fun candidates(question: String, labels: List<String>): List<String> {
         val words = WORD.findAll(question.lowercase()).map { it.value }.filter { it.length > 2 }.toSet()
         val wanted = words + words.flatMap { SYNONYMS[it].orEmpty() }
-        // Stable sort: pareho ang score → nananatili ang ayos mula itaas pababa.
-        return labels.sortedByDescending { label ->
-            val l = label.lowercase()
-            wanted.count { it in l }
+        val scored = labels.map { label ->
+            val labelWords = WORD.findAll(label.lowercase()).map { it.value }.toList()
+            val hits = labelWords.count { it in wanted }
+            // "Phone" (1/1) bago "Phone Master" (1/2): mas eksaktong tugma ang nauuna.
+            label to if (labelWords.isEmpty()) 0.0 else hits.toDouble() / labelWords.size
         }
+        val matched = scored.filter { it.second > 0 }.sortedByDescending { it.second }.map { it.first }
+        return if (matched.isEmpty()) labels else matched.take(MAX_CANDIDATES)
     }
+
+    const val MAX_CANDIDATES = 5
 }

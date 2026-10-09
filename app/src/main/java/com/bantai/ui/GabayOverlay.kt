@@ -170,7 +170,7 @@ object GabayOverlay {
             for (b in buttons) PromptBuilder.gabayLabels(listOf(b.label)).firstOrNull()?.let { byLabel.putIfAbsent(it, b.bounds) }
 
             val apoName = GuardianPreferences(svc).apoName
-            val result = Bantai.gabayPipeline(svc).guide(question, ScreenContext(app, GabayRanker.rank(question, byLabel.keys.toList())), apoName)
+            val result = Bantai.gabayPipeline(svc).guide(question, ScreenContext(app, GabayRanker.candidates(question, byLabel.keys.toList())), apoName)
             val target = result.steps.firstOrNull()?.let { QUOTED.find(it)?.groupValues?.get(1) }?.let(byLabel::get)
             Log.e(TAG, "q=$question app=$app buttons=${byLabel.size} source=${result.source} step=${result.steps.firstOrNull()} found=${target != null}")
 
