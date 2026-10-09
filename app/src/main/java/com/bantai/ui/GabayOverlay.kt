@@ -270,7 +270,7 @@ object GabayOverlay {
      * Walang "click" kapag nag-swipe o nag-type, kaya binabantayan ang screen hanggang magbago.
      */
     private suspend fun guideToApp(svc: BantaiAccessibilityService, appName: String, byLabel: Map<String, Rect>, scrollable: Boolean) {
-        val visible = byLabel.entries.firstOrNull { it.key.equals(appName, ignoreCase = true) }
+        val visible = byLabel.entries.firstOrNull { isApp(it.key, appName) }
         val search = byLabel.entries.firstOrNull { it.key.contains("search", true) && it.key.contains("app", true) }
         // Nasa listahan na ng apps pero hindi pa kita: scroll muna (mas madali kay Nanay kaysa mag-type).
         if (visible == null && search != null && scrollable && scrolls < MAX_SCROLLS) {
@@ -294,7 +294,7 @@ object GabayOverlay {
             delay(1_500)
             if (goal != g) return
             val now = svc.readButtons().buttons.map { it.label }.toSet()
-            if (now != before && (now.any { it.equals(appName, true) } || search == null)) {
+            if (now != before && (now.any { isApp(it, appName) } || search == null)) {
                 clearGuide()
                 step()
                 return
@@ -318,6 +318,13 @@ object GabayOverlay {
                 return
             }
         }
+    }
+
+    /** "Messenger, 7 new notifications" ay ang Messenger pa rin (may badge ang pangalan sa accessibility). */
+    private fun isApp(label: String, appName: String): Boolean {
+        val l = label.trim().lowercase()
+        val n = appName.lowercase()
+        return l == n || l.startsWith("$n,") || l.startsWith("$n ")
     }
 
     /** Pangalan ng naka-install na app na binanggit ni Nanay (hal. "go to facebook" → "Facebook"). */

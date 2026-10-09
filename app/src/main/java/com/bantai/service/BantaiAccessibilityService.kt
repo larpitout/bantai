@@ -21,7 +21,7 @@ data class Screen(val app: String, val buttons: List<ScreenButton>, val scrollab
 class BantaiAccessibilityService : AccessibilityService() {
 
     companion object {
-        private const val MAX_BUTTONS = 40
+        private const val MAX_BUTTONS = 80
 
         @Volatile
         var instance: BantaiAccessibilityService? = null
@@ -78,7 +78,8 @@ class BantaiAccessibilityService : AccessibilityService() {
 
     /** Sariling text o paglalarawan ng button; kung wala, ang unang text sa loob nito (hal. icon + label). */
     private fun labelOf(node: AccessibilityNodeInfo): String? {
-        val own = (node.contentDescription ?: node.text)?.toString()?.trim()
+        // Text muna ("Messenger"), saka paglalarawan ("Messenger has 2 notifications") para sa mga icon na walang text.
+        val own = node.text?.toString()?.trim()?.ifEmpty { null } ?: node.contentDescription?.toString()?.trim()
         if (!own.isNullOrEmpty()) return own
         for (i in 0 until node.childCount) {
             val child = node.getChild(i) ?: continue
