@@ -36,11 +36,11 @@
             android:layout_marginBottom="20dp"
             android:background="#DEE2E6" />
 
-        <!-- Guardian (Apo) Details -->
+        <!-- Trusted Contact Details -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Guardian (Apo) Contact"
+            android:text="Trusted Contact Details"
             android:textColor="#343A40"
             android:textSize="17sp"
             android:textStyle="bold" />
