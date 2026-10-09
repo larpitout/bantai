@@ -40,17 +40,19 @@ class ScamPipeline(
     /** Wika ng paliwanag ng AI ("English" o "Filipino"). */
     private val language: String = "English",
     private val timeoutMs: Long = DEFAULT_TIMEOUT_MS,
+    /** Kapag true (tulad sa Check tab), pinapayagan ang AI na magpasya kahit may rule signals. */
+    private val allowAiDowngrade: Boolean = false,
 ) {
 
     fun check(message: String, sender: String = ""): Flow<ScamCheck> = flow {
         val rule = RuleFilter.score(message, sender)
-        if (rule.score == 0) {
+        if (rule.score == 0 && !allowAiDowngrade) {
             emit(ScamCheck(rule, SAFE_VERDICT, VerdictSource.RULES, isFinal = true))
             return@flow
         }
 
         val ruleVerdict = RuleFilter.createInstantWarning(rule)
-        val confirmedByRules = rule.score >= 2
+        val confirmedByRules = rule.score >= 2 && !allowAiDowngrade
         if (confirmedByRules) {
             emit(ScamCheck(rule, ruleVerdict, VerdictSource.RULES, isFinal = false))
         }

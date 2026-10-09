@@ -56,15 +56,33 @@ class BantaiAccessibilityService : AccessibilityService() {
     private fun checkScreen() {
         val root = rootInActiveWindow
         val pkg = root?.packageName?.toString()
-        val nodes = if (root != null && pkg in Bantai.MESSAGING_APPS) visibleTexts(root) else emptyList()
+        if (root == null || pkg !in Bantai.MESSAGING_APPS || !isConversationOpen(root)) {
+            ScamAlertOverlay.dismiss(this)
+            return
+        }
+        val nodes = visibleTexts(root)
         val match = Bantai.flaggedOnScreen(nodes.map { it.first })
         if (match == null) {
             ScamAlertOverlay.dismiss(this)
             return
         }
-        // Ang bubble ng scammer: doon mismo sa ilalim ilalagay ang babala (pinakahuli kung marami).
+        // Ang bubble ng scammer: doon ilalagay ang babala (pinakahuli kung marami).
         val bubble = nodes.lastOrNull { Bantai.matches(match, it.first) }?.second
         ScamAlertOverlay.showFlagged(this, match, bubble)
+    }
+
+    /** Bukas lang ang chat kapag may text box (composer/EditText) para sa pag-type. Iwas lumabas sa inbox list. */
+    private fun isConversationOpen(root: AccessibilityNodeInfo): Boolean {
+        var seen = 0
+        fun findEditable(n: AccessibilityNodeInfo): Boolean {
+            if (++seen > 150) return false
+            if (n.isEditable || n.className?.contains("EditText", ignoreCase = true) == true) return true
+            for (i in 0 until n.childCount) {
+                if (n.getChild(i)?.let(::findEditable) == true) return true
+            }
+            return false
+        }
+        return findEditable(root)
     }
 
     private fun visibleTexts(root: AccessibilityNodeInfo): List<Pair<String, Rect>> {
@@ -72,7 +90,21 @@ class BantaiAccessibilityService : AccessibilityService() {
         var seen = 0
         fun visit(n: AccessibilityNodeInfo) {
             if (++seen > MAX_NODES) return
-            if (n.isVisibleToUser) n.text?.toString()?.takeIf { it.isNotBlank() }?.let { out += it to Rect().also(n::getBoundsInScreen) }
+            if (n.isVisibleToUser) {
+                val text = n.text?.toString()
+                if (!text.isNullOrBlank()) {
+                    val rect = Rect().also(n::getBoundsInScreen)
+                    // Kunin ang parent bounds kung mas kumpleto ang bubble container
+                    val parent = n.parent
+                    val bubbleRect = if (parent != null) {
+                        val pRect = Rect().also(parent::getBoundsInScreen)
+                        if (pRect.height() in rect.height()..(rect.height() * 3) && pRect.bottom >= rect.bottom) {
+                            pRect
+                        } else rect
+                    } else rect
+                    out += text to bubbleRect
+                }
+            }
             for (i in 0 until n.childCount) n.getChild(i)?.let(::visit)
         }
         visit(root)
