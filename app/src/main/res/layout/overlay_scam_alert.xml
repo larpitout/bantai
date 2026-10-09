@@ -134,37 +134,6 @@
             android:textColor="@color/bantai_text"
             android:textSize="18sp"
             android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/btnAlertCallApo"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:minHeight="56dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
-            android:layout_marginStart="10dp"
-            android:layout_weight="1"
-            android:background="@drawable/bg_btn_primary"
-            android:gravity="center"
-            android:text="@string/btn_call_apo"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp"
-            android:textStyle="bold" />
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/btnAlertTellApo"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:background="@drawable/bg_btn_secondary"
-        android:gravity="center"
-        android:minHeight="52dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:text="@string/btn_tell_apo"
-        android:textColor="@color/bantai_primary"
-        android:textSize="17sp"
-        android:textStyle="bold" />
 </LinearLayout>
 </FrameLayout>

@@ -37,7 +37,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Pangunahing screen ni Apo, may header at bottom navbar (disenyo: Dashboard ng bantai_ui).
- * Mga tab: Home (status, huling scan, trusted contact), Babala (insights + audit), Suriin (i-paste at suriin),
+ * Mga tab: Home (status, huling scan), Babala (insights + audit), Suriin (i-paste at suriin),
  * Settings (setup). Binubuksan ng Welcome pagkatapos ng onboarding, at ng "Posibleng scam" na notification.
  */
 class DashboardActivity : AppCompatActivity() {
@@ -231,13 +231,6 @@ class DashboardActivity : AppCompatActivity() {
             }
         })
 
-        if (prefs.apoName.isNotBlank() || prefs.apoPhone.isNotBlank()) {
-            content.addView(card {
-                addView(label(getString(R.string.card_trusted_contact)))
-                addView(text("${prefs.apoName}  •  ${prefs.apoPhone}", 17f, bold = true, color = INK))
-            })
-        }
-
         content.addView(button(getString(R.string.btn_test_alert), RED) {
             val loc = Bantai.localized(this)
             val (reason, action) = RuleFilter.instantWarningRes(RuleFilter.score(SAMPLE_SCAM))
@@ -319,13 +312,6 @@ class DashboardActivity : AppCompatActivity() {
             if (item.action.isNotBlank()) addView(row(getString(R.string.field_action), text(item.action, 15f, bold = true, color = RED)))
             if (item.signals.isNotEmpty()) addView(row(getString(R.string.field_signals), text(item.signals.joinToString("\n") { "• $it" }, 15f, color = INK)))
         })
-        val prefs = GuardianPreferences(this)
-        if (prefs.apoPhone.isNotBlank()) {
-            content.addView(button(getString(R.string.btn_tell_apo), BLUE) {
-                val body = Bantai.localized(this).getString(R.string.tell_apo_body, item.message.take(160))
-                startActivity(Intent(Intent.ACTION_SENDTO, android.net.Uri.parse("smsto:${prefs.apoPhone}")).putExtra("sms_body", body))
-            })
-        }
     }
 
     // ---------- Suriin: i-paste ang text o link ----------
@@ -441,20 +427,6 @@ class DashboardActivity : AppCompatActivity() {
                 }
             })
         })
-
-        // Trusted contact
-        val name = field(getString(R.string.contact_name_hint), prefs.apoName, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PERSON_NAME)
-        val phone = field(getString(R.string.contact_phone_hint), prefs.apoPhone, InputType.TYPE_CLASS_PHONE)
-        content.addView(card {
-            addView(label(getString(R.string.card_trusted_contact)))
-            addView(name)
-            addView(phone.apply { (layoutParams as LinearLayout.LayoutParams).topMargin = dp(10) })
-        })
-        content.addView(button(getString(R.string.btn_save), BLUE) {
-            prefs.apoName = name.text.toString()
-            prefs.apoPhone = phone.text.toString()
-            android.widget.Toast.makeText(this, R.string.saved, android.widget.Toast.LENGTH_SHORT).show()
-        })
     }
 
     /** Isang permission: pangalan at status; pindutin para buksan ang settings ng phone. */
@@ -467,16 +439,6 @@ class DashboardActivity : AppCompatActivity() {
         addView(text(getString(title), 16f, bold = true, color = INK).apply { layoutParams = LinearLayout.LayoutParams(0, -2, 1f) })
         addView(chip(getString(if (granted) R.string.perm_on else R.string.perm_off),
             if (granted) Color.parseColor("#ECFDF5") else ROSE_BG, if (granted) GREEN else ROSE))
-    }
-
-    private fun field(hint: String, value: String, type: Int) = EditText(this).apply {
-        this.hint = hint
-        setText(value)
-        inputType = type
-        setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
-        background = rounded(Color.WHITE, 14, BORDER)
-        setPadding(dp(14), dp(12), dp(14), dp(12))
-        layoutParams = LinearLayout.LayoutParams(-1, -2)
     }
 
     // ---------- Insights ----------

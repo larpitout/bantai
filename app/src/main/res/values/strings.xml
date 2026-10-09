@@ -13,7 +13,6 @@
     <string name="alert_ai_badge">Checked by on-device AI</string>
     <string name="btn_read_aloud">Read</string>
     <string name="btn_dismiss">Got it</string>
-    <string name="btn_call_apo">Call Trusted Contact</string>
 
     <!-- Overlay Warning Headers -->
     <string name="warning_title">Warning: Potential Scam Detected</string>
@@ -67,9 +66,6 @@
     <string name="warning_link_fake_site">This link points to a fake-looking website, not a real company.</string>
     <string name="setup_perm_battery_title">Battery: Unrestricted</string>
     <string name="setup_perm_battery_desc">So the phone does not stop Bantai in the background.</string>
-    <string name="btn_tell_apo">Tell your trusted contact</string>
-    <string name="btn_tell_apo_named">Tell %1$s</string>
-    <string name="tell_apo_body">Hi, I received a suspicious message: \"%1$s\". Is this real?</string>
     <string name="history_title">Flagged messages</string>
     <string name="history_empty">No flagged messages yet.</string>
     <string name="why_flagged">Why was this flagged?</string>
@@ -125,7 +121,6 @@
     <string name="status_rules_only">Fast rules on this phone (no AI model on this device)</string>
     <string name="card_status">Status</string>
     <string name="card_latest_scan">Latest scan</string>
-    <string name="card_trusted_contact">Trusted contact</string>
     <string name="field_verdict">Verdict</string>
     <string name="field_from">From</string>
     <string name="field_reason">Reason</string>
@@ -148,10 +143,6 @@
     <string name="check_ai_unavailable">Checked by Bantai rules (AI did not answer in time)</string>
     <string name="card_protection">Protection</string>
     <string name="card_permissions">Permissions</string>
-    <string name="btn_save">Save</string>
-    <string name="saved">Saved</string>
-    <string name="contact_name_hint">Trusted contact name</string>
-    <string name="contact_phone_hint">Trusted contact phone number</string>
     <string name="perm_on">On</string>
     <string name="perm_off">Turn on</string>
     <string name="btn_back">Back</string>
