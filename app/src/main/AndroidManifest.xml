@@ -46,18 +46,20 @@
                 android:resource="@xml/accessibility_service_config" />
         </service>
 
+        <!-- Unang screen: dashboard ni Apo -->
         <activity
             android:name="com.bantai.ui.DashboardActivity"
-            android:exported="false" />
-
-        <!-- Setup and Onboarding Activity -->
-        <activity
-            android:name="com.bantai.ui.SetupActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+
+        <!-- Setup and Onboarding Activity -->
+        <activity
+            android:name="com.bantai.ui.SetupActivity"
+            android:exported="false">
         </activity>
 
     </application>

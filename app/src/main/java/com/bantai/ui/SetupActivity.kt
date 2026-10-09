@@ -27,6 +27,11 @@ import com.bantai.util.PermissionHelper
  */
 class SetupActivity : AppCompatActivity() {
 
+    // Iisang wika sa buong app: Tagalog kung walang pinili (pareho ng babala).
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(com.bantai.Bantai.localized(newBase))
+    }
+
     private lateinit var prefs: GuardianPreferences
 
     private lateinit var etApoName: EditText

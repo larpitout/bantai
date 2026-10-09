@@ -42,6 +42,18 @@ class BantaiNotificationListener : NotificationListenerService() {
         return text.getString(reasonRes) to text.getString(actionRes)
     }
 
+    /** Uri ng scam para sa dashboard (isang salita/parirala). */
+    private fun kindOf(message: String, signals: List<String>): String = Bantai.localized(this).getString(
+        when {
+            LinkChecker.check(message) != null -> R.string.kind_link
+            "New Number / Impersonation" in signals -> R.string.kind_relative
+            "Prize / Raffle" in signals -> R.string.kind_prize
+            "Account / OTP / Parcel" in signals -> R.string.kind_account
+            "Money Request" in signals -> R.string.kind_money
+            else -> R.string.kind_other
+        }
+    )
+
     /** Mga senyales mula sa rules, sa wika ng babala. */
     private fun signalNames(signals: List<String>): List<String> {
         val text = Bantai.localized(this)
@@ -105,6 +117,7 @@ class BantaiNotificationListener : NotificationListenerService() {
             Log.d(TAG, "Skipping duplicate notification from $packageName")
             return
         }
+        com.bantai.data.ScamHistory.countScanned(this) // para sa dashboard: "nasuri ngayon"
 
         // 6. Layer 1 Rule Scoring
         val ruleResult = RuleFilter.score(message, sender)
@@ -125,7 +138,7 @@ class BantaiNotificationListener : NotificationListenerService() {
                     val (reason, action) = warningText(message, check.rule)
                     val signals = signalNames(check.rule.signals)
                     if (!shown) {
-                        com.bantai.data.ScamHistory.add(this@BantaiNotificationListener, sender, message, reason)
+                        com.bantai.data.ScamHistory.add(this@BantaiNotificationListener, sender, message, reason, kindOf(message, check.rule.signals), check.rule.score)
                         ScamNotifier.notify(this@BantaiNotificationListener, sender, reason, openChat)
                     }
                     val a11y = BantaiAccessibilityService.instance
