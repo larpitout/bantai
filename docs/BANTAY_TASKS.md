@@ -29,6 +29,44 @@ Paalala: Pag-uusapan pa ng team ang eksaktong toka sa bawat lane.
 
 Gate, 10:15 PM: Sumasagot ang Gemma 3 1B at gumagana ang RuleFilter unit tests.
 
+### Bago Magsimula: Mobile at Device Setup (~15 min)
+
+Pumili kung Virtual Device o Physical Device ang gagamitin:
+
+#### Paraan A: Kung Virtual Device (Android Emulator) ang gamit
+- [ ] **M1-V. AVD Creation at Specs Check** (~5 min)
+  - Buksan ang Android Studio -> Tools -> Device Manager.
+  - Pumili o gumawa ng virtual device na may Google Play Store (mahalaga para may built-in Google TTS).
+  - Siguraduhing may internal storage na hindi bababa sa 4 GB para magkasya ang 550 MB model file.
+- [ ] **M2-V. I-launch at i-verify ang Emulator** (~3 min)
+  - I-start ang AVD mula sa Android Studio o via terminal.
+  - Patunayan sa terminal: `adb devices` (dapat may lumabas na `emulator-5554 device`).
+- [ ] **M3-V. Offline Filipino Voice Pack (Google TTS sa Emulator)** (~5 min)
+  - Sa emulator screen: Pumunta sa Settings -> Accessibility o System -> Text-to-speech.
+  - Siguraduhing Google Speech Recognition and Synthesis ang engine at i-download ang Filipino (Philippines) voice pack.
+- [ ] **M4-V. SMS Simulation Verification** (~2 min)
+  - Subukan magpadala ng test text sa terminal:
+    `adb emu sms send 09951234567 "Test SMS"`
+  - O gamitin ang Emulator Extended Controls (...) -> Phone -> Send SMS.
+
+#### Paraan B: Kung Physical Android Phone ang gamit
+- [ ] **M1-P. Developer Options at USB Debugging** (~5 min)
+  - Sa phone: Pumunta sa Settings -> About phone -> Software information.
+  - I-tap ang Build number nang 7 beses para lumabas ang Developer options.
+  - Sa Developer options: I-ON ang USB Debugging.
+  - Isaksak via USB cable sa laptop at piliin ang "Always allow from this computer".
+- [ ] **M2-P. ADB Verification** (~2 min)
+  - Patunayan sa terminal: `adb devices` (dapat may lumabas na alphanumeric device ID).
+- [ ] **M3-P. Offline Filipino Voice Pack (Google TTS sa Phone)** (~5 min)
+  - Pumunta sa Settings -> General Management o Accessibility -> Text-to-speech.
+  - Piliin ang Google TTS engine at i-download ang Filipino (Philippines) voice data.
+
+#### Karaniwang Hakbang para sa Parehong Paraan (Virtual o Physical)
+- [ ] **M5. Gumawa ng Storage Folder para sa Model** (~2 min)
+  - I-run sa terminal: `adb shell mkdir -p /data/local/tmp/llm/`
+- [ ] **M6. Paalala sa Restricted Settings (Android 13 pataas)** (~2 min)
+  - Kapag na-install na ang APK: Pumunta sa Settings -> Apps -> Bantay -> Tatlong tuldok sa taas -> Allow Restricted Settings para ma-enable ang Notification Access at Accessibility Service.
+
 ### Lane C: App Shell at UI (ON HOLD - Hinihintay ang UI/UX)
 - [ ] **C1. Core Contracts & Data Models** (~15 min) · Pwedeng ilatag kahit walang UI
   - LlmEngine interface, data classes (RuleResult, ScamVerdict, ScreenContext), at FakeEngine.
