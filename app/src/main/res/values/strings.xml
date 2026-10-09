@@ -128,7 +128,7 @@
     <string name="field_kind">Type</string>
     <string name="field_signals">Signals</string>
     <string name="verdict_scam">SCAM</string>
-    <string name="verdict_safe">SAFE</string>
+    <string name="verdict_safe">VALID</string>
     <string name="nav_home">Home</string>
     <string name="nav_alerts">Alerts</string>
     <string name="nav_check">Check</string>

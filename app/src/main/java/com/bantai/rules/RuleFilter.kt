@@ -23,11 +23,6 @@ object RuleFilter {
         Pattern.CASE_INSENSITIVE
     )
 
-    private val URL_REGEX = Pattern.compile(
-        "(https?://\\S+|www\\.\\S+|bit\\.ly/\\S+|tinyurl\\.com/\\S+|[a-zA-Z0-9.-]+\\.(?:com|ph|net|org|xyz|top|link|site|info)(?:/\\S*)?)",
-        Pattern.CASE_INSENSITIVE
-    )
-
     private val PRIZE_PATTERNS = listOf(
         "nanalo", "congratulations", "congrats", "claim", "premyo",
         "panalo", "raffle", "biyaya", "jackpot", "grand prize", "winner", "prize"
@@ -44,7 +39,8 @@ object RuleFilter {
     )
 
     fun score(text: String, sender: String = ""): RuleResult {
-        val lowerText = text.lowercase(Locale.ROOT)
+        val textWithoutSafeUrls = LinkChecker.removeSafeUrls(text)
+        val lowerText = textWithoutSafeUrls.lowercase(Locale.ROOT)
         val signals = mutableListOf<String>()
 
         // 1. Money Request
@@ -59,8 +55,8 @@ object RuleFilter {
             signals.add("New Number / Impersonation")
         }
 
-        // 3. Suspicious Link
-        if (URL_REGEX.matcher(lowerText).find()) {
+        // 3. Suspicious Link (link na hindi kilalang ligtas na domain, o pekeng brand/shortener)
+        if (LinkChecker.hasUnverifiedLink(text)) {
             signals.add("Suspicious Link")
         }
         // 3b. Mapanganib na link (pekeng brand, shortener, murang domain, IP): sapat na para magbabala agad.

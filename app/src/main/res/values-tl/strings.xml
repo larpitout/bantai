@@ -128,7 +128,7 @@
     <string name="field_kind">Uri</string>
     <string name="field_signals">Senyales</string>
     <string name="verdict_scam">SCAM</string>
-    <string name="verdict_safe">LIGTAS</string>
+    <string name="verdict_safe">VALID</string>
     <string name="nav_home">Home</string>
     <string name="nav_alerts">Babala</string>
     <string name="nav_check">Suriin</string>

@@ -409,6 +409,7 @@ class DashboardActivity : AppCompatActivity() {
         val loc = Bantai.localized(this)
         val rule = RuleFilter.score(message)
         val link = LinkChecker.check(message)
+        val hasAi = Bantai.modelName() != null
         val initialReason: String
         val initialAction: String
         val initialIsScam: Boolean
@@ -424,7 +425,13 @@ class DashboardActivity : AppCompatActivity() {
                 initialAction = loc.getString(R.string.warning_link_action)
                 initialIsScam = true
             }
-            rule.score > 0 -> {
+            rule.score >= 2 -> {
+                val (rRes, aRes) = RuleFilter.instantWarningRes(rule)
+                initialReason = loc.getString(rRes)
+                initialAction = loc.getString(aRes)
+                initialIsScam = true
+            }
+            rule.score == 1 && !hasAi -> {
                 val (rRes, aRes) = RuleFilter.instantWarningRes(rule)
                 initialReason = loc.getString(rRes)
                 initialAction = loc.getString(aRes)
@@ -450,7 +457,6 @@ class DashboardActivity : AppCompatActivity() {
             })
         }
 
-        val hasAi = Bantai.modelName() != null
         show(initialIsScam, initialReason, initialAction, if (hasAi) getString(R.string.check_ai_thinking) else null)
         if (!hasAi) return
 
@@ -461,11 +467,22 @@ class DashboardActivity : AppCompatActivity() {
                 if (!c.isFinal) return@collect
                 val ai = c.source == VerdictSource.LLM
                 // Kung pekeng brand link (phishing), laging scam; kung hindi, sundin ang hatol ng AI
-                val isScam = if (link?.kind == LinkChecker.Kind.FAKE_BRAND) true else c.verdict.isScam
+                var isScam = if (link?.kind == LinkChecker.Kind.FAKE_BRAND) true else c.verdict.isScam
+                if (isScam && link?.kind != LinkChecker.Kind.FAKE_BRAND && c.verdict.action.isNotBlank() &&
+                    (c.verdict.action.contains("no action", ignoreCase = true) || c.verdict.action.contains("wala", ignoreCase = true))) {
+                    isScam = false
+                }
+                val ruleWarning = if (rule.score > 0) RuleFilter.instantWarningRes(rule) else null
                 val finalReason = if (ai && c.verdict.reason.isNotBlank()) {
                     c.verdict.reason
                 } else if (!isScam) {
                     loc.getString(R.string.warning_safe_reason)
+                } else if (link?.kind == LinkChecker.Kind.FAKE_BRAND) {
+                    loc.getString(R.string.warning_link_fake_brand, LinkChecker.displayBrand(link.brand!!))
+                } else if (link != null) {
+                    loc.getString(R.string.warning_link_risky_ending)
+                } else if (ruleWarning != null) {
+                    loc.getString(ruleWarning.first)
                 } else {
                     initialReason
                 }
@@ -473,6 +490,10 @@ class DashboardActivity : AppCompatActivity() {
                     c.verdict.action
                 } else if (!isScam) {
                     loc.getString(R.string.warning_safe_action)
+                } else if (link != null) {
+                    loc.getString(R.string.warning_link_action)
+                } else if (ruleWarning != null) {
+                    loc.getString(ruleWarning.second)
                 } else {
                     initialAction
                 }

@@ -63,4 +63,42 @@ class ScamParserTest {
         val verdict = ScamParser.parse(llmOutput)
         assertTrue(verdict.isScam)
     }
+
+    @Test
+    fun testParseValidAndNotScamVerdicts() {
+        val out1 = """
+            VERDICT: VALID
+            REASON: Official Google search domain.
+            ACTION: No action required.
+        """.trimIndent()
+        val res1 = ScamParser.parse(out1)
+        assertFalse(res1.isScam)
+        assertEquals("Official Google search domain.", res1.reason)
+        assertEquals("No action required.", res1.action)
+
+        val out2 = """
+            VERDICT: NOT SCAM
+            REASON: Message is safe and legitimate.
+        """.trimIndent()
+        val res2 = ScamParser.parse(out2)
+        assertFalse(res2.isScam)
+
+        val out3 = """
+            VERDICT: NOT A SCAM
+            REASON: Normal message from family.
+        """.trimIndent()
+        val res3 = ScamParser.parse(out3)
+        assertFalse(res3.isScam)
+    }
+
+    @Test
+    fun testParseSafeActionOverridesScamVerdict() {
+        val out = """
+            VERDICT: SCAM
+            REASON: Legitimate Google website.
+            ACTION: No action required.
+        """.trimIndent()
+        val res = ScamParser.parse(out)
+        assertFalse(res.isScam)
+    }
 }

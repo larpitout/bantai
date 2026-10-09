@@ -42,20 +42,33 @@ object ScamParser {
         }
 
         if (verdictStr != null) {
-            val isScam = verdictStr.uppercase(Locale.ROOT).contains("SCAM")
+            val v = verdictStr.uppercase(Locale.ROOT).trim()
+            val isScam = when {
+                v.startsWith("NOT") || v.contains("NOT SCAM") || v.contains("NOT A SCAM") || v.contains("NO SCAM") -> false
+                v.contains("SAFE") || v.contains("LIGTAS") || v.contains("VALID") || v.contains("LEGIT") -> false
+                v.contains("SCAM") || v.contains("PHISHING") || v.contains("FRAUD") || v.contains("MAPANGANIB") -> true
+                else -> false
+            }
+            val finalIsScam = if (isScam && action != null && (action.contains("no action", ignoreCase = true) || action.contains("wala", ignoreCase = true))) {
+                false
+            } else {
+                isScam
+            }
             return ScamVerdict(
-                isScam = isScam,
-                reason = reason ?: if (isScam) "This message appears suspicious." else "This message appears safe.",
-                action = action ?: if (isScam) "Do not send money or click links. Verify with family." else "No action required."
+                isScam = finalIsScam,
+                reason = reason ?: if (finalIsScam) "This message appears suspicious." else "This message appears safe.",
+                action = action ?: if (finalIsScam) "Do not send money or click links. Verify with family." else "No action required."
             )
         }
 
         // Fallback heuristic if formatting was loose:
         val upperRaw = rawOutput.uppercase(Locale.ROOT)
-        val detectedScam = upperRaw.contains("SCAM") ||
+        val hasNegative = upperRaw.contains("NOT SCAM") || upperRaw.contains("NOT A SCAM") || upperRaw.contains("NO SCAM") ||
+                upperRaw.contains("SAFE") || upperRaw.contains("VALID") || upperRaw.contains("LIGTAS") || upperRaw.contains("LEGIT")
+        val detectedScam = !hasNegative && (upperRaw.contains("SCAM") ||
                 upperRaw.contains("SUSPICIOUS") ||
                 upperRaw.contains("PHISHING") ||
-                upperRaw.contains("DO NOT SEND")
+                upperRaw.contains("DO NOT SEND"))
 
         if (fallbackVerdict != null) {
             return fallbackVerdict.copy(
