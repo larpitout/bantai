@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M16,4m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0"
+        android:strokeWidth="2"
+        android:strokeColor="@color/bantai_primary"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M18,19l1,-7l-6,1"
+        android:strokeWidth="2"
+        android:strokeColor="@color/bantai_primary"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M5,8l3,-3l5.5,3l-2.36,3.5"
+        android:strokeWidth="2"
+        android:strokeColor="@color/bantai_primary"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M4.24,14.5a5,5 0,0 0,6.88 6"
+        android:strokeWidth="2"
+        android:strokeColor="@color/bantai_primary"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M13.76,17.5a5,5 0,0 0,-6.88 -6"
+        android:strokeWidth="2"
+        android:strokeColor="@color/bantai_primary"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>
