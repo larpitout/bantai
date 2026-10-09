@@ -108,4 +108,13 @@
     <string name="tip_account">Payo: Hindi humihingi ng OTP o PIN ang bangko o GCash.</string>
     <string name="tip_prize">Payo: Walang totoong premyo na pinagbabayad ka muna.</string>
     <string name="tip_money">Payo: Kumpirmahin muna sa pamilya bago magpadala ng pera kahit kanino.</string>
+    <string name="setup_perm_call_title">Babala sa tawag</string>
+    <string name="setup_perm_call_desc">Gawing Caller ID at spam app si Bantai para magbabala sa hindi kilalang tumatawag.</string>
+    <string name="call_scam_sender_reason">Ang numerong ito ay nagpadala po ng scam na text kanina.</string>
+    <string name="call_scam_sender_action">Huwag pong sagutin. Kung sasagutin, huwag magbigay ng pera, OTP o PIN.</string>
+    <string name="call_unknown_reason">Tawag po mula sa numerong wala sa contacts ninyo.</string>
+    <string name="call_unknown_action">Mag-ingat po. Huwag ibigay ang OTP, PIN o pera sa tawag.</string>
+    <string name="call_hidden_number">Nakatagong numero</string>
+    <string name="call_history_message">Tawag</string>
+    <string name="kind_call">Tawag mula sa scam na numero</string>
 </resources>

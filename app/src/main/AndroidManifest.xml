@@ -46,6 +46,16 @@
                 android:resource="@xml/accessibility_service_config" />
         </service>
 
+        <!-- Babala sa tawag mula sa hindi kilalang numero (kapag si Bantai ang "Caller ID & spam app") -->
+        <service
+            android:name="com.bantai.service.BantaiCallScreening"
+            android:exported="true"
+            android:permission="android.permission.BIND_SCREENING_SERVICE">
+            <intent-filter>
+                <action android:name="android.telecom.CallScreeningService" />
+            </intent-filter>
+        </service>
+
         <!-- Unang screen: dashboard ni Apo -->
         <activity
             android:name="com.bantai.ui.DashboardActivity"

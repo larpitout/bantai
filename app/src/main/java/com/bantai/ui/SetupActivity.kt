@@ -49,6 +49,8 @@ class SetupActivity : AppCompatActivity() {
     private lateinit var tvBatteryStatus: TextView
     private lateinit var layoutBatteryPerm: android.view.View
     private lateinit var tvHistory: TextView
+    private lateinit var tvCallStatus: TextView
+    private lateinit var layoutCallPerm: android.view.View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,6 +91,8 @@ class SetupActivity : AppCompatActivity() {
         tvBatteryStatus = findViewById(R.id.tvBatteryStatus)
         layoutBatteryPerm = findViewById(R.id.layoutBatteryPerm)
         tvHistory = findViewById(R.id.tvHistory)
+        tvCallStatus = findViewById(R.id.tvCallStatus)
+        layoutCallPerm = findViewById(R.id.layoutCallPerm)
     }
 
     private fun loadPreferences() {
@@ -122,6 +126,14 @@ class SetupActivity : AppCompatActivity() {
 
         layoutAccessibilityPerm.setOnClickListener {
             startActivity(PermissionHelper.getAccessibilitySettingsIntent())
+        }
+
+        layoutCallPerm.setOnClickListener {
+            // Android 10+: hihingin na gawing "Caller ID & spam app" si Bantai para makapagbabala sa tawag.
+            if (android.os.Build.VERSION.SDK_INT >= 29) {
+                val roles = getSystemService(android.app.role.RoleManager::class.java)
+                startActivityForResult(roles.createRequestRoleIntent(android.app.role.RoleManager.ROLE_CALL_SCREENING), 2)
+            }
         }
 
         layoutBatteryPerm.setOnClickListener {
@@ -159,6 +171,11 @@ class SetupActivity : AppCompatActivity() {
      * Checks permission status in real-time and updates the UI indicators.
      */
     fun updatePermissionStatuses() {
+        val callOk = android.os.Build.VERSION.SDK_INT >= 29 &&
+            getSystemService(android.app.role.RoleManager::class.java).isRoleHeld(android.app.role.RoleManager.ROLE_CALL_SCREENING)
+        tvCallStatus.setText(if (callOk) R.string.status_granted else R.string.status_not_granted)
+        tvCallStatus.setTextColor(Color.parseColor(if (callOk) "#198754" else "#DC3545"))
+
         val batteryOk = PermissionHelper.isIgnoringBatteryOptimizations(this)
         tvBatteryStatus.setText(if (batteryOk) R.string.status_granted else R.string.status_not_granted)
         tvBatteryStatus.setTextColor(Color.parseColor(if (batteryOk) "#198754" else "#DC3545"))

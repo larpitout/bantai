@@ -108,4 +108,13 @@
     <string name="tip_account">Tip: Banks and GCash never ask for your OTP or PIN.</string>
     <string name="tip_prize">Tip: Real prizes never ask you to pay or send details first.</string>
     <string name="tip_money">Tip: Confirm with family before sending money to anyone.</string>
+    <string name="setup_perm_call_title">Call warnings</string>
+    <string name="setup_perm_call_desc">Set Bantai as Caller ID and spam app to warn about unknown callers.</string>
+    <string name="call_scam_sender_reason">This number sent you a scam text earlier.</string>
+    <string name="call_scam_sender_action">Do not answer. If you answer, do not give money, OTP or PIN.</string>
+    <string name="call_unknown_reason">Call from a number that is not in your contacts.</string>
+    <string name="call_unknown_action">Be careful. Never give your OTP, PIN or money over the phone.</string>
+    <string name="call_hidden_number">Hidden number</string>
+    <string name="call_history_message">Incoming call</string>
+    <string name="kind_call">Call from a scam number</string>
 </resources>
