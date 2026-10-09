@@ -230,12 +230,6 @@ class DashboardActivity : AppCompatActivity() {
                 addView(row(getString(R.string.field_kind), chip(last.kind, ROSE_BG, ROSE)))
             }
         })
-
-        content.addView(button(getString(R.string.btn_test_alert), RED) {
-            val loc = Bantai.localized(this)
-            val (reason, action) = RuleFilter.instantWarningRes(RuleFilter.score(SAMPLE_SCAM))
-            ScamAlertOverlay.show(this, loc.getString(reason), loc.getString(action), message = SAMPLE_SCAM)
-        })
     }
 
     // ---------- Babala: insights + audit ----------
@@ -243,74 +237,144 @@ class DashboardActivity : AppCompatActivity() {
     private fun renderAlerts() {
         selected?.let { return renderAudit(it) }
         val items = ScamHistory.list(this)
+        if (items.isEmpty()) {
+            content.addView(card {
+                gravity = Gravity.CENTER_HORIZONTAL
+                setPadding(dp(24), dp(32), dp(24), dp(32))
+                addView(ImageView(context).apply {
+                    setImageResource(R.drawable.ic_check_circle)
+                    imageTintList = ColorStateList.valueOf(GREEN)
+                    layoutParams = LinearLayout.LayoutParams(dp(56), dp(56))
+                })
+                addView(text(getString(R.string.history_empty), 19f, bold = true, color = INK).apply {
+                    gravity = Gravity.CENTER
+                    setPadding(0, dp(14), 0, dp(6))
+                })
+                addView(text(getString(R.string.insight_none), 15f, color = MUTED).apply { gravity = Gravity.CENTER })
+            })
+            return
+        }
+
+        // Insights: mga bilang muna, saka ang payo sa sariling kahon.
+        val lines = insights(items)
         content.addView(card {
             addView(label(getString(R.string.dashboard_insights)))
-            addView(text(insights(items).joinToString("\n\n") { "• $it" }, 16f, color = INK))
-        })
-        if (items.isNotEmpty()) {
-            content.addView(card {
-                addView(label(getString(R.string.dashboard_by_kind)))
-                items.groupingBy { it.kind }.eachCount().entries.sortedByDescending { it.value }.forEach {
-                    addView(text("${it.value}×  ${it.key}", 16f, color = INK))
-                }
+            lines.dropLast(1).forEach { addView(bullet(it)) }
+            addView(text(lines.last(), 15f, bold = true, color = BLUE).apply {
+                setPadding(dp(14), dp(12), dp(14), dp(12))
+                background = rounded(
+                    ContextCompat.getColor(context, R.color.bantai_pale), 14,
+                    ContextCompat.getColor(context, R.color.bantai_pale_border),
+                )
+                layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(10) }
             })
-        }
+        })
+
+        val kinds = items.groupingBy { it.kind }.eachCount().entries.sortedByDescending { it.value }
+        content.addView(card {
+            addView(label(getString(R.string.dashboard_by_kind)))
+            kinds.forEach { (kind, count) -> addView(kindBar(kind, count, kinds.first().value)) }
+        })
+
         content.addView(sectionTitle(getString(R.string.dashboard_history)))
-        if (items.isEmpty()) content.addView(card { addView(text(getString(R.string.history_empty), 16f, color = MUTED)) })
-        val fmt = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
-        // Isang row bawat mensahe; pindutin para makita ang buong audit.
+        val fmt = DateFormat.getTimeInstance(DateFormat.SHORT, locale)
+        // Nakagrupo ayon sa araw; isang row bawat mensahe, pindutin para makita ang buong audit.
+        var day: String? = null
         for (item in items) {
-            content.addView(card {
-                isClickable = true
-                setOnClickListener { selected = item; render() }
-                addView(LinearLayout(context).apply {
-                    orientation = LinearLayout.HORIZONTAL
-                    gravity = Gravity.CENTER_VERTICAL
-                    addView(text(item.sender, 16f, bold = true, color = INK).apply { layoutParams = LinearLayout.LayoutParams(0, -2, 1f) })
-                    addView(text(fmt.format(Date(item.time)), 12f, color = MUTED).apply { layoutParams = LinearLayout.LayoutParams(-2, -2) })
-                })
-                addView(text(item.message, 15f, color = MUTED).apply {
+            val itemDay = dayLabel(item.time)
+            if (itemDay != day) {
+                day = itemDay
+                content.addView(label(itemDay).apply { setPadding(dp(4), dp(16), 0, 0) })
+            }
+            content.addView(alertRow(item, fmt.format(Date(item.time))))
+        }
+    }
+
+    private fun alertRow(item: ScamHistory.Item, time: String) = card {
+        orientation = LinearLayout.HORIZONTAL
+        isClickable = true
+        setOnClickListener { selected = item; render() }
+        val (riskBg, riskFg) = riskColors(item.score)
+        addView(text("!", 20f, bold = true, color = riskFg).apply {
+            gravity = Gravity.CENTER
+            background = rounded(riskBg, 999, riskBg)
+            layoutParams = LinearLayout.LayoutParams(dp(40), dp(40)).apply { marginEnd = dp(12) }
+        })
+        addView(LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, -2, 1f)
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                addView(text(item.sender, 16f, bold = true, color = INK).apply {
                     maxLines = 1
                     ellipsize = android.text.TextUtils.TruncateAt.END
-                    setPadding(0, dp(4), 0, dp(8))
+                    layoutParams = LinearLayout.LayoutParams(0, -2, 1f)
                 })
-                addView(LinearLayout(context).apply {
-                    orientation = LinearLayout.HORIZONTAL
-                    addView(chip(item.kind, ROSE_BG, ROSE))
-                    addView(chip(riskLabel(item.score), AMBER_BG, AMBER).apply { (layoutParams as LinearLayout.LayoutParams).marginStart = dp(6) })
-                    if (item.aiModel != null) {
-                        addView(chip(getString(R.string.chip_ai), Color.parseColor("#EFF6FF"), BLUE).apply { (layoutParams as LinearLayout.LayoutParams).marginStart = dp(6) })
-                    }
+                addView(text(time, 12f, color = MUTED).apply {
+                    layoutParams = LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(8) }
                 })
             })
-        }
+            addView(text(item.kind, 13f, bold = true, color = ROSE).apply { setPadding(0, dp(2), 0, 0) })
+            addView(text(item.message, 15f, color = MUTED).apply {
+                maxLines = 2
+                ellipsize = android.text.TextUtils.TruncateAt.END
+                setPadding(0, dp(4), 0, dp(10))
+            })
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                addView(chip(riskLabel(item.score), riskBg, riskFg))
+                if (item.aiModel != null) {
+                    addView(chip(getString(R.string.chip_ai), Color.parseColor("#EFF6FF"), BLUE).apply { (layoutParams as LinearLayout.LayoutParams).marginStart = dp(6) })
+                }
+            })
+        })
     }
 
     /** Buong audit ng isang babala. */
     private fun renderAudit(item: ScamHistory.Item) {
-        val fmt = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
+        val fmt = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, locale)
         content.addView(text("← " + getString(R.string.btn_back), 16f, bold = true, color = BLUE).apply {
             setPadding(dp(4), dp(10), 0, dp(4))
             isClickable = true
             setOnClickListener { selected = null; render() }
         })
-        content.addView(card {
-            addView(label(getString(R.string.card_message)))
-            addView(text("\"${item.message}\"", 17f, color = INK))
-            addView(text("${item.sender}  ·  ${fmt.format(Date(item.time))}", 13f, color = MUTED).apply { setPadding(0, dp(8), 0, 0) })
+        content.addView(card(ROSE_BG, ROSE_BORDER) {
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                addView(chip(getString(R.string.verdict_scam), RED, Color.WHITE))
+                addView(chip(riskLabel(item.score), Color.WHITE, riskColors(item.score).second).apply { (layoutParams as LinearLayout.LayoutParams).marginStart = dp(6) })
+            })
+            addView(text(item.kind, 21f, bold = true, color = INK).apply { setPadding(0, dp(10), 0, dp(2)) })
+            addView(text("${item.sender}  ·  ${fmt.format(Date(item.time))}", 14f, color = MUTED))
         })
         content.addView(card {
-            addView(label(getString(R.string.card_audit)))
-            addView(row(getString(R.string.field_verdict), verdictChip(true)))
-            addView(row(getString(R.string.field_risk), chip(riskLabel(item.score), AMBER_BG, AMBER)))
-            addView(row(getString(R.string.field_kind), chip(item.kind, ROSE_BG, ROSE)))
+            addView(label(getString(R.string.card_message)))
+            addView(text(item.message, 17f, color = INK).apply {
+                setPadding(dp(14), dp(12), dp(14), dp(12))
+                background = rounded(SLATE_BG, 14, SLATE_BG)
+            })
+        })
+        if (item.action.isNotBlank()) {
+            content.addView(card {
+                addView(label(getString(R.string.field_action)))
+                addView(text(item.action, 17f, bold = true, color = RED))
+            })
+        }
+        content.addView(card {
+            addView(label(getString(R.string.why_flagged)))
+            addView(text(item.reason, 16f, color = INK))
+            item.signals.forEach {
+                addView(chip(it, AMBER_BG, AMBER).apply { (layoutParams as LinearLayout.LayoutParams).topMargin = dp(8) })
+            }
+            addView(View(context).apply {
+                setBackgroundColor(BORDER)
+                layoutParams = LinearLayout.LayoutParams(-1, dp(1)).apply { topMargin = dp(14); bottomMargin = dp(8) }
+            })
             addView(row(getString(R.string.field_decided_by), text(
                 item.aiModel?.let { getString(R.string.decided_by_ai_model, it) } ?: getString(R.string.decided_by_rules), 15f, bold = true,
                 color = if (item.aiModel != null) BLUE else INK,
             )))
-            addView(row(getString(R.string.field_reason), text(item.reason, 15f, color = INK)))
-            if (item.action.isNotBlank()) addView(row(getString(R.string.field_action), text(item.action, 15f, bold = true, color = RED)))
-            if (item.signals.isNotEmpty()) addView(row(getString(R.string.field_signals), text(item.signals.joinToString("\n") { "• $it" }, 15f, color = INK)))
         })
     }
 
@@ -522,10 +586,55 @@ class DashboardActivity : AppCompatActivity() {
         when { score >= 3 -> R.string.risk_high; score == 2 -> R.string.risk_medium; else -> R.string.risk_low }
     )
 
-    private fun card(build: LinearLayout.() -> Unit) = LinearLayout(this).apply {
+    /** (background, text) ng chip ayon sa taas ng panganib. */
+    private fun riskColors(score: Int) = when {
+        score >= 3 -> RED_BG to RED
+        score == 2 -> AMBER_BG to AMBER
+        else -> SLATE_BG to MUTED
+    }
+
+    private fun dayLabel(time: Long): String = when {
+        ScamHistory.isToday(time) -> getString(R.string.day_today)
+        ScamHistory.isToday(time + 24L * 60 * 60 * 1000) -> getString(R.string.day_yesterday)
+        else -> DateFormat.getDateInstance(DateFormat.MEDIUM, locale).format(Date(time))
+    }
+
+    private fun bullet(value: String) = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        setPadding(0, dp(5), 0, dp(5))
+        addView(View(context).apply {
+            background = rounded(BLUE, 999, BLUE)
+            layoutParams = LinearLayout.LayoutParams(dp(8), dp(8)).apply { topMargin = dp(8); marginEnd = dp(12) }
+        })
+        addView(text(value, 16f, color = INK).apply { layoutParams = LinearLayout.LayoutParams(0, -2, 1f) })
+    }
+
+    /** Uri ng scam, bilang, at bar na katumbas ng dami nito kumpara sa pinakamadalas. */
+    private fun kindBar(kind: String, count: Int, max: Int) = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(0, dp(6), 0, dp(6))
+        addView(LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(text(kind, 16f, color = INK).apply { layoutParams = LinearLayout.LayoutParams(0, -2, 1f) })
+            addView(text(count.toString(), 16f, bold = true, color = ROSE).apply {
+                layoutParams = LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(8) }
+            })
+        })
+        addView(LinearLayout(context).apply {
+            weightSum = max.toFloat()
+            background = rounded(SLATE_BG, 999, SLATE_BG)
+            layoutParams = LinearLayout.LayoutParams(-1, dp(8)).apply { topMargin = dp(6) }
+            addView(View(context).apply {
+                background = rounded(ROSE, 999, ROSE)
+                layoutParams = LinearLayout.LayoutParams(0, -1, count.toFloat())
+            })
+        })
+    }
+
+    private fun card(fill: Int = Color.WHITE, stroke: Int = BORDER, build: LinearLayout.() -> Unit) = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         setPadding(dp(18), dp(16), dp(18), dp(16))
-        background = rounded(Color.WHITE, 22, BORDER)
+        background = rounded(fill, 22, stroke)
         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) }
         build()
     }
@@ -597,16 +706,21 @@ class DashboardActivity : AppCompatActivity() {
 
     private val BLUE get() = ContextCompat.getColor(this, R.color.bantai_primary)
 
+    // Wika ng app (pareho ng mga string), hindi ng phone.
+    private val locale get() = resources.configuration.locales[0]
+
     private companion object {
         val INK = Color.parseColor("#0F172A")
         val MUTED = Color.parseColor("#64748B")
+        val SLATE_BG = Color.parseColor("#F1F5F9")
         val BORDER = Color.parseColor("#DCE6F4")
         val GREEN = Color.parseColor("#059669")
         val RED = Color.parseColor("#DC2626")
+        val RED_BG = Color.parseColor("#FEF2F2")
         val ROSE = Color.parseColor("#BE123C")
         val ROSE_BG = Color.parseColor("#FFF1F2")
+        val ROSE_BORDER = Color.parseColor("#FECDD3")
         val AMBER = Color.parseColor("#B45309")
         val AMBER_BG = Color.parseColor("#FFFBEB")
-        const val SAMPLE_SCAM = "Ma si Junjun to bagong number ko padala ka 5k sa gcash emergency lang"
     }
 }
