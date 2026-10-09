@@ -6,6 +6,7 @@ import android.service.notification.StatusBarNotification
 import android.util.Log
 import com.bantai.model.RuleResult
 import com.bantai.rules.RuleFilter
+import com.bantai.ui.ScamAlertOverlay
 
 class BantaiNotificationListener : NotificationListenerService() {
 
@@ -69,7 +70,14 @@ class BantaiNotificationListener : NotificationListenerService() {
 
         // 7. Dispatch if score >= 1 (suspicious or confirmed scam)
         if (ruleResult.score >= 1) {
-            scamCandidateListener?.onScamCandidate(packageName, sender, message, ruleResult)
+            val pipeline = scamCandidateListener
+            if (pipeline != null) {
+                pipeline.onScamCandidate(packageName, sender, message, ruleResult)
+            } else {
+                // Rules-only fallback habang wala pang LLM pipeline (o kapag pumalya ito).
+                val (reasonRes, actionRes) = RuleFilter.instantWarningRes(ruleResult)
+                ScamAlertOverlay.show(this, getString(reasonRes), getString(actionRes))
+            }
         }
     }
 }

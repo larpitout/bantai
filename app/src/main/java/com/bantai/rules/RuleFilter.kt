@@ -1,7 +1,7 @@
 package com.bantai.rules
 
 import com.bantai.model.RuleResult
-import com.bantai.model.ScamVerdict
+import com.bantai.R
 import java.util.Locale
 import java.util.regex.Pattern
 
@@ -85,48 +85,27 @@ object RuleFilter {
     }
 
     /**
-     * Creates an immediate generic warning based purely on rule signals (for Score >= 2)
-     * while the on-device LLM is asynchronously generating a detailed explanation.
+     * Babala base lang sa rule signals, bilang (reason, action) string resource ids,
+     * para naka-localize (values / values-tl) at hindi na kailangan ng LLM.
      */
-    fun createInstantWarning(ruleResult: RuleResult): ScamVerdict {
-        val reason = when {
-            ruleResult.signals.contains("New Number / Impersonation") &&
-                    ruleResult.signals.contains("Money Request") ->
-                "Someone appears to be impersonating a relative asking for money from an unfamiliar number."
-
-            ruleResult.signals.contains("Account / OTP / Parcel") &&
-                    ruleResult.signals.contains("Suspicious Link") ->
-                "Suspicious link detected requesting sensitive account information or an OTP."
-
-            ruleResult.signals.contains("Prize / Raffle") ->
-                "Unsolicited prize or lottery claim detected, which is commonly a scam."
-
-            ruleResult.signals.contains("Suspicious Link") ->
-                "Message contains an unverified external link. Do not tap or open it."
-
+    fun instantWarningRes(ruleResult: RuleResult): Pair<Int, Int> {
+        val s = ruleResult.signals
+        return when {
+            "New Number / Impersonation" in s && "Money Request" in s ->
+                R.string.warning_impersonation_reason to R.string.warning_impersonation_action
+            "Account / OTP / Parcel" in s && "Suspicious Link" in s ->
+                R.string.warning_account_otp_reason to R.string.warning_account_otp_action
+            "Prize / Raffle" in s ->
+                R.string.warning_prize_reason to R.string.warning_prize_action
+            "Suspicious Link" in s ->
+                R.string.warning_link_reason to R.string.warning_link_action
+            "New Number / Impersonation" in s ->
+                R.string.warning_impersonation_reason to R.string.warning_impersonation_action
+            "Account / OTP / Parcel" in s ->
+                R.string.warning_account_otp_reason to R.string.warning_account_otp_action
             else ->
-                "This message contains multiple common scam indicators."
+                R.string.warning_generic_reason to R.string.warning_generic_action
         }
-
-        val action = when {
-            ruleResult.signals.contains("New Number / Impersonation") ->
-                "Do not send money. Contact the person directly using their existing verified contact number."
-
-            ruleResult.signals.contains("Account / OTP / Parcel") ->
-                "Never share your OTP or PIN, and do not click the link."
-
-            ruleResult.signals.contains("Suspicious Link") ->
-                "Do not click the link or provide any personal details."
-
-            else ->
-                "Do not send money or sensitive personal information. Verify with a family member first."
-        }
-
-        return ScamVerdict(
-            isScam = true,
-            reason = reason,
-            action = action
-        )
     }
 }
 

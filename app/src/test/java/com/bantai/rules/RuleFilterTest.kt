@@ -1,5 +1,6 @@
 package com.bantai.rules
 
+import com.bantai.R
 import com.bantai.data.TestDataset
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -47,10 +48,10 @@ class RuleFilterTest {
         val result = RuleFilter.score(text)
         assertTrue(result.score >= 2)
 
-        val warning = RuleFilter.createInstantWarning(result)
-        assertTrue(warning.isScam)
-        assertTrue(warning.reason.contains("impersonating a relative", ignoreCase = true))
-        assertTrue(warning.action.contains("Do not send money", ignoreCase = true))
+        assertEquals(
+            R.string.warning_impersonation_reason to R.string.warning_impersonation_action,
+            RuleFilter.instantWarningRes(result)
+        )
     }
 
     @Test
@@ -59,9 +60,9 @@ class RuleFilterTest {
         val result = RuleFilter.score(text)
         assertTrue(result.score >= 2)
 
-        val warning = RuleFilter.createInstantWarning(result)
-        assertTrue(warning.isScam)
-        assertTrue(warning.reason.contains("Suspicious link", ignoreCase = true))
-        assertTrue(warning.action.contains("Never share your OTP", ignoreCase = true))
+        assertEquals(
+            R.string.warning_account_otp_reason to R.string.warning_account_otp_action,
+            RuleFilter.instantWarningRes(result)
+        )
     }
 }
