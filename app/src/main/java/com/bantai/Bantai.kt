@@ -113,7 +113,7 @@ object Bantai {
     val MESSAGING_APPS: Set<String> = NotificationExtractor.ALLOWED_PACKAGES
 
     /** Na-flag na mensahe; ipapakita ang babala kapag nakita ito sa bukas na chat. */
-    class Flagged(val key: String, val reason: String, val action: String, var fromAi: Boolean) {
+    class Flagged(val key: String, val reason: String, val action: String, var fromAi: Boolean, val message: String) {
         var dismissed = false
     }
 
@@ -127,7 +127,7 @@ object Bantai {
         val key = keyOf(message)
         flagged.firstOrNull { it.key == key }?.let { it.fromAi = it.fromAi || fromAi; return it }
         if (flagged.size >= 20) flagged.removeFirst()
-        return Flagged(key, reason, action, fromAi).also(flagged::addLast)
+        return Flagged(key, reason, action, fromAi, message).also(flagged::addLast)
     }
 
     /** Ang na-flag na mensaheng nakikita sa screen ngayon, kung meron. */

@@ -35,13 +35,13 @@ object ScamAlertOverlay {
     fun canShow(context: Context) = Settings.canDrawOverlays(context)
 
     /** Popup agad (fallback kapag walang Accessibility). */
-    fun show(context: Context, reason: String, action: String, fromAi: Boolean = false) {
+    fun show(context: Context, reason: String, action: String, fromAi: Boolean = false, message: String = "") {
         val app = context.applicationContext
         if (!canShow(app)) {
             Log.w(TAG, "Walang 'Display over other apps' permission, hindi maipakita ang babala")
             return
         }
-        present(app, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, reason, action, fromAi, bottomOffsetDp = 0) { dismiss(app) }
+        present(app, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, reason, action, fromAi, message, bottomOffsetDp = 0) { dismiss(app) }
     }
 
     /** Banner sa loob ng bukas na chat, para sa mensaheng na-flag. */
@@ -49,7 +49,7 @@ object ScamAlertOverlay {
         if (current != null && currentFlag === flag && currentFromAi == flag.fromAi) return // nakalabas na
         present(
             service, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-            flag.reason, flag.action, flag.fromAi,
+            flag.reason, flag.action, flag.fromAi, flag.message,
             // Nasa itaas ng text box ng chat, para makapag-type pa rin si Nanay.
             bottomOffsetDp = 72,
         ) {
@@ -67,6 +67,7 @@ object ScamAlertOverlay {
         reason: String,
         action: String,
         fromAi: Boolean,
+        message: String,
         bottomOffsetDp: Int,
         onDismiss: () -> Unit,
     ) {
@@ -94,6 +95,22 @@ object ScamAlertOverlay {
                 // ACTION_DIAL: bubuksan lang ang dialer, si Nanay pa rin ang pipindot ng tawag.
                 app.startActivity(
                     Intent(Intent.ACTION_DIAL, Uri.parse("tel:$apoPhone"))
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                )
+            }
+        }
+
+        // "Sabihan si Apo": bubuksan ang SMS kay Apo na may nakahandang text; si Nanay pa rin ang magse-send.
+        view.findViewById<TextView>(R.id.btnAlertTellApo).apply {
+            val name = GuardianPreferences(app).apoName.ifBlank { null }
+            visibility = if (apoPhone.isBlank() || message.isBlank()) View.GONE else View.VISIBLE
+            name?.let { text = Bantai.localized(app).getString(R.string.btn_tell_apo_named, it) }
+            setOnClickListener {
+                onDismiss()
+                val body = Bantai.localized(app).getString(R.string.tell_apo_body, message.take(160))
+                app.startActivity(
+                    Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:$apoPhone"))
+                        .putExtra("sms_body", body)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 )
             }

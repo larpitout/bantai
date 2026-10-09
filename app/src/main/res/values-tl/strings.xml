@@ -64,4 +64,11 @@
     <string name="warning_link_shortener">Nakatago po kung saan talaga pupunta ang link na ito (pinaikling link). Ginagamit ito ng mga scammer.</string>
     <string name="warning_link_risky_ending">Hindi kilalang website po ang link na ito, at madalas itong gamitin ng mga scammer.</string>
     <string name="warning_link_fake_site">Mukhang pekeng website po ang link na ito, hindi ng totoong kumpanya.</string>
+    <string name="setup_perm_battery_title">Battery: Unrestricted</string>
+    <string name="setup_perm_battery_desc">Para hindi patayin ng phone si Bantai sa background.</string>
+    <string name="btn_tell_apo">Sabihan ang Trusted Contact</string>
+    <string name="btn_tell_apo_named">Sabihan si %1$s</string>
+    <string name="tell_apo_body">Apo, may natanggap akong kahina-hinalang text: \"%1$s\". Totoo ba ito?</string>
+    <string name="history_title">Mga na-flag na mensahe</string>
+    <string name="history_empty">Wala pang na-flag na mensahe.</string>
 </resources>

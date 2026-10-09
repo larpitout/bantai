@@ -3,6 +3,8 @@
 
     <!-- Babala sa ibabaw ng ibang app -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- Para hindi patayin ng phone si Bantai sa background -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <!-- Crucial for Android 11+ to discover and bind to Google TextToSpeech engine -->
     <queries>

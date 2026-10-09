@@ -105,13 +105,14 @@ class BantaiNotificationListener : NotificationListenerService() {
                     if (shown && !fromAi) return@collect
                     // Tagalog template mula sa rules ang laging ipinapakita; si Gemma ang nagpapasya kung scam.
                     val (reason, action) = warningText(message, check.rule)
+                    if (!shown) com.bantai.data.ScamHistory.add(this@BantaiNotificationListener, sender, message, reason)
                     val a11y = BantaiAccessibilityService.instance
                     if (a11y != null) {
                         // Walang biglang popup: lalabas ang babala kapag binuksan ni Nanay ang mensahe.
                         Bantai.flag(message, reason, action, fromAi)
                         a11y.recheck()
                     } else {
-                        ScamAlertOverlay.show(this@BantaiNotificationListener, reason, action, fromAi)
+                        ScamAlertOverlay.show(this@BantaiNotificationListener, reason, action, fromAi, message)
                     }
                     shown = true
                 }

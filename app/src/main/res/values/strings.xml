@@ -64,4 +64,11 @@
     <string name="warning_link_shortener">This link hides where it really goes (shortened link). Scammers use these to hide fake sites.</string>
     <string name="warning_link_risky_ending">This link goes to an unknown website often used by scammers.</string>
     <string name="warning_link_fake_site">This link points to a fake-looking website, not a real company.</string>
+    <string name="setup_perm_battery_title">Battery: Unrestricted</string>
+    <string name="setup_perm_battery_desc">So the phone does not stop Bantai in the background.</string>
+    <string name="btn_tell_apo">Tell your trusted contact</string>
+    <string name="btn_tell_apo_named">Tell %1$s</string>
+    <string name="tell_apo_body">Hi, I received a suspicious message: \"%1$s\". Is this real?</string>
+    <string name="history_title">Flagged messages</string>
+    <string name="history_empty">No flagged messages yet.</string>
 </resources>

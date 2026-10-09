@@ -41,6 +41,9 @@ class SetupActivity : AppCompatActivity() {
     private lateinit var switchProtection: androidx.appcompat.widget.SwitchCompat
     private lateinit var tvProtectionStatus: TextView
     private lateinit var btnTest: Button
+    private lateinit var tvBatteryStatus: TextView
+    private lateinit var layoutBatteryPerm: android.view.View
+    private lateinit var tvHistory: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,6 +75,9 @@ class SetupActivity : AppCompatActivity() {
         switchProtection = findViewById(R.id.switchProtection)
         tvProtectionStatus = findViewById(R.id.tvProtectionStatus)
         btnTest = findViewById(R.id.btnTest)
+        tvBatteryStatus = findViewById(R.id.tvBatteryStatus)
+        layoutBatteryPerm = findViewById(R.id.layoutBatteryPerm)
+        tvHistory = findViewById(R.id.tvHistory)
     }
 
     private fun loadPreferences() {
@@ -107,6 +113,11 @@ class SetupActivity : AppCompatActivity() {
             startActivity(PermissionHelper.getAccessibilitySettingsIntent())
         }
 
+        layoutBatteryPerm.setOnClickListener {
+            // Para hindi patayin ng phone (OPPO, TECNO…) si Bantai sa background.
+            startActivity(PermissionHelper.getBatteryOptimizationIntent(this))
+        }
+
         layoutOverlayPerm.setOnClickListener {
             startActivity(
                 Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
@@ -137,6 +148,16 @@ class SetupActivity : AppCompatActivity() {
      * Checks permission status in real-time and updates the UI indicators.
      */
     fun updatePermissionStatuses() {
+        val batteryOk = PermissionHelper.isIgnoringBatteryOptimizations(this)
+        tvBatteryStatus.setText(if (batteryOk) R.string.status_granted else R.string.status_not_granted)
+        tvBatteryStatus.setTextColor(Color.parseColor(if (batteryOk) "#198754" else "#DC3545"))
+
+        val history = com.bantai.data.ScamHistory.list(this)
+        tvHistory.text = if (history.isEmpty()) getString(R.string.history_empty) else history.joinToString("\n\n") { item ->
+            val time = java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT).format(java.util.Date(item.time))
+            "$time · ${item.sender}\n\"${item.message}\"\n→ ${item.reason}"
+        }
+
         val overlayGranted = ScamAlertOverlay.canShow(this)
         tvOverlayStatus.setText(if (overlayGranted) R.string.status_granted else R.string.status_not_granted)
         tvOverlayStatus.setTextColor(Color.parseColor(if (overlayGranted) "#198754" else "#DC3545"))
