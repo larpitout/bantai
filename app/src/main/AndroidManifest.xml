@@ -25,6 +25,19 @@
             </intent-filter>
         </service>
 
+        <!-- Accessibility Service for screen context reading and global actions -->
+        <service
+            android:name="com.bantai.service.BantaiAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
     </application>
 
 </manifest>

@@ -48,4 +48,7 @@
     <string name="setup_perm_accessibility_desc">Allows Bantai to display warning overlays and assist on screen.</string>
     <string name="setup_btn_save">Save Settings</string>
     <string name="setup_btn_test">Test Scam Alert</string>
+
+    <!-- Accessibility Service -->
+    <string name="accessibility_service_description">Bantai reads visible screen text to detect scams and provides safety navigation actions for seniors.</string>
 </resources>
