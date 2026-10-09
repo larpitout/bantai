@@ -31,6 +31,7 @@ import com.bantai.R
 import com.bantai.data.GuardianPreferences
 import com.bantai.model.ScreenContext
 import com.bantai.pipeline.GabaySource
+import com.bantai.rules.GabayIntent
 import com.bantai.rules.GabayRanker
 import com.bantai.rules.PromptBuilder
 import com.bantai.service.BantaiAccessibilityService
@@ -63,6 +64,12 @@ object GabayOverlay {
 
     /** Layunin ni Nanay sa kasalukuyang usapan (hal. "go to facebook"); null kapag walang usapan. */
     private var goal: String? = null
+
+    /** Tawag/video/message sa isang tao (may alam na daan); null kapag ibang klase ng tanong. */
+    private var task: GabayIntent? = null
+
+    /** Naghihintay ng pangalan ("Sino po ang tatawagan?") para sa gawaing ito. */
+    private var askingNameFor: GabayIntent? = null
     private var steps = 0
     private var scrolls = 0
     private var emptyReads = 0
@@ -123,6 +130,8 @@ object GabayOverlay {
     private fun togglePanel() {
         if (panel != null) return closePanel()
         goal = null // pinindot ni Nanay ang chathead: bagong usapan
+        task = null
+        askingNameFor = null
         openPanel(service?.t(R.string.gabay_panel_title) ?: return)
     }
 
@@ -160,7 +169,16 @@ object GabayOverlay {
             onPartial = { status.text = "\"$it\"" },
             onText = { text ->
                 Log.e(TAG, "heard=$text")
-                if (STOP_WORDS.containsMatchIn(text.lowercase())) endSession() else startGoal(text)
+                val waiting = askingNameFor
+                when {
+                    waiting != null -> {
+                        askingNameFor = null
+                        val name = text.trim().split(' ').joinToString(" ") { w -> w.replaceFirstChar(Char::uppercase) }
+                        startTask(waiting.copy(person = name, needsTrustedContact = false), "${waiting.action} $name")
+                    }
+                    STOP_WORDS.containsMatchIn(text.lowercase()) -> endSession()
+                    else -> startGoal(text)
+                }
             },
             onFail = { error ->
                 Log.e(TAG, "listen failed error=$error")
@@ -183,6 +201,24 @@ object GabayOverlay {
     fun debugStart(goal: String) = startGoal(goal)
 
     private fun startGoal(text: String) {
+        val parsed = GabayIntent.parse(text)
+        Log.e(TAG, "intent=$parsed")
+        val svc = service ?: return
+        if (parsed.needsTrustedContact) {
+            // "apo ko": ang Trusted Contact sa setup; kung wala, itanong ang pangalan.
+            val saved = GuardianPreferences(svc).apoName.trim()
+            if (saved.isEmpty()) {
+                askingNameFor = parsed
+                openPanel(svc.t(R.string.gabay_ask_name))
+                return
+            }
+            return startTask(parsed.copy(person = saved, needsTrustedContact = false), text)
+        }
+        startTask(parsed, text)
+    }
+
+    private fun startTask(parsed: GabayIntent, text: String) {
+        task = parsed.takeIf { it.person != null && it.action in PERSON_ACTIONS }
         goal = text
         steps = 0
         scrolls = 0
@@ -193,6 +229,7 @@ object GabayOverlay {
     private fun endSession() {
         val svc = service ?: return
         goal = null
+        task = null
         closePanel()
         clearGuide()
         Bantai.speaker(svc).speak(svc.t(R.string.gabay_bye))
@@ -216,6 +253,17 @@ object GabayOverlay {
                 return@launch
             }
             emptyReads = 0
+
+            // Tawag/video/message sa isang tao: may alam na daan, hindi na hula.
+            task?.let { t ->
+                if (++steps > MAX_STEPS) {
+                    clearGuide()
+                    openPanel(svc.t(R.string.gabay_anything_else))
+                } else {
+                    guidePersonTask(svc, t, screen)
+                }
+                return@launch
+            }
 
             // Nakarating na (hal. bukas na ang Facebook) o masyado nang mahaba: tanungin kung may iba pa.
             val reached = reachedApp(svc, app, g)
@@ -379,6 +427,94 @@ object GabayOverlay {
         val h = ctx.resources.displayMetrics.heightPixels
         return Rect(w / 2 - ctx.dp(60), h * 6 / 10, w / 2 + ctx.dp(60), h * 6 / 10 + ctx.dp(120))
     }
+
+    /**
+     * Isang hakbang ng "tawagan / i-video call / i-message si X":
+     * nasa tawag na → tapos; nasa chat ni X → ang call button; nakikita si X → siya; Phone app → Contacts;
+     * may maisi-scroll → scroll; wala pa sa tamang app → papunta roon (Home → listahan ng apps).
+     */
+    private suspend fun guidePersonTask(svc: BantaiAccessibilityService, t: GabayIntent, screen: Screen) {
+        val person = t.person ?: return
+        clearGuide()
+        val buttons = screen.buttons
+        val target = targetAppLabel(svc, t)
+        val inTarget = appLabel(svc, screen.app)?.equals(target, ignoreCase = true) == true
+        fun find(words: List<String>, exclude: List<String> = emptyList()) = buttons.firstOrNull { b ->
+            val l = b.label.lowercase()
+            words.any { it in l } && exclude.none { it in l }
+        }
+        val firstName = person.lowercase().substringBefore(' ')
+        val personButton = buttons.firstOrNull { firstName in it.label.lowercase() }
+        Log.e(TAG, "task=${t.action} person=$person target=$target inTarget=$inTarget app=${screen.app} personVisible=${personButton != null}")
+
+        // Nasa tawag na.
+        if ((t.action == GabayIntent.Action.CALL || t.action == GabayIntent.Action.VIDEO_CALL) && find(END_CALL) != null) {
+            task = null; goal = null
+            val text = svc.t(R.string.gabay_calling, person)
+            showCard(text, offerCallApo = false)
+            Bantai.speaker(svc).speak(text)
+            return
+        }
+
+        if (!inTarget) {
+            // Papunta sa tamang app, gaya ng "Go to Messenger".
+            if (screen.app == launcherPackage(svc)) {
+                val byLabel = LinkedHashMap<String, Rect>()
+                for (b in buttons) PromptBuilder.gabayLabels(listOf(b.label)).firstOrNull()?.let { byLabel.putIfAbsent(it, b.bounds) }
+                guideToApp(svc, target, byLabel, screen.scrollable)
+            } else {
+                val text = svc.t(R.string.gabay_go_home)
+                showHighlight(homeArea(svc), text)
+                Bantai.speaker(svc).speak(text)
+            }
+            return
+        }
+
+        val callButton = when (t.action) {
+            GabayIntent.Action.VIDEO_CALL -> find(listOf("video"))
+            GabayIntent.Action.CALL -> find(listOf("audio call", "voice call", "call", "tawag"), exclude = listOf("video", "end", "log", "history"))
+            else -> null
+        }
+        when {
+            // Nasa chat/contact na ni X at may call button: iyon ang pipindutin.
+            personButton != null && callButton != null -> say(svc, callButton.bounds, svc.t(R.string.gabay_tap, callButton.label))
+            // Message: bukas na ang chat ni X.
+            t.action == GabayIntent.Action.MESSAGE && personButton != null && find(listOf("message", "aa", "type")) != null -> {
+                task = null; goal = null
+                val text = svc.t(R.string.gabay_chat_open, person)
+                showCard(text, offerCallApo = false)
+                Bantai.speaker(svc).speak(text)
+            }
+            personButton != null -> say(svc, personButton.bounds, svc.t(R.string.gabay_tap, person))
+            find(listOf("contacts", "contact", "people")) != null ->
+                find(listOf("contacts", "contact", "people"))!!.let { say(svc, it.bounds, svc.t(R.string.gabay_tap, it.label)) }
+            screen.scrollable && scrolls < MAX_SCROLLS -> {
+                scrolls++
+                showScrollHint(svc, buttons.mapNotNull { PromptBuilder.gabayLabels(listOf(it.label)).firstOrNull() }.toSet())
+            }
+            else -> {
+                task = null; goal = null
+                val text = svc.t(R.string.gabay_cannot_find_person, person)
+                showCard(text, offerCallApo = true)
+                Bantai.speaker(svc).speak(text)
+            }
+        }
+    }
+
+    private fun say(svc: BantaiAccessibilityService, rect: Rect, text: String) {
+        showHighlight(rect, text)
+        Bantai.speaker(svc).speak(text)
+    }
+
+    /** Kung saang app gagawin: ang binanggit ni Nanay, o ang karaniwan (tawag → Phone, video/message → Messenger). */
+    private fun targetAppLabel(ctx: Context, t: GabayIntent): String {
+        val wanted = t.app ?: if (t.action == GabayIntent.Action.CALL) "phone" else "messenger"
+        return installedAppIn(ctx, "open $wanted") ?: wanted.replaceFirstChar(Char::uppercase)
+    }
+
+    private fun appLabel(ctx: Context, pkg: String): String? = runCatching {
+        ctx.packageManager.getApplicationLabel(ctx.packageManager.getApplicationInfo(pkg, 0)).toString()
+    }.getOrNull()
 
     /** Pangalan ng app kung ito na ang hinahanap ni Nanay (hal. "go to facebook" at bukas ang Facebook). */
     private fun reachedApp(ctx: Context, app: String, goal: String): String? {
@@ -587,6 +723,8 @@ object GabayOverlay {
 
     private val QUOTED = Regex("\"([^\"]+)\"")
     private val WORDS = Regex("[a-z0-9]+")
+    private val PERSON_ACTIONS = setOf(GabayIntent.Action.CALL, GabayIntent.Action.VIDEO_CALL, GabayIntent.Action.MESSAGE)
+    private val END_CALL = listOf("end call", "hang up", "end", "ibaba")
     private val CLOCK = Regex("\\d{1,2}:\\d{2}.*")
     private val STOP_WORDS = Regex("\\b(ok|okay|okey|tama na|salamat|thank|thanks|stop|done|enough|wala na)\\b")
 

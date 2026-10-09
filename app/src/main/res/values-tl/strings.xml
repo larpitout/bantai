@@ -80,4 +80,8 @@
     <string name="gabay_scroll">Mag-scroll po pababa: i-slide pataas ang daliri sa gitna ng screen.</string>
     <string name="gabay_cannot_see">Hindi ko po makita ang screen na ito.</string>
     <string name="gabay_cannot_find">Hindi ko po makita ang %1$s. Gusto n\'yo po bang tawagan ang inyong Trusted Contact?</string>
+    <string name="gabay_ask_name">Ano po ang pangalan ng gusto ninyong tawagan?</string>
+    <string name="gabay_calling">Ayan na po, tinatawagan na po si %1$s.</string>
+    <string name="gabay_chat_open">Nandito na po ang chat ni %1$s. I-type na po ang mensahe ninyo.</string>
+    <string name="gabay_cannot_find_person">Hindi ko po makita si %1$s dito. Gusto n\'yo po bang tawagan ang inyong Trusted Contact?</string>
 </resources>

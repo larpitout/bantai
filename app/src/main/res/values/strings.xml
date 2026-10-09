@@ -80,4 +80,8 @@
     <string name="gabay_scroll">Scroll down: slide your finger up in the middle of the screen.</string>
     <string name="gabay_cannot_see">I can\'t see this screen.</string>
     <string name="gabay_cannot_find">I can\'t find %1$s. Do you want to call your trusted contact?</string>
+    <string name="gabay_ask_name">What is the name of the person you want to call?</string>
+    <string name="gabay_calling">There you go, you are now calling %1$s.</string>
+    <string name="gabay_chat_open">This is %1$s\'s chat. You can type your message now.</string>
+    <string name="gabay_cannot_find_person">I can\'t find %1$s here. Do you want to call your trusted contact?</string>
 </resources>
