@@ -2,6 +2,7 @@ package com.bantai.rules
 
 import com.bantai.model.RuleResult
 import com.bantai.R
+import com.bantai.model.ScamVerdict
 import java.util.Locale
 import java.util.regex.Pattern
 
@@ -81,6 +82,54 @@ object RuleFilter {
         return RuleResult(
             score = signals.size,
             signals = signals
+        )
+    }
+
+    /**
+     * ponytail: English, para sa ScamPipeline (walang Context). Ang overlay ay gumagamit ng
+     * [instantWarningRes] para naka-localize; pag-isahin kapag may Context na ang pipeline.
+     *
+     * Creates an immediate generic warning based purely on rule signals (for Score >= 2)
+     * while the on-device LLM is asynchronously generating a detailed explanation.
+     */
+    fun createInstantWarning(ruleResult: RuleResult): ScamVerdict {
+        val reason = when {
+            ruleResult.signals.contains("New Number / Impersonation") &&
+                    ruleResult.signals.contains("Money Request") ->
+                "Someone appears to be impersonating a relative asking for money from an unfamiliar number."
+
+            ruleResult.signals.contains("Account / OTP / Parcel") &&
+                    ruleResult.signals.contains("Suspicious Link") ->
+                "Suspicious link detected requesting sensitive account information or an OTP."
+
+            ruleResult.signals.contains("Prize / Raffle") ->
+                "Unsolicited prize or lottery claim detected, which is commonly a scam."
+
+            ruleResult.signals.contains("Suspicious Link") ->
+                "Message contains an unverified external link. Do not tap or open it."
+
+            else ->
+                "This message contains multiple common scam indicators."
+        }
+
+        val action = when {
+            ruleResult.signals.contains("New Number / Impersonation") ->
+                "Do not send money. Contact the person directly using their existing verified contact number."
+
+            ruleResult.signals.contains("Account / OTP / Parcel") ->
+                "Never share your OTP or PIN, and do not click the link."
+
+            ruleResult.signals.contains("Suspicious Link") ->
+                "Do not click the link or provide any personal details."
+
+            else ->
+                "Do not send money or sensitive personal information. Verify with a family member first."
+        }
+
+        return ScamVerdict(
+            isScam = true,
+            reason = reason,
+            action = action
         )
     }
 
