@@ -230,12 +230,6 @@ class DashboardActivity : AppCompatActivity() {
                 addView(row(getString(R.string.field_kind), chip(last.kind, ROSE_BG, ROSE)))
             }
         })
-
-        content.addView(button(getString(R.string.btn_test_alert), RED) {
-            val loc = Bantai.localized(this)
-            val (reason, action) = RuleFilter.instantWarningRes(RuleFilter.score(SAMPLE_SCAM))
-            ScamAlertOverlay.show(this, loc.getString(reason), loc.getString(action), message = SAMPLE_SCAM)
-        })
     }
 
     // ---------- Babala: insights + audit ----------
@@ -555,6 +549,5 @@ class DashboardActivity : AppCompatActivity() {
         val ROSE_BG = Color.parseColor("#FFF1F2")
         val AMBER = Color.parseColor("#B45309")
         val AMBER_BG = Color.parseColor("#FFFBEB")
-        const val SAMPLE_SCAM = "Ma si Junjun to bagong number ko padala ka 5k sa gcash emergency lang"
     }
 }

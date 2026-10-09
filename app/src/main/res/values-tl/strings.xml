@@ -129,7 +129,6 @@
     <string name="field_signals">Senyales</string>
     <string name="verdict_scam">SCAM</string>
     <string name="verdict_safe">LIGTAS</string>
-    <string name="btn_test_alert">I-test ang babala</string>
     <string name="nav_home">Home</string>
     <string name="nav_alerts">Babala</string>
     <string name="nav_check">Suriin</string>
