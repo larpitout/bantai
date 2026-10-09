@@ -2,7 +2,12 @@
 <resources>
     <!-- App Identity -->
     <string name="app_name">Bantai</string>
-    <string name="app_tagline">Hindi na papauto</string>
+    <string name="app_tagline">Hindi na pauuto</string>
+
+    <!-- Welcome Screen -->
+    <string name="welcome_btn_start">Get Started</string>
+    <string name="welcome_footnote">Quick 1-minute setup • Runs 100% offline</string>
+    <string name="welcome_logo_desc">Bantai logo</string>
 
     <!-- Overlay Warning Dialog Buttons -->
     <string name="alert_ai_badge">Checked by on-device AI</string>

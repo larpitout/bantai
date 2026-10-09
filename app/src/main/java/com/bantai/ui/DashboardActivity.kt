@@ -22,7 +22,7 @@ import java.util.Date
 
 /**
  * Dashboard para kay Apo: proteksyon, bilang ng nasuri at na-flag, insights, at listahan ng mga babala.
- * Unang screen ng app; ang setup ay bubukas kapag hindi pa tapos ang onboarding.
+ * Binubuksan ng Welcome screen pagkatapos ng onboarding, at ng "Posibleng scam" na notification.
  */
 class DashboardActivity : AppCompatActivity() {
 
@@ -35,9 +35,6 @@ class DashboardActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (!GuardianPreferences(this).isOnboardingCompleted) {
-            startActivity(Intent(this, SetupActivity::class.java))
-        }
         root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             val pad = dp(20)
