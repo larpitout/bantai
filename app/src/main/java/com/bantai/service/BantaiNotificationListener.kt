@@ -135,10 +135,18 @@ class BantaiNotificationListener : NotificationListenerService() {
                     val fromAi = check.source == VerdictSource.LLM
                     if (shown && !fromAi) return@collect
                     // Template mula sa rules ang laging ipinapakita; si Gemma ang nagpapasya kung scam.
-                    val (reason, action) = warningText(message, check.rule)
+                    val (ruleReason, action) = warningText(message, check.rule)
+                    // AI ang bida: kapag si Qwen/Gemma ang nagpasya, ang sarili niyang paliwanag ang ipapakita.
+                    val reason = check.verdict.reason.takeIf { fromAi && it.isNotBlank() && it.length < 300 } ?: ruleReason
                     val signals = signalNames(check.rule.signals)
+                    // Kasaysayan (audit): sa huling hatol, para alam kung AI o rules ang nagpasya.
+                    if (check.isFinal) {
+                        com.bantai.data.ScamHistory.add(
+                            this@BantaiNotificationListener, sender, message, reason, kindOf(message, check.rule.signals),
+                            check.rule.score, action, signals, if (fromAi) Bantai.modelName() else null,
+                        )
+                    }
                     if (!shown) {
-                        com.bantai.data.ScamHistory.add(this@BantaiNotificationListener, sender, message, reason, kindOf(message, check.rule.signals), check.rule.score)
                         ScamNotifier.notify(this@BantaiNotificationListener, sender, reason, openChat)
                     }
                     val a11y = BantaiAccessibilityService.instance

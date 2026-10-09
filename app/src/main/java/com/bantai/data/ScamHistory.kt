@@ -26,12 +26,20 @@ object ScamHistory {
         val reason: String,
         val kind: String,
         val score: Int,
+        val action: String = "",
+        val signals: List<String> = emptyList(),
+        /** Pangalan ng AI model kung siya ang nagpasya; null kapag rules. */
+        val aiModel: String? = null,
     )
 
-    fun add(context: Context, sender: String, message: String, reason: String, kind: String, score: Int) {
+    fun add(
+        context: Context, sender: String, message: String, reason: String, kind: String, score: Int,
+        action: String = "", signals: List<String> = emptyList(), aiModel: String? = null,
+    ) {
         val items = JSONArray().put(
             JSONObject().put("t", System.currentTimeMillis()).put("s", sender).put("m", message.take(160))
                 .put("r", reason).put("k", kind).put("c", score)
+                .put("a", action).put("g", JSONArray(signals)).put("ai", aiModel ?: "")
         )
         val old = read(context)
         for (i in 0 until minOf(old.length(), MAX - 1)) items.put(old.get(i))
@@ -42,7 +50,11 @@ object ScamHistory {
         val arr = read(context)
         return (0 until arr.length()).map { i ->
             val o = arr.getJSONObject(i)
-            Item(o.getLong("t"), o.optString("s"), o.optString("m"), o.optString("r"), o.optString("k"), o.optInt("c"))
+            val g = o.optJSONArray("g")
+            Item(
+                o.getLong("t"), o.optString("s"), o.optString("m"), o.optString("r"), o.optString("k"), o.optInt("c"),
+                o.optString("a"), (0 until (g?.length() ?: 0)).map { g!!.getString(it) }, o.optString("ai").ifBlank { null },
+            )
         }
     }
 

@@ -154,4 +154,11 @@
     <string name="contact_phone_hint">Numero ng Trusted Contact</string>
     <string name="perm_on">Naka-on</string>
     <string name="perm_off">I-on</string>
+    <string name="btn_back">Bumalik</string>
+    <string name="card_message">Mensahe</string>
+    <string name="card_audit">Audit</string>
+    <string name="field_risk">Panganib</string>
+    <string name="field_decided_by">Sinuri ng</string>
+    <string name="decided_by_ai_model">AI sa phone (%1$s)</string>
+    <string name="chip_ai">AI</string>
 </resources>

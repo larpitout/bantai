@@ -154,4 +154,11 @@
     <string name="contact_phone_hint">Trusted contact phone number</string>
     <string name="perm_on">On</string>
     <string name="perm_off">Turn on</string>
+    <string name="btn_back">Back</string>
+    <string name="card_message">Message</string>
+    <string name="card_audit">Audit</string>
+    <string name="field_risk">Risk</string>
+    <string name="field_decided_by">Checked by</string>
+    <string name="decided_by_ai_model">On-device AI (%1$s)</string>
+    <string name="chip_ai">AI</string>
 </resources>

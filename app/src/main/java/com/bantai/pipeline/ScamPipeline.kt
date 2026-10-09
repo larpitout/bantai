@@ -37,6 +37,8 @@ data class ScamCheck(
  */
 class ScamPipeline(
     private val engine: LlmEngine,
+    /** Wika ng paliwanag ng AI ("English" o "Filipino"). */
+    private val language: String = "English",
     private val timeoutMs: Long = DEFAULT_TIMEOUT_MS,
 ) {
 
@@ -68,7 +70,7 @@ class ScamPipeline(
 
         val raw = try {
             withTimeoutOrNull(timeoutMs) {
-                engine.generate(PromptBuilder.buildScamPrompt(message, rule.signals))
+                engine.generate(PromptBuilder.buildScamPrompt(message, rule.signals, language))
             }
         } catch (e: CancellationException) {
             throw e
@@ -81,7 +83,7 @@ class ScamPipeline(
     }
 
     companion object {
-        const val DEFAULT_TIMEOUT_MS = 15_000L
+        const val DEFAULT_TIMEOUT_MS = 25_000L
 
         private val VERDICT_LINE = Regex("^\\s*(HATOL|VERDICT)\\s*:", setOf(RegexOption.IGNORE_CASE, RegexOption.MULTILINE))
 

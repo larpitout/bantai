@@ -50,6 +50,9 @@ class DashboardActivity : AppCompatActivity() {
     private var tab = Tab.HOME
     private var checkJob: Job? = null
 
+    /** Babalang binuksan sa Alerts tab (audit); null = listahan. */
+    private var selected: ScamHistory.Item? = null
+
     // Iisang wika sa buong app (pareho ng babala).
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(Bantai.localized(newBase))
@@ -80,6 +83,13 @@ class DashboardActivity : AppCompatActivity() {
             insets
         }
         setContentView(screen)
+
+        // Back sa audit: balik sa listahan, hindi labas ng app.
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (selected != null) { selected = null; render() } else { isEnabled = false; onBackPressedDispatcher.onBackPressed() }
+            }
+        })
     }
 
     override fun onResume() {
@@ -167,6 +177,7 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun switchTo(t: Tab) {
         tab = t
+        selected = null
         render()
     }
 
@@ -237,9 +248,10 @@ class DashboardActivity : AppCompatActivity() {
     // ---------- Babala: insights + audit ----------
 
     private fun renderAlerts() {
+        selected?.let { return renderAudit(it) }
         val items = ScamHistory.list(this)
         content.addView(card {
-            addView(label(getString(if (Bantai.modelName() != null) R.string.dashboard_ai_insights else R.string.dashboard_insights)))
+            addView(label(getString(R.string.dashboard_insights)))
             addView(text(insights(items).joinToString("\n\n") { "• $it" }, 16f, color = INK))
         })
         if (items.isNotEmpty()) {
@@ -253,18 +265,65 @@ class DashboardActivity : AppCompatActivity() {
         content.addView(sectionTitle(getString(R.string.dashboard_history)))
         if (items.isEmpty()) content.addView(card { addView(text(getString(R.string.history_empty), 16f, color = MUTED)) })
         val fmt = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+        // Isang row bawat mensahe; pindutin para makita ang buong audit.
         for (item in items) {
             content.addView(card {
-                addView(text("${fmt.format(Date(item.time))}  ·  ${item.sender}", 13f, color = MUTED))
-                addView(text("\"${item.message}\"", 16f, color = INK).apply { setPadding(0, dp(6), 0, dp(8)) })
+                isClickable = true
+                setOnClickListener { selected = item; render() }
+                addView(LinearLayout(context).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = Gravity.CENTER_VERTICAL
+                    addView(text(item.sender, 16f, bold = true, color = INK).apply { layoutParams = LinearLayout.LayoutParams(0, -2, 1f) })
+                    addView(text(fmt.format(Date(item.time)), 12f, color = MUTED).apply { layoutParams = LinearLayout.LayoutParams(-2, -2) })
+                })
+                addView(text(item.message, 15f, color = MUTED).apply {
+                    maxLines = 1
+                    ellipsize = android.text.TextUtils.TruncateAt.END
+                    setPadding(0, dp(4), 0, dp(8))
+                })
                 addView(LinearLayout(context).apply {
                     orientation = LinearLayout.HORIZONTAL
                     addView(chip(item.kind, ROSE_BG, ROSE))
-                    addView(chip(riskLabel(item.score), AMBER_BG, AMBER).apply {
-                        (layoutParams as LinearLayout.LayoutParams).marginStart = dp(6)
-                    })
+                    addView(chip(riskLabel(item.score), AMBER_BG, AMBER).apply { (layoutParams as LinearLayout.LayoutParams).marginStart = dp(6) })
+                    if (item.aiModel != null) {
+                        addView(chip(getString(R.string.chip_ai), Color.parseColor("#EFF6FF"), BLUE).apply { (layoutParams as LinearLayout.LayoutParams).marginStart = dp(6) })
+                    }
                 })
-                addView(text("→ ${item.reason}", 15f, color = INK).apply { setPadding(0, dp(8), 0, 0) })
+            })
+        }
+    }
+
+    /** Buong audit ng isang babala. */
+    private fun renderAudit(item: ScamHistory.Item) {
+        val fmt = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
+        content.addView(text("← " + getString(R.string.btn_back), 16f, bold = true, color = BLUE).apply {
+            setPadding(dp(4), dp(10), 0, dp(4))
+            isClickable = true
+            setOnClickListener { selected = null; render() }
+        })
+        content.addView(card {
+            addView(label(getString(R.string.card_message)))
+            addView(text("\"${item.message}\"", 17f, color = INK))
+            addView(text("${item.sender}  ·  ${fmt.format(Date(item.time))}", 13f, color = MUTED).apply { setPadding(0, dp(8), 0, 0) })
+        })
+        content.addView(card {
+            addView(label(getString(R.string.card_audit)))
+            addView(row(getString(R.string.field_verdict), verdictChip(true)))
+            addView(row(getString(R.string.field_risk), chip(riskLabel(item.score), AMBER_BG, AMBER)))
+            addView(row(getString(R.string.field_kind), chip(item.kind, ROSE_BG, ROSE)))
+            addView(row(getString(R.string.field_decided_by), text(
+                item.aiModel?.let { getString(R.string.decided_by_ai_model, it) } ?: getString(R.string.decided_by_rules), 15f, bold = true,
+                color = if (item.aiModel != null) BLUE else INK,
+            )))
+            addView(row(getString(R.string.field_reason), text(item.reason, 15f, color = INK)))
+            if (item.action.isNotBlank()) addView(row(getString(R.string.field_action), text(item.action, 15f, bold = true, color = RED)))
+            if (item.signals.isNotEmpty()) addView(row(getString(R.string.field_signals), text(item.signals.joinToString("\n") { "• $it" }, 15f, color = INK)))
+        })
+        val prefs = GuardianPreferences(this)
+        if (prefs.apoPhone.isNotBlank()) {
+            content.addView(button(getString(R.string.btn_tell_apo), BLUE) {
+                val body = Bantai.localized(this).getString(R.string.tell_apo_body, item.message.take(160))
+                startActivity(Intent(Intent.ACTION_SENDTO, android.net.Uri.parse("smsto:${prefs.apoPhone}")).putExtra("sms_body", body))
             })
         }
     }

@@ -90,7 +90,7 @@ class ScamPipelineTest {
     fun timeoutFallsBackToRuleVerdict() = runTest {
         val engine = FakeEngine(delayMs = 0)
         engine.load()
-        val slow = FakeEngine(delayMs = 20_000)
+        val slow = FakeEngine(delayMs = ScamPipeline.DEFAULT_TIMEOUT_MS + 5_000)
         slow.load()
 
         val fast = ScamPipeline(engine).check(ONE_SIGNAL_TEXT).toList()
@@ -139,12 +139,14 @@ class ScamPipelineTest {
 
         assertTrue(prompt.contains(SCAM_TEXT))
         assertTrue(prompt.contains("Money Request"))
-        assertTrue(prompt.contains("HATOL:"))
-        val words = prompt.split(Regex("\\s+")).size
-        assertTrue("Prompt is $words words", words <= 50)
+        // Isang buong halimbawa (hindi template na makokopya) at ang format na binabasa ng ScamParser.
+        assertTrue(prompt.contains("VERDICT: SCAM"))
+        assertTrue(prompt.contains("REASON:"))
+        assertTrue(!prompt.contains("SCAM or LIGTAS"))
+        assertTrue(PromptBuilder.buildScamPrompt(SCAM_TEXT, language = "Filipino").contains("REASON in Filipino"))
 
         val long = PromptBuilder.buildScamPrompt("a".repeat(2000))
-        assertTrue(long.length < PromptBuilder.MAX_MESSAGE_CHARS + 200)
+        assertTrue(!long.contains("a".repeat(PromptBuilder.MAX_MESSAGE_CHARS + 1)))
     }
 
     private companion object {
