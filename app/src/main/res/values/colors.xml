@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Galing sa bantai_ui (tailwind.config.js, "shazam" palette + amber caution). -->
+<resources>
+    <color name="bantai_primary">#0A5BC4</color>
+    <color name="bantai_pale">#E6F0FC</color>
+    <color name="bantai_pale_border">#C5DCFA</color>
+    <color name="bantai_bg">#F6F9FE</color>
+    <color name="bantai_border">#C5CEDA</color>
+    <color name="bantai_text">#1F2937</color>
+    <color name="bantai_text_muted">#4B5563</color>
+    <color name="caution_border">#FCD34D</color>
+    <color name="caution_text">#78350F</color>
+</resources>

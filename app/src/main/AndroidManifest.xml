@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Babala sa ibabaw ng ibang app -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
     <!-- Crucial for Android 11+ to discover and bind to Google TextToSpeech engine -->
     <queries>
         <intent>

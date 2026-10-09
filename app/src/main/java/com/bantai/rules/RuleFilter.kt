@@ -1,6 +1,7 @@
 package com.bantai.rules
 
 import com.bantai.model.RuleResult
+import com.bantai.R
 import com.bantai.model.ScamVerdict
 import java.util.Locale
 import java.util.regex.Pattern
@@ -85,6 +86,9 @@ object RuleFilter {
     }
 
     /**
+     * ponytail: English, para sa ScamPipeline (walang Context). Ang overlay ay gumagamit ng
+     * [instantWarningRes] para naka-localize; pag-isahin kapag may Context na ang pipeline.
+     *
      * Creates an immediate generic warning based purely on rule signals (for Score >= 2)
      * while the on-device LLM is asynchronously generating a detailed explanation.
      */
@@ -127,6 +131,30 @@ object RuleFilter {
             reason = reason,
             action = action
         )
+    }
+
+    /**
+     * Babala base lang sa rule signals, bilang (reason, action) string resource ids,
+     * para naka-localize (values / values-tl) at hindi na kailangan ng LLM.
+     */
+    fun instantWarningRes(ruleResult: RuleResult): Pair<Int, Int> {
+        val s = ruleResult.signals
+        return when {
+            "New Number / Impersonation" in s && "Money Request" in s ->
+                R.string.warning_impersonation_reason to R.string.warning_impersonation_action
+            "Account / OTP / Parcel" in s && "Suspicious Link" in s ->
+                R.string.warning_account_otp_reason to R.string.warning_account_otp_action
+            "Prize / Raffle" in s ->
+                R.string.warning_prize_reason to R.string.warning_prize_action
+            "Suspicious Link" in s ->
+                R.string.warning_link_reason to R.string.warning_link_action
+            "New Number / Impersonation" in s ->
+                R.string.warning_impersonation_reason to R.string.warning_impersonation_action
+            "Account / OTP / Parcel" in s ->
+                R.string.warning_account_otp_reason to R.string.warning_account_otp_action
+            else ->
+                R.string.warning_generic_reason to R.string.warning_generic_action
+        }
     }
 }
 

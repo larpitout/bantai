@@ -46,6 +46,8 @@
     <string name="setup_perm_notification_desc">Allows Bantai to inspect incoming SMS and chats for scams.</string>
     <string name="setup_perm_accessibility_title">Accessibility Service</string>
     <string name="setup_perm_accessibility_desc">Allows Bantai to display warning overlays and assist on screen.</string>
+    <string name="setup_perm_overlay_title">Display Over Other Apps</string>
+    <string name="setup_perm_overlay_desc">Lets Bantai show the scam warning on top of any app.</string>
     <string name="setup_btn_save">Save Settings</string>
     <string name="setup_btn_test">Test Scam Alert</string>
     <string name="status_granted">Granted</string>

@@ -1,8 +1,10 @@
 package com.bantai.ui
 
-import android.app.AlertDialog
+import android.content.Intent
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -11,7 +13,6 @@ import androidx.appcompat.app.AppCompatActivity
 import com.bantai.R
 import com.bantai.data.GuardianPreferences
 import com.bantai.rules.RuleFilter
-import com.bantai.service.Speaker
 import com.bantai.util.PermissionHelper
 
 /**
@@ -26,7 +27,6 @@ import com.bantai.util.PermissionHelper
 class SetupActivity : AppCompatActivity() {
 
     private lateinit var prefs: GuardianPreferences
-    private var speaker: Speaker? = null
 
     private lateinit var etApoName: EditText
     private lateinit var etApoPhone: EditText
@@ -35,6 +35,8 @@ class SetupActivity : AppCompatActivity() {
     private lateinit var tvAccessibilityStatus: TextView
     private lateinit var layoutNotificationPerm: android.view.View
     private lateinit var layoutAccessibilityPerm: android.view.View
+    private lateinit var tvOverlayStatus: TextView
+    private lateinit var layoutOverlayPerm: android.view.View
     private lateinit var btnTest: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,7 +44,6 @@ class SetupActivity : AppCompatActivity() {
         setContentView(R.layout.activity_setup)
 
         prefs = GuardianPreferences(this)
-        speaker = Speaker(this)
 
         initViews()
         loadPreferences()
@@ -54,12 +55,6 @@ class SetupActivity : AppCompatActivity() {
         updatePermissionStatuses()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        speaker?.shutdown()
-        speaker = null
-    }
-
     private fun initViews() {
         etApoName = findViewById(R.id.etApoName)
         etApoPhone = findViewById(R.id.etApoPhone)
@@ -68,6 +63,8 @@ class SetupActivity : AppCompatActivity() {
         tvAccessibilityStatus = findViewById(R.id.tvAccessibilityStatus)
         layoutNotificationPerm = findViewById(R.id.layoutNotificationPerm)
         layoutAccessibilityPerm = findViewById(R.id.layoutAccessibilityPerm)
+        tvOverlayStatus = findViewById(R.id.tvOverlayStatus)
+        layoutOverlayPerm = findViewById(R.id.layoutOverlayPerm)
         btnTest = findViewById(R.id.btnTest)
     }
 
@@ -101,6 +98,12 @@ class SetupActivity : AppCompatActivity() {
             startActivity(PermissionHelper.getAccessibilitySettingsIntent())
         }
 
+        layoutOverlayPerm.setOnClickListener {
+            startActivity(
+                Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
+            )
+        }
+
         btnTest.setOnClickListener {
             triggerTestScamAlert()
         }
@@ -110,6 +113,10 @@ class SetupActivity : AppCompatActivity() {
      * Checks permission status in real-time and updates the UI indicators.
      */
     fun updatePermissionStatuses() {
+        val overlayGranted = ScamAlertOverlay.canShow(this)
+        tvOverlayStatus.setText(if (overlayGranted) R.string.status_granted else R.string.status_not_granted)
+        tvOverlayStatus.setTextColor(Color.parseColor(if (overlayGranted) "#198754" else "#DC3545"))
+
         val notifGranted = PermissionHelper.isNotificationAccessGranted(this)
         if (notifGranted) {
             tvNotificationStatus.setText(R.string.status_granted)
@@ -130,30 +137,15 @@ class SetupActivity : AppCompatActivity() {
     }
 
     /**
-     * Triggers a realistic test scam evaluation and alert.
+     * Ipinapakita ang totoong overlay na babala gamit ang sample na scam.
      */
     private fun triggerTestScamAlert() {
-        val sampleScamText = "Congratulations! Nanalo ka ng P50,000 sa ayuda promo. I-click ang bit.ly/claim-ayuda agad bago ma-expire!"
-
-        val result = RuleFilter.score(sampleScamText)
-        val warning = RuleFilter.createInstantWarning(result)
-
-        val reasonText = warning?.reason ?: getString(R.string.warning_generic_reason)
-        val actionText = warning?.action ?: getString(R.string.warning_generic_action)
-
-        // Speak alert using TTS
-        val speechText = "$reasonText. $actionText"
-        speaker?.speak(speechText)
-
-        // Show confirmation alert dialog
-        AlertDialog.Builder(this)
-            .setTitle(R.string.warning_title)
-            .setMessage("$reasonText\n\n$actionText\n\n(Signals: ${result.signals.joinToString(", ")})")
-            .setPositiveButton(R.string.btn_dismiss) { dialog, _ ->
-                speaker?.stop()
-                dialog.dismiss()
-            }
-            .setCancelable(false)
-            .show()
+        if (!ScamAlertOverlay.canShow(this)) {
+            Toast.makeText(this, R.string.setup_perm_overlay_desc, Toast.LENGTH_LONG).show()
+            return
+        }
+        val sampleScamText = "Ma si Junjun to bagong number ko padala ka 5k sa gcash emergency lang"
+        val (reasonRes, actionRes) = RuleFilter.instantWarningRes(RuleFilter.score(sampleScamText))
+        ScamAlertOverlay.show(this, getString(reasonRes), getString(actionRes))
     }
 }
