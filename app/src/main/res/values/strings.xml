@@ -79,4 +79,6 @@
     <string name="gabay_tap">Tap "%1$s".</string>
     <string name="gabay_search_app">Tap "%1$s", then type %2$s.</string>
     <string name="gabay_open_drawer">Swipe up from the middle of the screen to see all your apps.</string>
+    <string name="gabay_scroll">Scroll down: slide your finger up in the middle of the screen.</string>
+    <string name="gabay_cannot_see">I can\'t see this screen.</string>
 </resources>

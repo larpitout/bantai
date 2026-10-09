@@ -61,7 +61,10 @@ object GabayOverlay {
     /** Layunin ni Nanay sa kasalukuyang usapan (hal. "go to facebook"); null kapag walang usapan. */
     private var goal: String? = null
     private var steps = 0
+    private var scrolls = 0
+    private var emptyReads = 0
     private const val MAX_STEPS = 8
+    private const val MAX_SCROLLS = 3
 
     private val wm get() = service!!.getSystemService(WindowManager::class.java)
 
@@ -169,6 +172,8 @@ object GabayOverlay {
     private fun startGoal(text: String) {
         goal = text
         steps = 0
+        scrolls = 0
+        emptyReads = 0
         step()
     }
 
@@ -190,7 +195,14 @@ object GabayOverlay {
         job?.cancel()
         job = Bantai.scope.launch {
             delay(700) // hayaang mawala muna ang panel at ang VoiceActivity bago basahin ang screen
-            val (app, buttons) = svc.readButtons()
+            val screen = svc.readButtons()
+            val (app, buttons) = screen.app to screen.buttons
+            // Hindi pa nababasa ang screen (hal. nagpapalit pa ng app): subukan ulit, huwag agad ituro ang Home.
+            if (app.isEmpty() || buttons.isEmpty()) {
+                if (++emptyReads <= 3) { delay(800); step() } else showCard(svc.getString(R.string.gabay_cannot_see), offerCallApo = true)
+                return@launch
+            }
+            emptyReads = 0
 
             // Nakarating na (hal. bukas na ang Facebook) o masyado nang mahaba: tanungin kung may iba pa.
             val reached = reachedApp(svc, app, g)
@@ -210,10 +222,19 @@ object GabayOverlay {
             val wantedApp = installedAppIn(svc, g)
             if (wantedApp != null && app == launcherPackage(svc)) {
                 clearGuide()
-                guideToApp(svc, wantedApp, byLabel)
+                guideToApp(svc, wantedApp, byLabel, screen.scrollable)
                 return@launch
             }
             val candidates = GabayRanker.candidates(g, labels)
+
+            // Walang tugma pero may maisi-scroll pa: baka nasa ibaba lang.
+            // (Hindi kapag app ang hinahanap: sa Home/listahan ng apps iyon, hindi sa loob ng ibang app.)
+            if (wantedApp == null && candidates === labels && app != launcherPackage(svc) && screen.scrollable && scrolls < MAX_SCROLLS) {
+                scrolls++
+                clearGuide()
+                showScrollHint(svc, labels.toSet())
+                return@launch
+            }
 
             // Walang kahit anong tugma sa screen ng isang app: ituro muna ang Home, doon nagsisimula ang lahat.
             if (candidates === labels && app != launcherPackage(svc)) {
@@ -231,7 +252,7 @@ object GabayOverlay {
 
             clearGuide()
             // Lumipat na si Nanay sa ibang app habang nag-iisip si Gemma: luma na ang sagot; susunod na hakbang na lang.
-            if (svc.readButtons().first != app) return@launch
+            if (svc.readButtons().app != app) return@launch
             if (result.source == GabaySource.LLM && target != null) {
                 showHighlight(target, result.steps.first())
                 Bantai.speaker(svc).speak(result.steps.first())
@@ -248,9 +269,15 @@ object GabayOverlay {
      * nakikita → bilugan; may "Search for apps" → ituro ito at ang ita-type; wala pa → ituro ang pag-swipe pataas.
      * Walang "click" kapag nag-swipe o nag-type, kaya binabantayan ang screen hanggang magbago.
      */
-    private suspend fun guideToApp(svc: BantaiAccessibilityService, appName: String, byLabel: Map<String, Rect>) {
+    private suspend fun guideToApp(svc: BantaiAccessibilityService, appName: String, byLabel: Map<String, Rect>, scrollable: Boolean) {
         val visible = byLabel.entries.firstOrNull { it.key.equals(appName, ignoreCase = true) }
         val search = byLabel.entries.firstOrNull { it.key.contains("search", true) && it.key.contains("app", true) }
+        // Nasa listahan na ng apps pero hindi pa kita: scroll muna (mas madali kay Nanay kaysa mag-type).
+        if (visible == null && search != null && scrollable && scrolls < MAX_SCROLLS) {
+            scrolls++
+            showScrollHint(svc, byLabel.keys)
+            return
+        }
         val (rect, text) = when {
             visible != null -> visible.value to svc.getString(R.string.gabay_tap, appName)
             search != null -> search.value to svc.getString(R.string.gabay_search_app, search.key, appName)
@@ -266,8 +293,26 @@ object GabayOverlay {
         repeat(15) {
             delay(1_500)
             if (goal != g) return
-            val now = svc.readButtons().second.map { it.label }.toSet()
+            val now = svc.readButtons().buttons.map { it.label }.toSet()
             if (now != before && (now.any { it.equals(appName, true) } || search == null)) {
+                clearGuide()
+                step()
+                return
+            }
+        }
+    }
+
+    /** "Mag-scroll po pababa", tapos hintayin na magbago ang screen bago ang susunod na hakbang. */
+    private suspend fun showScrollHint(svc: BantaiAccessibilityService, before: Set<String>) {
+        val text = svc.getString(R.string.gabay_scroll)
+        Log.e(TAG, "q=$goal -> SCROLL $scrolls")
+        showHighlight(drawerArea(svc), text)
+        Bantai.speaker(svc).speak(text)
+        val g = goal
+        repeat(15) {
+            delay(1_500)
+            if (goal != g) return
+            if (svc.readButtons().buttons.map { it.label }.toSet() != before) {
                 clearGuide()
                 step()
                 return
@@ -304,7 +349,10 @@ object GabayOverlay {
     }
 
     private fun launcherPackage(ctx: Context): String? =
-        ctx.packageManager.resolveActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), 0)
+        ctx.packageManager.resolveActivity(
+            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),
+            android.content.pm.PackageManager.MATCH_DEFAULT_ONLY,
+        )
             ?.activityInfo?.packageName
 
     /** Gitna-ibaba ng screen: ang Home button o ang swipe bar. Wala ito sa accessibility tree ng app. */

@@ -14,6 +14,11 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <!-- Gabay: alamin kung alin ang Home screen app -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
     </queries>
 
     <!-- Crucial for Android 11+ to discover and bind to Google TextToSpeech engine -->

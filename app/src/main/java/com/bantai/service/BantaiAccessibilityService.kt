@@ -11,6 +11,9 @@ import com.bantai.ui.GabayOverlay
 /** Isang pinipindot na button sa screen: pangalan at kung nasaan ito. */
 data class ScreenButton(val label: String, val bounds: Rect)
 
+/** Ang app na bukas, ang mga button nito, at kung may maisi-scroll pa (para maituro ang pag-scroll). */
+data class Screen(val app: String, val buttons: List<ScreenButton>, val scrollable: Boolean)
+
 /**
  * Para sa Gabay: binabasa ang mga BUTTON sa screen (hindi ang laman ng chats) para maituro kay Nanay.
  * Hindi ito pumipindot para sa kanya; ang chathead at highlight lang ang ipinapakita (TYPE_ACCESSIBILITY_OVERLAY).
@@ -50,13 +53,15 @@ class BantaiAccessibilityService : AccessibilityService() {
 
     override fun onInterrupt() {}
 
-    /** Pangalan ng app na bukas, at ang mga nakikitang button nito sa ayos mula itaas pababa. */
-    fun readButtons(): Pair<String, List<ScreenButton>> {
-        val root = rootInActiveWindow ?: return "" to emptyList()
+    /** Ang app na bukas at ang mga nakikitang button nito sa ayos mula itaas pababa. */
+    fun readButtons(): Screen {
+        val root = rootInActiveWindow ?: return Screen("", emptyList(), scrollable = false)
         val app = root.packageName?.toString().orEmpty()
         val out = mutableListOf<ScreenButton>()
+        var scrollable = false
 
         fun visit(node: AccessibilityNodeInfo) {
+            if (node.isScrollable && node.isVisibleToUser) scrollable = true
             if (out.size >= MAX_BUTTONS) return
             if (node.isClickable && node.isVisibleToUser) {
                 val label = labelOf(node)
@@ -68,7 +73,7 @@ class BantaiAccessibilityService : AccessibilityService() {
             for (i in 0 until node.childCount) node.getChild(i)?.let(::visit)
         }
         visit(root)
-        return app to out.sortedWith(compareBy({ it.bounds.top }, { it.bounds.left }))
+        return Screen(app, out.sortedWith(compareBy({ it.bounds.top }, { it.bounds.left })), scrollable)
     }
 
     /** Sariling text o paglalarawan ng button; kung wala, ang unang text sa loob nito (hal. icon + label). */
