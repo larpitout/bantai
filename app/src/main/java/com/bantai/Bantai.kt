@@ -98,13 +98,13 @@ object Bantai {
     /**
      * Context na sumusunod sa wikang pinili para sa app (Settings → Apps → Bantai → Language).
      * Mga Activity lang ang kusang sumusunod dito; ang babala ay galing sa service kaya kailangan ito.
-     * Walang napili: Tagalog, dahil para kay Nanay ang mga babala.
+     * Walang napili: English. Tagalog kapag iyon ang pinili sa Language ng app.
      */
     fun localized(context: Context): Context {
         val chosen = if (Build.VERSION.SDK_INT >= 33) {
             context.getSystemService(LocaleManager::class.java).applicationLocales
         } else LocaleList.getEmptyLocaleList()
-        val locales = if (chosen.isEmpty) LocaleList(Locale("tl")) else chosen
+        val locales = if (chosen.isEmpty) LocaleList(Locale.ENGLISH) else chosen
         val config = Configuration(context.resources.configuration).apply { setLocales(locales) }
         return context.createConfigurationContext(config)
     }
