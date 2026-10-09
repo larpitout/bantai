@@ -59,4 +59,14 @@
 
     <!-- Accessibility Service -->
     <string name="accessibility_service_description">Bantai reads visible screen text to detect scams and provides safety navigation actions for seniors.</string>
+    <!-- Gabay -->
+    <string name="gabay_bubble_desc">Bantai helper</string>
+    <string name="gabay_panel_title">What do you need help with?</string>
+    <string name="gabay_next_step">➜ Next step</string>
+    <string name="gabay_opt_message">💬 Send a message</string>
+    <string name="gabay_opt_video">📹 Video call</string>
+    <string name="gabay_opt_photo">📸 Send a picture</string>
+    <string name="gabay_opt_search">🔍 Find a person</string>
+    <string name="gabay_close">Close</string>
+    <string name="gabay_thinking">One moment, let me look at your screen…</string>
 </resources>

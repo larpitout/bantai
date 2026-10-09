@@ -59,4 +59,14 @@
 
     <!-- Accessibility Service -->
     <string name="accessibility_service_description">Binabasa ni Bantai ang text sa screen para maka-detect ng scam at tulungan ang nakatatanda.</string>
+    <!-- Gabay -->
+    <string name="gabay_bubble_desc">Katulong na si Bantai</string>
+    <string name="gabay_panel_title">Ano po\'ng kailangan, Nay?</string>
+    <string name="gabay_next_step">➜ Susunod na hakbang</string>
+    <string name="gabay_opt_message">💬 Mag-message</string>
+    <string name="gabay_opt_video">📹 Mag-video call</string>
+    <string name="gabay_opt_photo">📸 Mag-send ng picture</string>
+    <string name="gabay_opt_search">🔍 Maghanap ng tao</string>
+    <string name="gabay_close">Isara</string>
+    <string name="gabay_thinking">Sandali lang po, tinitingnan ko ang screen…</string>
 </resources>

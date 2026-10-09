@@ -2,19 +2,24 @@ package com.bantai.service
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
+import android.graphics.Rect
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import com.bantai.model.ScreenContext
+import com.bantai.Bantai
+import com.bantai.ui.GabayOverlay
+
+/** Isang pinipindot na button sa screen: pangalan at kung nasaan ito. */
+data class ScreenButton(val label: String, val bounds: Rect)
 
 /**
- * Android Accessibility Service for reading on-screen context and performing
- * senior-assisting global actions (Back, Home).
+ * Para sa Gabay: binabasa ang mga BUTTON sa screen (hindi ang laman ng chats) para maituro kay Nanay.
+ * Hindi ito pumipindot para sa kanya; ang chathead at highlight lang ang ipinapakita (TYPE_ACCESSIBILITY_OVERLAY).
  */
 class BantaiAccessibilityService : AccessibilityService() {
 
-    private val reader = ScreenContextReader()
-
     companion object {
+        private const val MAX_BUTTONS = 40
+
         @Volatile
         var instance: BantaiAccessibilityService? = null
             private set
@@ -23,46 +28,57 @@ class BantaiAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
+        Bantai.warmUp(this)
+        GabayOverlay.showBubble(this)
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
+        GabayOverlay.hideAll()
         instance = null
         return super.onUnbind(intent)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        // Can be used for window content change callbacks or real-time inspection
-    }
-
-    override fun onInterrupt() {
-        // Accessibility service interrupted
-    }
-
-    /**
-     * Reads the current screen labels and app context from the active window.
-     */
-    fun readCurrentScreen(): ScreenContext {
-        val root: AccessibilityNodeInfo? = rootInActiveWindow
-        return try {
-            reader.extractScreenContext(root)
-        } finally {
-            root?.recycle()
+        // Pumindot si Nanay o nagbago ang screen: tapos na ang itinurong hakbang.
+        if (event?.packageName == packageName) return
+        if (event?.eventType == AccessibilityEvent.TYPE_VIEW_CLICKED ||
+            event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
+        ) {
+            GabayOverlay.onScreenChanged()
         }
     }
 
-    /**
-     * Performs a global BACK navigation action.
-     * @return true if action was successfully sent to the system.
-     */
-    fun performBack(): Boolean {
-        return performGlobalAction(GLOBAL_ACTION_BACK)
+    override fun onInterrupt() {}
+
+    /** Pangalan ng app na bukas, at ang mga nakikitang button nito sa ayos mula itaas pababa. */
+    fun readButtons(): Pair<String, List<ScreenButton>> {
+        val root = rootInActiveWindow ?: return "" to emptyList()
+        val app = root.packageName?.toString().orEmpty()
+        val out = mutableListOf<ScreenButton>()
+
+        fun visit(node: AccessibilityNodeInfo) {
+            if (out.size >= MAX_BUTTONS) return
+            if (node.isClickable && node.isVisibleToUser) {
+                val label = labelOf(node)
+                if (label != null) {
+                    out += ScreenButton(label, Rect().also(node::getBoundsInScreen))
+                    return // ang mga anak ng button ay bahagi na ng pangalan nito
+                }
+            }
+            for (i in 0 until node.childCount) node.getChild(i)?.let(::visit)
+        }
+        visit(root)
+        return app to out.sortedWith(compareBy({ it.bounds.top }, { it.bounds.left }))
     }
 
-    /**
-     * Performs a global HOME navigation action.
-     * @return true if action was successfully sent to the system.
-     */
-    fun performHome(): Boolean {
-        return performGlobalAction(GLOBAL_ACTION_HOME)
+    /** Sariling text o paglalarawan ng button; kung wala, ang unang text sa loob nito (hal. icon + label). */
+    private fun labelOf(node: AccessibilityNodeInfo): String? {
+        val own = (node.contentDescription ?: node.text)?.toString()?.trim()
+        if (!own.isNullOrEmpty()) return own
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i) ?: continue
+            labelOf(child)?.let { return it }
+        }
+        return null
     }
 }
