@@ -4,12 +4,19 @@ import android.util.Log
 import com.bantay.app.core.EngineState
 import com.bantay.app.core.LlmEngine
 import com.google.ai.edge.litertlm.Backend
+import com.google.ai.edge.litertlm.Conversation
 import com.google.ai.edge.litertlm.ConversationConfig
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.SamplerConfig
 import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.sync.Mutex
@@ -23,6 +30,7 @@ class LiteRtEngine(
 ) : LlmEngine {
 
     private val mutex = Mutex()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var engine: Engine? = null
 
     private val _state = MutableStateFlow(EngineState.IDLE)
@@ -49,15 +57,37 @@ class LiteRtEngine(
         }
     }
 
-    override suspend fun generate(prompt: String): String = mutex.withLock {
-        val e = checkNotNull(engine) { "Engine not ready: ${_state.value}" }
-        withContext(Dispatchers.Default) {
-            // Bagong conversation kada tawag para walang naiiwang history.
-            e.createConversation(ConversationConfig(samplerConfig = SAMPLER)).use { conversation ->
-                val out = StringBuilder()
-                conversation.sendMessageAsync(prompt).collect { out.append(it.toString()) }
-                out.toString().trim()
+    override suspend fun generate(prompt: String): String {
+        val active = AtomicReference<Conversation?>()
+        val abandoned = AtomicBoolean(false)
+        // Hiwalay na scope: kapag nag-timeout ang tumawag, hindi napuputol sa gitna ang native inference.
+        // Ang pagsara ng conversation habang tumatakbo pa ito ay nagse-segfault sa liblitertlm_jni.
+        val job = scope.async {
+            mutex.withLock {
+                val e = checkNotNull(engine) { "Engine not ready: ${_state.value}" }
+                if (abandoned.get()) throw CancellationException("Umalis na ang tumawag")
+                // Bagong conversation kada tawag para walang naiiwang history.
+                val conversation = e.createConversation(ConversationConfig(samplerConfig = SAMPLER))
+                active.set(conversation)
+                try {
+                    val out = StringBuilder()
+                    conversation.sendMessageAsync(prompt).collect { out.append(it.toString()) }
+                    out.toString().trim()
+                } finally {
+                    synchronized(active) {
+                        active.set(null)
+                        conversation.close()
+                    }
+                }
             }
+        }
+        try {
+            return job.await()
+        } catch (c: CancellationException) {
+            abandoned.set(true)
+            // Pinapahinto nang maayos ang inference para hindi maghintay nang matagal ang susunod na tawag.
+            synchronized(active) { active.get()?.let { runCatching { it.cancelProcess() } } }
+            throw c
         }
     }
 
