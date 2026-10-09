@@ -20,3 +20,13 @@ Thumbs.db
 tmp/
 temp/
 .cache/
+
+# Android / Gradle
+.gradle/
+build/
+local.properties
+*.apk
+.kotlin/
+
+# Model weights (i-adb push, huwag i-commit)
+*.litertlm
