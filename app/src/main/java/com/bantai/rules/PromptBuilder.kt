@@ -22,6 +22,10 @@ Message: "Lola bagong number ko to, padala ka 3k sa gcash ngayon na"
 VERDICT: SCAM
 REASON: Someone claims a new number and urgently asks for money.
 
+Message: "Ma, naipadala ko na po yung 1k sa gcash niyo para sa gamot."
+VERDICT: SAFE
+REASON: A family member confirming money was already sent, not requesting anything.
+
 Message: "$cleanMessage"
 $hint
 Reply with exactly two lines, VERDICT and REASON. Write the REASON in $language."""
