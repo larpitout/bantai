@@ -14,7 +14,7 @@ import android.view.WindowManager
 import android.widget.TextView
 import com.bantai.R
 import com.bantai.data.GuardianPreferences
-import com.bantai.service.Speaker
+import com.bantai.Bantai
 
 /**
  * Babala card na lumalabas sa ibabaw ng kahit anong app (SYSTEM_ALERT_WINDOW).
@@ -26,7 +26,6 @@ object ScamAlertOverlay {
     private const val TAG = "ScamAlertOverlay"
 
     private var current: View? = null
-    private var speaker: Speaker? = null
 
     fun canShow(context: Context) = Settings.canDrawOverlays(context)
 
@@ -41,7 +40,7 @@ object ScamAlertOverlay {
 
         val wm = app.getSystemService(WindowManager::class.java)
         val view = LayoutInflater.from(app).inflate(R.layout.overlay_scam_alert, null)
-        val tts = speaker ?: Speaker(app).also { speaker = it }
+        val tts = Bantai.speaker(app)
 
         view.findViewById<TextView>(R.id.tvAlertReason).text = reason
         view.findViewById<TextView>(R.id.tvAlertAction).text = action
@@ -80,7 +79,7 @@ object ScamAlertOverlay {
 
     fun dismiss(context: Context) {
         val view = current ?: return
-        speaker?.stop()
+        Bantai.speaker(context).stop()
         context.applicationContext.getSystemService(WindowManager::class.java).removeView(view)
         current = null
     }

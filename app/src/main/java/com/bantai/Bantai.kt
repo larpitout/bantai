@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.bantai.pipeline.GabayPipeline
 import com.bantai.pipeline.ScamPipeline
+import com.bantai.service.Speaker
 import com.bantay.app.ai.LiteRtEngine
 import com.bantay.app.core.EngineState
 import java.io.File
@@ -69,6 +70,12 @@ object Bantai {
         context.assets.open(MODEL_ASSET).use { input -> tmp.outputStream().use { input.copyTo(it, 1 shl 20) } }
         check(tmp.renameTo(target)) { "Hindi mailipat ang model sa $target" }
     }
+
+    private var speaker: Speaker? = null
+
+    /** Iisang TextToSpeech para sa babala at Gabay. */
+    fun speaker(context: Context): Speaker =
+        speaker ?: Speaker(context.applicationContext).also { speaker = it }
 
     fun scamPipeline(context: Context) = ScamPipeline(engine(context))
 
