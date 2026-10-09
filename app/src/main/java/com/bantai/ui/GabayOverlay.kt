@@ -57,6 +57,7 @@ object GabayOverlay {
     private var highlight: View? = null
     private var card: View? = null
     private var highlightShownAt = 0L
+    private var highlightSignature: Pair<String, Set<String>>? = null
     private var job: Job? = null
     private val main = Handler(Looper.getMainLooper())
 
@@ -83,7 +84,7 @@ object GabayOverlay {
                 setStroke(svc.dp(3), Color.WHITE)
             }
             elevation = svc.dp(8).toFloat()
-            contentDescription = svc.getString(R.string.gabay_bubble_desc)
+            contentDescription = svc.t(R.string.gabay_bubble_desc)
         }
         val params = overlayParams(size, size, touchable = true).apply {
             gravity = Gravity.TOP or Gravity.START
@@ -107,14 +108,22 @@ object GabayOverlay {
     fun onScreenChanged() {
         // Hindi pa nakikita ni Nanay ang bilog kung kalalabas lang; huwag agad alisin.
         if (highlight == null || SystemClock.uptimeMillis() - highlightShownAt < 1_000) return
+        val svc = service ?: return
+        // Ang orasan at widget sa Home ay nagpapadala rin ng event: ituloy lang kapag talagang nagbago ang screen.
+        val now = signature(svc.readButtons())
+        if (now == highlightSignature) return
         clearGuide()
         if (goal != null) step()
     }
 
+    /** App + mga button, walang orasan: para malaman kung talagang lumipat ang screen. */
+    private fun signature(screen: Screen) =
+        screen.app to screen.buttons.map { it.label }.filterNot { CLOCK.matches(it) }.toSet()
+
     private fun togglePanel() {
         if (panel != null) return closePanel()
         goal = null // pinindot ni Nanay ang chathead: bagong usapan
-        openPanel(service?.getString(R.string.gabay_panel_title) ?: return)
+        openPanel(service?.t(R.string.gabay_panel_title) ?: return)
     }
 
     /** Panel na nagtatanong ng [prompt] (sinasabi rin nang malakas), tapos nakikinig. */
@@ -128,9 +137,9 @@ object GabayOverlay {
             setPadding(0, svc.dp(8), 0, 0)
         }
         val items = mutableListOf<View>(title(svc, prompt), status)
-        items += option(svc, svc.getString(R.string.gabay_speak), primary = true) { listen(status) }
-        for ((labelRes, question) in OPTIONS) items += option(svc, svc.getString(labelRes)) { startGoal(question) }
-        items += option(svc, svc.getString(R.string.gabay_close)) { closePanel() }
+        items += option(svc, svc.t(R.string.gabay_speak), primary = true) { listen(status) }
+        for ((labelRes, question) in OPTIONS) items += option(svc, svc.t(labelRes)) { startGoal(question) }
+        items += option(svc, svc.t(R.string.gabay_close)) { closePanel() }
         val box = cardView(svc, items)
         val params = overlayParams(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT, touchable = true)
             .apply { gravity = Gravity.BOTTOM }
@@ -146,7 +155,7 @@ object GabayOverlay {
     private fun listen(status: TextView) {
         val svc = service ?: return
         Bantai.speaker(svc).stop()
-        status.text = svc.getString(R.string.gabay_listening)
+        status.text = svc.t(R.string.gabay_listening)
         VoiceActivity.pending = VoiceActivity.Request(
             onPartial = { status.text = "\"$it\"" },
             onText = { text ->
@@ -155,7 +164,7 @@ object GabayOverlay {
             },
             onFail = { error ->
                 Log.e(TAG, "listen failed error=$error")
-                status.text = svc.getString(R.string.gabay_not_heard)
+                status.text = svc.t(R.string.gabay_not_heard)
             },
         )
         svc.startActivity(
@@ -186,7 +195,7 @@ object GabayOverlay {
         goal = null
         closePanel()
         clearGuide()
-        Bantai.speaker(svc).speak(svc.getString(R.string.gabay_bye))
+        Bantai.speaker(svc).speak(svc.t(R.string.gabay_bye))
     }
 
     /** Isang hakbang ng usapan: basahin ang screen, tapos ituro ang susunod na pipindutin. */
@@ -195,7 +204,7 @@ object GabayOverlay {
         val g = goal ?: return
         closePanel()
         clearGuide()
-        showCard(svc.getString(R.string.gabay_thinking), offerCallApo = false)
+        showCard(svc.t(R.string.gabay_thinking), offerCallApo = false)
         job?.cancel()
         job = Bantai.scope.launch {
             delay(700) // hayaang mawala muna ang panel at ang VoiceActivity bago basahin ang screen
@@ -203,7 +212,7 @@ object GabayOverlay {
             val (app, buttons) = screen.app to screen.buttons
             // Hindi pa nababasa ang screen (hal. nagpapalit pa ng app): subukan ulit, huwag agad ituro ang Home.
             if (app.isEmpty() || buttons.isEmpty()) {
-                if (++emptyReads <= 3) { delay(800); step() } else showCard(svc.getString(R.string.gabay_cannot_see), offerCallApo = true)
+                if (++emptyReads <= 3) { delay(800); step() } else showCard(svc.t(R.string.gabay_cannot_see), offerCallApo = true)
                 return@launch
             }
             emptyReads = 0
@@ -212,8 +221,8 @@ object GabayOverlay {
             val reached = reachedApp(svc, app, g)
             if (reached != null || ++steps > MAX_STEPS) {
                 clearGuide()
-                val done = reached?.let { svc.getString(R.string.gabay_reached, it) }.orEmpty()
-                openPanel("$done ${svc.getString(R.string.gabay_anything_else)}".trim())
+                val done = reached?.let { svc.t(R.string.gabay_reached, it) }.orEmpty()
+                openPanel("$done ${svc.t(R.string.gabay_anything_else)}".trim())
                 return@launch
             }
 
@@ -244,8 +253,8 @@ object GabayOverlay {
             if (candidates === labels && app != launcherPackage(svc)) {
                 Log.e(TAG, "q=$g app=$app buttons=${labels.size} -> HOME")
                 clearGuide()
-                showHighlight(homeArea(svc), svc.getString(R.string.gabay_go_home))
-                Bantai.speaker(svc).speak(svc.getString(R.string.gabay_go_home))
+                showHighlight(homeArea(svc), svc.t(R.string.gabay_go_home))
+                Bantai.speaker(svc).speak(svc.t(R.string.gabay_go_home))
                 return@launch
             }
 
@@ -279,7 +288,7 @@ object GabayOverlay {
         Log.e(TAG, "app=$appName visible=${visible != null} inAppList=$inAppList labels=${byLabel.keys.take(40)}")
         when {
             visible != null -> {
-                val text = svc.getString(R.string.gabay_tap, appName)
+                val text = svc.t(R.string.gabay_tap, appName)
                 showHighlight(visible.value, text)
                 Bantai.speaker(svc).speak(text)
                 // pipindutin ni Nanay → onScreenChanged
@@ -291,13 +300,13 @@ object GabayOverlay {
             }
             inAppList -> {
                 goal = null
-                val text = svc.getString(R.string.gabay_cannot_find, appName)
+                val text = svc.t(R.string.gabay_cannot_find, appName)
                 showCard(text, offerCallApo = true)
                 Bantai.speaker(svc).speak(text)
             }
             else -> {
-                val text = svc.getString(R.string.gabay_open_drawer)
-                showHighlight(drawerArea(svc), text)
+                val text = svc.t(R.string.gabay_open_drawer)
+                showHighlight(drawerArea(svc), text, swipeUp = true)
                 Bantai.speaker(svc).speak(text)
                 waitForChange(byLabel.keys)
             }
@@ -311,7 +320,10 @@ object GabayOverlay {
         repeat(20) {
             delay(1_000)
             if (goal != g) return
-            if (readSettled(svc).buttons.map { it.label }.toSet() != before) {
+            // Parehong paglilinis ng label gaya ng [before] (galing sa byLabel), kung hindi laging "nagbago".
+            val now = readSettled(svc).buttons.mapNotNull { PromptBuilder.gabayLabels(listOf(it.label)).firstOrNull() }
+                .filterNot { CLOCK.matches(it) }.toSet()
+            if (now != before.filterNot { CLOCK.matches(it) }.toSet()) {
                 clearGuide()
                 step()
                 return
@@ -336,9 +348,9 @@ object GabayOverlay {
 
     /** "Mag-scroll po pababa", tapos hintayin na magbago ang screen bago ang susunod na hakbang. */
     private suspend fun showScrollHint(svc: BantaiAccessibilityService, before: Set<String>) {
-        val text = svc.getString(R.string.gabay_scroll)
+        val text = svc.t(R.string.gabay_scroll)
         Log.e(TAG, "q=$goal -> SCROLL $scrolls")
-        showHighlight(drawerArea(svc), text)
+        showHighlight(drawerArea(svc), text, swipeUp = true)
         Bantai.speaker(svc).speak(text)
         waitForChange(before)
     }
@@ -393,13 +405,14 @@ object GabayOverlay {
     }
 
     /** Bilog sa paligid ng button + text. Hindi nito sinasalo ang pindot, kaya ang button mismo ang mapipindot ni Nanay. */
-    private fun showHighlight(target: Rect, text: String) {
+    private fun showHighlight(target: Rect, text: String, swipeUp: Boolean = false) {
         val svc = service ?: return
-        val ring = RingView(svc, target, text)
+        val ring = RingView(svc, target, text, swipeUp)
         val params = overlayParams(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT, touchable = false)
         wm.addView(ring, params)
         highlight = ring
         highlightShownAt = SystemClock.uptimeMillis()
+        highlightSignature = signature(svc.readButtons())
     }
 
     /** Text lang (habang nag-iisip, o kapag walang maituro), may "Tawagan si Apo" kung kailangan. */
@@ -409,12 +422,12 @@ object GabayOverlay {
         val items = mutableListOf<View>(title(svc, text))
         val apoPhone = GuardianPreferences(svc).apoPhone
         if (offerCallApo && apoPhone.isNotBlank()) {
-            items += option(svc, svc.getString(R.string.btn_call_apo), primary = true) {
+            items += option(svc, svc.t(R.string.btn_call_apo), primary = true) {
                 clearGuide()
                 svc.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$apoPhone")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }
         }
-        if (offerCallApo) items += option(svc, svc.getString(R.string.btn_dismiss)) { clearGuide() }
+        if (offerCallApo) items += option(svc, svc.t(R.string.btn_dismiss)) { clearGuide() }
         val box = cardView(svc, items)
         val params = overlayParams(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT, touchable = offerCallApo)
             .apply { gravity = Gravity.BOTTOM }
@@ -485,10 +498,17 @@ object GabayOverlay {
 
     /** Kumikislap na bilog sa paligid ng button, at text sa itaas o ibaba (malayo sa button). */
     @SuppressLint("ViewConstructor")
-    private class RingView(ctx: Context, private val target: Rect, private val text: String) : View(ctx) {
+    private class RingView(
+        ctx: Context,
+        private val target: Rect,
+        private val text: String,
+        /** Swipe/scroll: arrow na umaakyat sa halip na bilog, para hindi mapagkamalang button ang nasa ilalim. */
+        private val swipeUp: Boolean,
+    ) : View(ctx) {
         private val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
             strokeWidth = ctx.dp(6).toFloat()
+            strokeCap = Paint.Cap.ROUND
             color = ctx.color(R.color.caution_border)
         }
         private val bubble = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = ctx.color(R.color.bantai_primary) }
@@ -512,9 +532,22 @@ object GabayOverlay {
             getLocationOnScreen(loc)
             canvas.save()
             canvas.translate(-loc[0].toFloat(), -loc[1].toFloat()) // screen coords ang bounds ng button
-            val grow = context.dp(10) + context.dp(8) * (pulse.animatedValue as Float)
-            val r = RectF(target).apply { inset(-grow, -grow) }
-            canvas.drawRoundRect(r, context.dp(18).toFloat(), context.dp(18).toFloat(), ring)
+            val t = pulse.animatedValue as Float
+            if (swipeUp) {
+                // Arrow mula ibaba pataas, umaakyat habang kumikislap.
+                val x = target.exactCenterX()
+                val lift = context.dp(60) * t
+                val bottom = target.bottom + context.dp(80) - lift
+                val top = target.top - lift
+                val head = context.dp(28).toFloat()
+                canvas.drawLine(x, bottom, x, top, ring)
+                canvas.drawLine(x, top, x - head, top + head, ring)
+                canvas.drawLine(x, top, x + head, top + head, ring)
+            } else {
+                val grow = context.dp(10) + context.dp(8) * t
+                val r = RectF(target).apply { inset(-grow, -grow) }
+                canvas.drawRoundRect(r, context.dp(18).toFloat(), context.dp(18).toFloat(), ring)
+            }
             canvas.restore()
 
             // Text: sa ibaba kung nasa itaas ang button, at baligtad.
@@ -554,6 +587,7 @@ object GabayOverlay {
 
     private val QUOTED = Regex("\"([^\"]+)\"")
     private val WORDS = Regex("[a-z0-9]+")
+    private val CLOCK = Regex("\\d{1,2}:\\d{2}.*")
     private val STOP_WORDS = Regex("\\b(ok|okay|okey|tama na|salamat|thank|thanks|stop|done|enough|wala na)\\b")
 
     // Mga salitang gawain, hindi pangalan ng app: ang "call" ay hindi ibig sabihing nasa Phone app na ang dulo.
@@ -571,6 +605,7 @@ object GabayOverlay {
         R.string.gabay_opt_search to "Search for a person",
     )
 
+    private fun Context.t(id: Int, vararg args: Any): String = Bantai.localized(this).getString(id, *args)
     private fun Context.dp(v: Int) = (v * resources.displayMetrics.density).toInt()
     private fun Context.sp(v: Float) = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, v, resources.displayMetrics)
     private fun Context.color(res: Int) = ContextCompat.getColor(this, res)

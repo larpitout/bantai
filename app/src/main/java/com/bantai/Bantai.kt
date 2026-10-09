@@ -1,6 +1,10 @@
 package com.bantai
 
+import android.app.LocaleManager
 import android.content.Context
+import android.content.res.Configuration
+import android.os.Build
+import android.os.LocaleList
 import android.util.Log
 import com.bantai.pipeline.GabayPipeline
 import com.bantai.pipeline.ScamPipeline
@@ -8,6 +12,7 @@ import com.bantai.service.Speaker
 import com.bantay.app.ai.LiteRtEngine
 import com.bantay.app.core.EngineState
 import java.io.File
+import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -69,6 +74,20 @@ object Bantai {
         val tmp = File(target.path + ".part")
         context.assets.open(MODEL_ASSET).use { input -> tmp.outputStream().use { input.copyTo(it, 1 shl 20) } }
         check(tmp.renameTo(target)) { "Hindi mailipat ang model sa $target" }
+    }
+
+    /**
+     * Context na sumusunod sa wikang pinili para sa app (Settings → Apps → Bantai → Language).
+     * Mga Activity lang ang kusang sumusunod dito; ang overlay ay galing sa service kaya kailangan ito.
+     * Walang napili: Tagalog, dahil para kay Nanay ang mga babala at gabay.
+     */
+    fun localized(context: Context): Context {
+        val chosen = if (Build.VERSION.SDK_INT >= 33) {
+            context.getSystemService(LocaleManager::class.java).applicationLocales
+        } else LocaleList.getEmptyLocaleList()
+        val locales = if (chosen.isEmpty) LocaleList(Locale("tl")) else chosen
+        val config = Configuration(context.resources.configuration).apply { setLocales(locales) }
+        return context.createConfigurationContext(config)
     }
 
     private var speaker: Speaker? = null

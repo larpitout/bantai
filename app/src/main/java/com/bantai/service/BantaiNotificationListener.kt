@@ -76,7 +76,8 @@ class BantaiNotificationListener : NotificationListenerService() {
                     if (shown && !fromAi) return@collect
                     // Tagalog template mula sa rules ang laging ipinapakita; si Gemma ang nagpapasya kung scam.
                     val (reasonRes, actionRes) = RuleFilter.instantWarningRes(check.rule)
-                    ScamAlertOverlay.show(this@BantaiNotificationListener, getString(reasonRes), getString(actionRes), fromAi)
+                    val text = Bantai.localized(this@BantaiNotificationListener)
+                    ScamAlertOverlay.show(this@BantaiNotificationListener, text.getString(reasonRes), text.getString(actionRes), fromAi)
                     shown = true
                 }
             }

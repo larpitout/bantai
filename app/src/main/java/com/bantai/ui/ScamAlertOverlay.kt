@@ -39,7 +39,7 @@ object ScamAlertOverlay {
         dismiss(app)
 
         val wm = app.getSystemService(WindowManager::class.java)
-        val view = LayoutInflater.from(app).inflate(R.layout.overlay_scam_alert, null)
+        val view = LayoutInflater.from(Bantai.localized(app)).inflate(R.layout.overlay_scam_alert, null)
         val tts = Bantai.speaker(app)
 
         view.findViewById<TextView>(R.id.tvAlertReason).text = reason
@@ -47,7 +47,7 @@ object ScamAlertOverlay {
         view.findViewById<View>(R.id.tvAlertAiBadge).visibility = if (fromAi) View.VISIBLE else View.GONE
 
         view.findViewById<View>(R.id.btnAlertListen).setOnClickListener {
-            tts.speak("${app.getString(R.string.warning_title)}. $reason $action")
+            tts.speak("${Bantai.localized(app).getString(R.string.warning_title)}. $reason $action")
         }
         view.findViewById<View>(R.id.btnAlertDismiss).setOnClickListener { dismiss(app) }
 
