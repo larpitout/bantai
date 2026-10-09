@@ -4,6 +4,7 @@ import android.content.Context
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.util.Log
+import com.bantai.Bantai
 import java.util.Locale
 import java.util.UUID
 
@@ -14,20 +15,25 @@ class Speaker(context: Context) : TextToSpeech.OnInitListener {
         private const val SENIOR_SPEECH_RATE = 0.9f
     }
 
-    private var tts: TextToSpeech? = TextToSpeech(context.applicationContext, this)
+    private val appContext = context.applicationContext
+    private var tts: TextToSpeech? = TextToSpeech(appContext, this)
     private var isInitialized = false
     private val pendingUtteranceCallbacks = mutableMapOf<String, () -> Unit>()
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
-            val filLocale = Locale("fil", "PH")
-            val langResult = tts?.setLanguage(filLocale)
-
-            if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
-                Log.w(TAG, "Filipino TTS voice not available offline, falling back to English (US)")
-                tts?.setLanguage(Locale.US)
+            // Boses na tugma sa wika ng babala (tingnan ang Bantai.localized).
+            val language = Bantai.localized(appContext).resources.configuration.locales[0].language
+            if (language == "tl" || language == "fil") {
+                val langResult = tts?.setLanguage(Locale("fil", "PH"))
+                if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    Log.w(TAG, "Filipino TTS voice not available offline, falling back to English (US)")
+                    tts?.setLanguage(Locale.US)
+                } else {
+                    Log.i(TAG, "Initialized TextToSpeech with Filipino (fil-PH)")
+                }
             } else {
-                Log.i(TAG, "Initialized TextToSpeech with Filipino (fil-PH)")
+                tts?.setLanguage(Locale.US)
             }
 
             tts?.setSpeechRate(SENIOR_SPEECH_RATE)
