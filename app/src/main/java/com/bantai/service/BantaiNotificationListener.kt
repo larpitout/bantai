@@ -34,7 +34,10 @@ class BantaiNotificationListener : NotificationListenerService() {
         val packageName = sbn.packageName ?: return
 
         // 1. Package allowlist check
-        if (!NotificationExtractor.isPackageAllowed(packageName)) {
+        // Debug build lang: tanggapin din ang "adb shell cmd notification post" para ma-test nang walang pangalawang phone.
+        val debugTest = packageName == "com.android.shell" &&
+            applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0
+        if (!NotificationExtractor.isPackageAllowed(packageName) && !debugTest) {
             return
         }
 
@@ -82,7 +85,8 @@ class BantaiNotificationListener : NotificationListenerService() {
                     if (shown && !fromAi) return@collect
                     // Tagalog template mula sa rules ang laging ipinapakita; si Gemma ang nagpapasya kung scam.
                     val (reasonRes, actionRes) = RuleFilter.instantWarningRes(check.rule)
-                    ScamAlertOverlay.show(this@BantaiNotificationListener, getString(reasonRes), getString(actionRes), fromAi)
+                    val text = Bantai.localized(this@BantaiNotificationListener)
+                    ScamAlertOverlay.show(this@BantaiNotificationListener, text.getString(reasonRes), text.getString(actionRes), fromAi)
                     shown = true
                 }
             }
