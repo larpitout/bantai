@@ -131,7 +131,7 @@ class BantaiNotificationListener : NotificationListenerService() {
                     val a11y = BantaiAccessibilityService.instance
                     if (a11y != null) {
                         // Walang biglang popup: lalabas ang babala kapag binuksan ni Nanay ang mensahe.
-                        Bantai.flag(message, reason, action, fromAi, signals)
+                        Bantai.flag(message, reason, action, fromAi, signals, check.rule.score)
                         a11y.recheck()
                     } else {
                         ScamAlertOverlay.show(this@BantaiNotificationListener, reason, action, fromAi, message, signals)

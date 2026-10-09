@@ -76,4 +76,10 @@
     <string name="notif_channel">Scam alerts</string>
     <string name="notif_title">Possible scam from %1$s</string>
     <string name="notif_tap_hint">Tap to open the message and see why.</string>
+    <string name="risk_high">High risk</string>
+    <string name="risk_medium">Medium risk</string>
+    <string name="risk_low">Low risk</string>
+    <string name="risk_line">%1$s · %2$s</string>
+    <string name="decided_by_ai">checked by on-device AI</string>
+    <string name="decided_by_rules">checked by Bantai rules on this phone</string>
 </resources>

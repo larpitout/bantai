@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
+import android.graphics.Rect
 import android.net.Uri
 import android.provider.Settings
 import android.util.Log
@@ -41,17 +42,24 @@ object ScamAlertOverlay {
             Log.w(TAG, "Walang 'Display over other apps' permission, hindi maipakita ang babala")
             return
         }
-        present(app, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, reason, action, fromAi, message, signals, bottomOffsetDp = 0) { dismiss(app) }
+        present(app, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, reason, action, fromAi, message, signals, score = 0, bottomOffsetDp = 0) { dismiss(app) }
     }
 
     /** Banner sa loob ng bukas na chat, para sa mensaheng na-flag. */
-    fun showFlagged(service: AccessibilityService, flag: Bantai.Flagged) {
-        if (current != null && currentFlag === flag && currentFromAi == flag.fromAi) return // nakalabas na
+    fun showFlagged(service: AccessibilityService, flag: Bantai.Flagged, bubble: Rect? = null) {
+        val view = current
+        if (view != null && currentFlag === flag && currentFromAi == flag.fromAi) {
+            // Nakalabas na: sundan lang ang bubble kapag nag-scroll si Nanay.
+            val params = view.layoutParams as? WindowManager.LayoutParams ?: return
+            if (placeUnder(service, params, bubble)) runCatching { currentWm?.updateViewLayout(view, params) }
+            return
+        }
         present(
             service, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-            flag.reason, flag.action, flag.fromAi, flag.message, flag.signals,
+            flag.reason, flag.action, flag.fromAi, flag.message, flag.signals, flag.score,
             // Nasa itaas ng text box ng chat, para makapag-type pa rin si Nanay.
             bottomOffsetDp = 72,
+            anchor = bubble,
         ) {
             flag.dismissed = true // "Sige po": hindi na lalabas ulit para sa mensaheng ito
             dismiss(service)
@@ -69,7 +77,9 @@ object ScamAlertOverlay {
         fromAi: Boolean,
         message: String,
         signals: List<String>,
+        score: Int,
         bottomOffsetDp: Int,
+        anchor: Rect? = null,
         onDismiss: () -> Unit,
     ) {
         dismiss(ctx)
@@ -82,6 +92,15 @@ object ScamAlertOverlay {
         view.findViewById<TextView>(R.id.tvAlertReason).text = reason
         view.findViewById<TextView>(R.id.tvAlertAction).text = action
         view.findViewById<View>(R.id.tvAlertAiBadge).visibility = if (fromAi) View.VISIBLE else View.GONE
+        // Audit: gaano kapanganib at sino ang nagpasya (rules o AI sa phone).
+        val loc = Bantai.localized(app)
+        view.findViewById<TextView>(R.id.tvAlertRisk).apply {
+            visibility = if (score > 0) View.VISIBLE else View.GONE
+            val level = loc.getString(
+                when { score >= 3 -> R.string.risk_high; score == 2 -> R.string.risk_medium; else -> R.string.risk_low }
+            )
+            text = loc.getString(R.string.risk_line, level, loc.getString(if (fromAi) R.string.decided_by_ai else R.string.decided_by_rules))
+        }
 
         // "Bakit na-flag?": ang mga nakitang senyales, para may paliwanag at hindi lang "scam".
         val why = view.findViewById<TextView>(R.id.tvAlertWhy)
@@ -135,11 +154,30 @@ object ScamAlertOverlay {
         ).apply {
             gravity = Gravity.BOTTOM
             y = (bottomOffsetDp * app.resources.displayMetrics.density).toInt()
+            placeUnder(app, this, anchor)
         }
 
         wm.addView(view, params)
         current = view
         currentWm = wm
+    }
+
+    /**
+     * Ilagay ang babala sa mismong ilalim ng bubble ng scammer. Kapag nasa ibabang bahagi ng screen ang bubble
+     * (walang sapat na espasyo sa ilalim), sa ibaba ng chat na lang, sa itaas ng text box.
+     * Ibinabalik kung nagbago ang puwesto.
+     */
+    private fun placeUnder(ctx: Context, params: WindowManager.LayoutParams, bubble: Rect?): Boolean {
+        val metrics = ctx.resources.displayMetrics
+        val (gravity, y) = if (bubble != null && bubble.bottom < metrics.heightPixels * 0.5) {
+            (Gravity.TOP) to (bubble.bottom + (4 * metrics.density).toInt())
+        } else {
+            Gravity.BOTTOM to (72 * metrics.density).toInt()
+        }
+        if (params.gravity == gravity && params.y == y) return false
+        params.gravity = gravity
+        params.y = y
+        return true
     }
 
     fun dismiss(context: Context) {

@@ -48,6 +48,16 @@
     </LinearLayout>
 
     <TextView
+        android:id="@+id/tvAlertRisk"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textColor="@color/caution_text"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <TextView
         android:id="@+id/tvAlertAiBadge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
