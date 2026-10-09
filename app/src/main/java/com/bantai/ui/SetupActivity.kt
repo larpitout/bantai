@@ -28,6 +28,11 @@ import com.bantai.util.PermissionHelper
  */
 class SetupActivity : AppCompatActivity() {
 
+    // Iisang wika sa buong app: Tagalog kung walang pinili (pareho ng babala).
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(Bantai.localized(newBase))
+    }
+
     private lateinit var prefs: GuardianPreferences
 
     private lateinit var btnSave: View
@@ -37,6 +42,10 @@ class SetupActivity : AppCompatActivity() {
     private lateinit var layoutNotificationPerm: View
     private lateinit var layoutAccessibilityPerm: View
     private lateinit var layoutOverlayPerm: View
+    private lateinit var switchBattery: SwitchCompat
+    private lateinit var layoutBatteryPerm: View
+    private lateinit var switchCall: SwitchCompat
+    private lateinit var layoutCallPerm: View
     private lateinit var switchProtection: SwitchCompat
     private lateinit var tvProtectionStatus: TextView
 
@@ -46,6 +55,12 @@ class SetupActivity : AppCompatActivity() {
 
         prefs = GuardianPreferences(this)
         Bantai.warmUp(this)
+        // Android 13+: kailangan ng pahintulot para sa "Posibleng scam" na notification.
+        if (android.os.Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1)
+        }
 
         initViews()
         padForSystemBars()
@@ -66,6 +81,10 @@ class SetupActivity : AppCompatActivity() {
         layoutNotificationPerm = findViewById(R.id.layoutNotificationPerm)
         layoutAccessibilityPerm = findViewById(R.id.layoutAccessibilityPerm)
         layoutOverlayPerm = findViewById(R.id.layoutOverlayPerm)
+        switchBattery = findViewById(R.id.switchBattery)
+        layoutBatteryPerm = findViewById(R.id.layoutBatteryPerm)
+        switchCall = findViewById(R.id.switchCall)
+        layoutCallPerm = findViewById(R.id.layoutCallPerm)
         switchProtection = findViewById(R.id.switchProtection)
         tvProtectionStatus = findViewById(R.id.tvProtectionStatus)
 
@@ -95,6 +114,7 @@ class SetupActivity : AppCompatActivity() {
         btnSave.setOnClickListener {
             prefs.isOnboardingCompleted = true
             Toast.makeText(this, R.string.setup_toast_done, Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, DashboardActivity::class.java))
             finish()
         }
 
@@ -104,6 +124,19 @@ class SetupActivity : AppCompatActivity() {
 
         layoutAccessibilityPerm.setOnClickListener {
             startActivity(PermissionHelper.getAccessibilitySettingsIntent())
+        }
+
+        layoutBatteryPerm.setOnClickListener {
+            // Para hindi patayin ng phone (OPPO, TECNO…) si Bantai sa background.
+            startActivity(PermissionHelper.getBatteryOptimizationIntent(this))
+        }
+
+        layoutCallPerm.setOnClickListener {
+            // Android 10+: gawing "Caller ID & spam app" si Bantai para makapagbabala sa tawag.
+            if (android.os.Build.VERSION.SDK_INT >= 29) {
+                val roles = getSystemService(android.app.role.RoleManager::class.java)
+                startActivityForResult(roles.createRequestRoleIntent(android.app.role.RoleManager.ROLE_CALL_SCREENING), 2)
+            }
         }
 
         layoutOverlayPerm.setOnClickListener {
@@ -135,5 +168,8 @@ class SetupActivity : AppCompatActivity() {
         switchOverlay.isChecked = ScamAlertOverlay.canShow(this)
         switchNotification.isChecked = PermissionHelper.isNotificationAccessGranted(this)
         switchAccessibility.isChecked = PermissionHelper.isAccessibilityServiceEnabled(this)
+        switchBattery.isChecked = PermissionHelper.isIgnoringBatteryOptimizations(this)
+        switchCall.isChecked = android.os.Build.VERSION.SDK_INT >= 29 &&
+            getSystemService(android.app.role.RoleManager::class.java).isRoleHeld(android.app.role.RoleManager.ROLE_CALL_SCREENING)
     }
 }

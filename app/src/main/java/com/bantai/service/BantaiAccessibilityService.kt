@@ -2,6 +2,7 @@ package com.bantai.service
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
+import android.graphics.Rect
 import android.os.Handler
 import android.os.Looper
 import android.view.accessibility.AccessibilityEvent
@@ -55,17 +56,23 @@ class BantaiAccessibilityService : AccessibilityService() {
     private fun checkScreen() {
         val root = rootInActiveWindow
         val pkg = root?.packageName?.toString()
-        val texts = if (root != null && pkg in Bantai.MESSAGING_APPS) visibleTexts(root) else emptyList()
-        val match = Bantai.flaggedOnScreen(texts)
-        if (match == null) ScamAlertOverlay.dismiss(this) else ScamAlertOverlay.showFlagged(this, match)
+        val nodes = if (root != null && pkg in Bantai.MESSAGING_APPS) visibleTexts(root) else emptyList()
+        val match = Bantai.flaggedOnScreen(nodes.map { it.first })
+        if (match == null) {
+            ScamAlertOverlay.dismiss(this)
+            return
+        }
+        // Ang bubble ng scammer: doon mismo sa ilalim ilalagay ang babala (pinakahuli kung marami).
+        val bubble = nodes.lastOrNull { Bantai.matches(match, it.first) }?.second
+        ScamAlertOverlay.showFlagged(this, match, bubble)
     }
 
-    private fun visibleTexts(root: AccessibilityNodeInfo): List<String> {
-        val out = mutableListOf<String>()
+    private fun visibleTexts(root: AccessibilityNodeInfo): List<Pair<String, Rect>> {
+        val out = mutableListOf<Pair<String, Rect>>()
         var seen = 0
         fun visit(n: AccessibilityNodeInfo) {
             if (++seen > MAX_NODES) return
-            if (n.isVisibleToUser) n.text?.toString()?.takeIf { it.isNotBlank() }?.let(out::add)
+            if (n.isVisibleToUser) n.text?.toString()?.takeIf { it.isNotBlank() }?.let { out += it to Rect().also(n::getBoundsInScreen) }
             for (i in 0 until n.childCount) n.getChild(i)?.let(::visit)
         }
         visit(root)

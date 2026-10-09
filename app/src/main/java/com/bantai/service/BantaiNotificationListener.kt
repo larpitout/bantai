@@ -42,6 +42,35 @@ class BantaiNotificationListener : NotificationListenerService() {
         return text.getString(reasonRes) to text.getString(actionRes)
     }
 
+    /** Uri ng scam para sa dashboard (isang salita/parirala). */
+    private fun kindOf(message: String, signals: List<String>): String = Bantai.localized(this).getString(
+        when {
+            LinkChecker.check(message) != null -> R.string.kind_link
+            "New Number / Impersonation" in signals -> R.string.kind_relative
+            "Prize / Raffle" in signals -> R.string.kind_prize
+            "Account / OTP / Parcel" in signals -> R.string.kind_account
+            "Money Request" in signals -> R.string.kind_money
+            else -> R.string.kind_other
+        }
+    )
+
+    /** Mga senyales mula sa rules, sa wika ng babala. */
+    private fun signalNames(signals: List<String>): List<String> {
+        val text = Bantai.localized(this)
+        return signals.mapNotNull { s ->
+            when (s) {
+                "Money Request" -> R.string.signal_money_request
+                "New Number / Impersonation" -> R.string.signal_new_number
+                "Suspicious Link" -> R.string.signal_suspicious_link
+                "Dangerous Link" -> R.string.signal_dangerous_link
+                "Prize / Raffle" -> R.string.signal_prize_raffle
+                "Account / OTP / Parcel" -> R.string.signal_account_parcel
+                "Urgency / Emergency" -> R.string.signal_urgency
+                else -> null
+            }?.let(text::getString)
+        }
+    }
+
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
         if (sbn == null) return
@@ -88,6 +117,7 @@ class BantaiNotificationListener : NotificationListenerService() {
             Log.d(TAG, "Skipping duplicate notification from $packageName")
             return
         }
+        com.bantai.data.ScamHistory.countScanned(this) // para sa dashboard: "nasuri ngayon"
 
         // 6. Layer 1 Rule Scoring
         val ruleResult = RuleFilter.score(message, sender)
@@ -96,6 +126,7 @@ class BantaiNotificationListener : NotificationListenerService() {
         // 7. Score >= 1: rules + Gemma (ScamPipeline). Lalabas agad ang babala kapag score >= 2;
         //    kapag score 1, si Gemma ang magdedesisyon (rules ang fallback kapag mabagal o pumalya).
         if (ruleResult.score >= 1) {
+            val openChat = notification.contentIntent // para buksan ang mismong chat mula sa notification ni Bantai
             Bantai.scope.launch {
                 var shown = false
                 Bantai.scamPipeline(this@BantaiNotificationListener).check(message, sender).collect { check ->
@@ -105,13 +136,18 @@ class BantaiNotificationListener : NotificationListenerService() {
                     if (shown && !fromAi) return@collect
                     // Template mula sa rules ang laging ipinapakita; si Gemma ang nagpapasya kung scam.
                     val (reason, action) = warningText(message, check.rule)
+                    val signals = signalNames(check.rule.signals)
+                    if (!shown) {
+                        com.bantai.data.ScamHistory.add(this@BantaiNotificationListener, sender, message, reason, kindOf(message, check.rule.signals), check.rule.score)
+                        ScamNotifier.notify(this@BantaiNotificationListener, sender, reason, openChat)
+                    }
                     val a11y = BantaiAccessibilityService.instance
                     if (a11y != null) {
                         // Walang biglang popup: lalabas ang babala kapag binuksan ni Nanay ang mensahe.
-                        Bantai.flag(message, reason, action, fromAi)
+                        Bantai.flag(message, reason, action, fromAi, signals, check.rule.score)
                         a11y.recheck()
                     } else {
-                        ScamAlertOverlay.show(this@BantaiNotificationListener, reason, action, fromAi)
+                        ScamAlertOverlay.show(this@BantaiNotificationListener, reason, action, fromAi, message, signals)
                     }
                     shown = true
                 }

@@ -32,7 +32,9 @@ class WelcomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         if (GuardianPreferences(this).isOnboardingCompleted) {
-            openSetup()
+            // Tapos na ang setup: diretso sa dashboard ni Apo.
+            startActivity(Intent(this, DashboardActivity::class.java))
+            finish()
             return
         }
 

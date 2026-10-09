@@ -13,6 +13,16 @@ import com.bantai.service.BantaiNotificationListener
  */
 object PermissionHelper {
 
+    fun isIgnoringBatteryOptimizations(context: Context): Boolean =
+        context.getSystemService(android.os.PowerManager::class.java).isIgnoringBatteryOptimizations(context.packageName)
+
+    /** Diretsong tanong na "Allow"; kung hindi suportado ng phone, ang listahan ng battery settings. */
+    fun getBatteryOptimizationIntent(context: Context): Intent {
+        val direct = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, android.net.Uri.parse("package:${context.packageName}"))
+        return if (direct.resolveActivity(context.packageManager) != null) direct
+        else Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+    }
+
     /**
      * Checks if NotificationListenerService access has been granted to Bantai.
      */

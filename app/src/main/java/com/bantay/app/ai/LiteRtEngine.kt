@@ -71,7 +71,10 @@ class LiteRtEngine(
                 active.set(conversation)
                 try {
                     val out = StringBuilder()
+                    val start = System.currentTimeMillis()
                     conversation.sendMessageAsync(prompt).collect { out.append(it.toString()) }
+                    // Para masukat ang bilis sa totoong phone (walang laman ng mensahe, sagot lang ng model).
+                    Log.w(TAG, "generate ms=${System.currentTimeMillis() - start} promptChars=${prompt.length} answer=${out.toString().trim().replace('\n', '|').take(160)}")
                     out.toString().trim()
                 } finally {
                     synchronized(active) {

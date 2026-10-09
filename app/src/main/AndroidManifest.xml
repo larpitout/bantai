@@ -3,6 +3,10 @@
 
     <!-- Babala sa ibabaw ng ibang app -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- "Posibleng scam" na notification -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Para hindi patayin ng phone si Bantai sa background -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <!-- Crucial for Android 11+ to discover and bind to Google TextToSpeech engine -->
     <queries>
@@ -43,6 +47,16 @@
                 android:resource="@xml/accessibility_service_config" />
         </service>
 
+        <!-- Babala sa tawag mula sa hindi kilalang numero (kapag si Bantai ang "Caller ID & spam app") -->
+        <service
+            android:name="com.bantai.service.BantaiCallScreening"
+            android:exported="true"
+            android:permission="android.permission.BIND_SCREENING_SERVICE">
+            <intent-filter>
+                <action android:name="android.telecom.CallScreeningService" />
+            </intent-filter>
+        </service>
+
         <!-- Welcome screen: unang bukas ng app -->
         <activity
             android:name="com.bantai.ui.WelcomeActivity"
@@ -52,6 +66,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Dashboard ni Apo: bubukas pagkatapos ng onboarding -->
+        <activity
+            android:name="com.bantai.ui.DashboardActivity"
+            android:exported="false" />
 
         <!-- Setup and Onboarding Activity (binubuksan din mula sa Accessibility settings) -->
         <activity
