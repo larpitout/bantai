@@ -53,11 +53,11 @@ class GabayPipelineTest {
         val result = GabayPipeline(engine).guide(QUESTION, SCREEN)
 
         assertEquals(GabaySource.LLM, result.source)
-        assertEquals(listOf("Pindutin po ang \"Gallery\".", "Pindutin po ang \"Send\"."), result.steps)
-        assertEquals("1. Pindutin po ang \"Gallery\".\n2. Pindutin po ang \"Send\".", result.spokenText)
+        assertEquals(listOf("Pindutin po ang \"Gallery\".", "Pagkatapos, pindutin po ang \"Send\"."), result.steps)
+        assertEquals("1. Pindutin po ang \"Gallery\".\n2. Pagkatapos, pindutin po ang \"Send\".", result.spokenText)
         assertFalse(result.offerCallApo)
         assertTrue(engine.lastPrompt.contains(QUESTION))
-        assertTrue(engine.lastPrompt.contains("\"Gallery\""))
+        assertTrue(engine.lastPrompt.contains("Camera, Gallery, Send"))
     }
 
     @Test
@@ -97,7 +97,7 @@ class GabayPipelineTest {
 
     @Test
     fun replyWithNoUsableStepOffersToCallApo() = runTest {
-        val hallucinated = GabayPipeline(StubEngine { "1. Pindutin po ang \"Attach\"." }).guide(QUESTION, SCREEN)
+        val hallucinated = GabayPipeline(StubEngine { "Attach\nShare" }).guide(QUESTION, SCREEN)
         assertEquals(GabaySource.UNAVAILABLE, hallucinated.source)
 
         val freeText = GabayPipeline(StubEngine { "Hindi ko po alam." }).guide(QUESTION, SCREEN)
@@ -115,20 +115,20 @@ class GabayPipelineTest {
         assertTrue(labels.size <= PromptBuilder.MAX_GABAY_LABELS)
         assertTrue(labels.all { it.length <= PromptBuilder.MAX_LABEL_CHARS })
         assertTrue(labels.sumOf { it.length } <= PromptBuilder.MAX_GABAY_LABEL_CHARS)
-        assertTrue("Prompt is ${prompt.length} chars", prompt.length < 600)
+        assertTrue("Prompt is ${prompt.length} chars", prompt.length < 450)
     }
 
     @Test
     fun duplicateAndBlankLabelsAreLeftOutOfThePrompt() {
-        val labels = PromptBuilder.gabayLabels(listOf("Send", " ", "send", "Say \"hi\"", "Camera"))
+        val labels = PromptBuilder.gabayLabels(listOf("Send", " ", "send", "Say \"hi\", now", "Camera"))
 
-        assertEquals(listOf("Send", "Say 'hi'", "Camera"), labels)
+        assertEquals(listOf("Send", "Say hi now", "Camera"), labels)
     }
 
     private companion object {
         const val QUESTION = "Paano mag-send ng picture?"
         val SCREEN = ScreenContext("com.facebook.orca", listOf("Camera", "Gallery", "Send"))
 
-        const val GOOD_REPLY = "1. Pindutin po ang \"Gallery\".\n2. Pindutin po ang \"Send\"."
+        const val GOOD_REPLY = "Gallery\nSend"
     }
 }

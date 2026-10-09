@@ -149,9 +149,13 @@ Pumili kung Virtual Device o Physical Device ang gagamitin:
   - `performGlobalAction(GLOBAL_ACTION_BACK)` at `GLOBAL_ACTION_HOME`.
 
 ### Lane A: AI Core (Backend Dev 1)
-- [ ] **A7. I-tune ang Gabay Prompt gamit ang Screen Labels** (~40 min) · Kailangan: B6
+- [x] **A7. I-tune ang Gabay Prompt gamit ang Screen Labels** (~40 min) · Kailangan: B6
   - Limitahan sa 3 simpleng hakbang, magalang (may "po"), at bawal magbanggit ng buttons na wala sa screen.
-  - Nakasulat na ang `buildGabayPrompt` at `GabayParser` (ipinapatupad sa code ang 3 hakbang, "po", at labels lang ng screen). Hindi pa nasusukat sa device: patakbuhin ang `GabayPipelineEvalTest` at itala rito ang resulta bago i-check.
+  - Resulta (Oct 10, Infinix X6835B, `GabayPipelineEvalTest`, 6 na screen na may labels):
+    - Buong Tagalog na hakbang mula sa model: 3 sa 4 ang nag-timeout sa 20 s; ang isang sumagot ay 18.5 s at mali ang buttons.
+    - Hanggang 3 pangalan ng button: 9.5–17.3 s, pero laging 3 ang ibinibigay at pampuno lang ang ika-2 at ika-3.
+    - Pinal, isang button lang (ang susunod na pipindutin): 6/6 ang sumagot, avg 6.1 s, max 9.6 s. Tama ang 4 (Voice call, Sound & vibration, Photo, Facebook), puwede na ang 1 (Keypad sa "tumawag sa anak ko"), mali ang 1 ("Message" sa "mag-send ng picture").
+  - Ang model ay pumipili lang ng button; ang pangungusap na may "po" ay galing sa code (`GabayPipeline`), at `GabayParser` ang nagtatanggal ng button na wala sa screen.
 - [x] **A8. `GabayPipeline`** (~45 min) · Kailangan: A7
   - Fixed fallback kapag walang labels (hal. banking app): *"Hindi ko po makita ang screen na ito"*.
   - 20-segundong timeout na nag-aalok na tawagan si Apo.

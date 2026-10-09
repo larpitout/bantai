@@ -1,35 +1,33 @@
 package com.bantai.rules
 
 /**
- * Turns the model's Gabay reply into steps that are safe to show a senior.
+ * Reads the model's Gabay reply: the names of the buttons to tap, in order.
  * The 1B model does not reliably follow the prompt, so the rules are enforced here:
- * at most [MAX_STEPS] steps, every quoted button must be on the screen, and every step says "po".
+ * at most [MAX_STEPS] buttons, and only buttons that are on the screen.
  */
 object GabayParser {
 
     const val MAX_STEPS = 3
 
-    private val STEP_LINE = Regex("^\\s*(?:\\d+\\s*[.):]|[-•])\\s*(.+)$")
-    private val QUOTED = Regex("[\"“”]([^\"“”]+)[\"“”]")
-    private val PO = Regex("\\bpo\\b", RegexOption.IGNORE_CASE)
+    private val NUMBERING = Regex("^\\s*(?:\\d+\\s*[.):]|[-•])\\s*")
+    private val EDGE_NOISE = charArrayOf('"', '\'', '“', '”', '.', '!', ':', ' ')
 
     /**
-     * Returns the usable steps, without their numbers. Empty when the reply has no numbered steps
-     * or every step names a button that is not in [labels].
+     * Returns the buttons to tap, spelled as in [labels]. Names that are not in [labels] are dropped;
+     * empty when nothing in the reply names a button on the screen.
      */
     fun parse(raw: String, labels: List<String>): List<String> {
-        val allowed = labels.map(::normalize).toSet()
+        val byName = labels.associateBy(::normalize)
 
-        return raw.lines()
-            .mapNotNull { STEP_LINE.find(it.replace("*", ""))?.groupValues?.get(1)?.trim() }
-            .filter { it.isNotEmpty() }
+        return raw.split('\n', ',')
+            .mapNotNull { part ->
+                val name = normalize(part.replace("*", "").replace(NUMBERING, "").trim(*EDGE_NOISE))
+                // "Tap Voice call" still names a button: fall back to the longest label inside the line.
+                byName[name] ?: byName.filterKeys { it in name }.maxByOrNull { it.key.length }?.value
+            }
+            .distinct()
             .take(MAX_STEPS)
-            .filter { step -> QUOTED.findAll(step).all { normalize(it.groupValues[1]) in allowed } }
-            .map(::polite)
     }
 
     private fun normalize(text: String) = text.replace(Regex("\\s+"), " ").trim().lowercase()
-
-    private fun polite(step: String): String =
-        if (PO.containsMatchIn(step)) step else step.trimEnd('.', '!', ' ') + " po."
 }

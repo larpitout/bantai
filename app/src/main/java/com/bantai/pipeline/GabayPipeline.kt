@@ -22,11 +22,13 @@ data class GabayResult(
 )
 
 /**
- * Screen labels + question -> at most 3 polite steps from the on-device model.
+ * Screen labels + question -> at most 3 polite steps.
+ * The on-device model only picks which buttons to tap; the sentences are fixed Tagalog templates,
+ * so every step is polite and names a button that is really on the screen.
  *
  * - No labels (e.g. a banking app that blocks screen reading): fixed reply, the model is not called.
  * - No reply within the timeout: offers to call Apo.
- * - Engine not READY, inference error, or no step that survives [GabayParser]: offers to call Apo.
+ * - Engine not READY, inference error, or no button that survives [GabayParser]: offers to call Apo.
  *
  * Never throws to its caller, except for cancellation.
  */
@@ -50,9 +52,12 @@ class GabayPipeline(
             return unavailable(apoName)
         } ?: return fallback(GabaySource.TIMEOUT, "$TIMEOUT_TEXT ${callApoOffer(apoName)}")
 
-        val steps = GabayParser.parse(raw, labels)
-        if (steps.isEmpty()) return unavailable(apoName)
+        val buttons = GabayParser.parse(raw, labels)
+        if (buttons.isEmpty()) return unavailable(apoName)
 
+        val steps = buttons.mapIndexed { i, button ->
+            if (i == 0) "Pindutin po ang \"$button\"." else "Pagkatapos, pindutin po ang \"$button\"."
+        }
         val spoken = steps.withIndex().joinToString("\n") { (i, step) -> "${i + 1}. $step" }
         return GabayResult(steps, spoken, GabaySource.LLM, offerCallApo = false)
     }

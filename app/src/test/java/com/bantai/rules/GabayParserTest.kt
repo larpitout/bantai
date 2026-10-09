@@ -6,58 +6,47 @@ import org.junit.Test
 
 class GabayParserTest {
 
-    private val labels = listOf("Camera", "Gallery", "Send")
+    private val labels = listOf("Camera", "Gallery", "Send", "Voice call", "Video call")
 
     @Test
-    fun keepsNumberedStepsWithoutTheirNumbers() {
-        val steps = GabayParser.parse(
-            "1. Pindutin po ang \"Gallery\".\n2) Piliin po ang larawan.\n3: Pindutin po ang \"Send\".",
-            labels,
-        )
+    fun readsButtonNamesOnePerLine() {
+        assertEquals(listOf("Gallery", "Send"), GabayParser.parse("Gallery\nSend", labels))
+    }
 
+    @Test
+    fun readsNumberedQuotedAndCommaSeparatedNames() {
+        assertEquals(listOf("Gallery", "Send"), GabayParser.parse("1. \"Gallery\"\n2) **Send**.", labels))
+        assertEquals(listOf("Voice call", "Send"), GabayParser.parse("Voice call, Send", labels))
+        assertEquals(listOf("Camera"), GabayParser.parse("- “camera”", labels))
+    }
+
+    @Test
+    fun spellsButtonsAsOnTheScreen() {
+        assertEquals(listOf("Voice call"), GabayParser.parse("VOICE  CALL", labels))
+    }
+
+    @Test
+    fun findsAButtonInsideALongerLine() {
+        assertEquals(listOf("Voice call"), GabayParser.parse("Tap Voice call", labels))
+    }
+
+    @Test
+    fun keepsAtMostThreeAndNoRepeats() {
         assertEquals(
-            listOf("Pindutin po ang \"Gallery\".", "Piliin po ang larawan.", "Pindutin po ang \"Send\"."),
-            steps,
+            listOf("Camera", "Gallery", "Send"),
+            GabayParser.parse("Camera\nCamera\nGallery\nSend\nVoice call", labels),
         )
     }
 
     @Test
-    fun keepsOnlyTheFirstThreeSteps() {
-        val raw = (1..5).joinToString("\n") { "$it. Hakbang $it po." }
-
-        val steps = GabayParser.parse(raw, labels)
-
-        assertEquals(listOf("Hakbang 1 po.", "Hakbang 2 po.", "Hakbang 3 po."), steps)
+    fun dropsNamesThatAreNotOnTheScreen() {
+        assertEquals(listOf("Gallery", "Send"), GabayParser.parse("Gallery\nAttach\nSend", labels))
     }
 
     @Test
-    fun dropsStepsThatNameAButtonNotOnTheScreen() {
-        val steps = GabayParser.parse(
-            "1. Pindutin po ang \"Gallery\".\n2. Pindutin po ang \"Attach\".\n3. Pindutin po ang \"Send\".",
-            labels,
-        )
-
-        assertEquals(listOf("Pindutin po ang \"Gallery\".", "Pindutin po ang \"Send\"."), steps)
-    }
-
-    @Test
-    fun matchesButtonNamesIgnoringCaseAndQuoteStyle() {
-        val steps = GabayParser.parse("1. Pindutin po ang “send”.\n- Pindutin po ang \"CAMERA\".", labels)
-
-        assertEquals(2, steps.size)
-    }
-
-    @Test
-    fun addsPoWhenTheStepHasNone() {
-        val steps = GabayParser.parse("1. Pindutin ang \"Send\".\n2. **Hintayin** itong maipadala!", labels)
-
-        assertEquals(listOf("Pindutin ang \"Send\" po.", "Hintayin itong maipadala po."), steps)
-    }
-
-    @Test
-    fun replyWithoutStepsIsEmpty() {
+    fun replyWithoutAKnownButtonIsEmpty() {
         assertTrue(GabayParser.parse("Hindi ko po alam kung paano.", labels).isEmpty())
         assertTrue(GabayParser.parse("", labels).isEmpty())
-        assertTrue(GabayParser.parse("1. Pindutin po ang \"Attach\".", labels).isEmpty())
+        assertTrue(GabayParser.parse("Attach\nShare", labels).isEmpty())
     }
 }
