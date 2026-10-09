@@ -2,7 +2,7 @@
 <resources>
     <!-- App Identity -->
     <string name="app_name">Bantai</string>
-    <string name="app_tagline">Ang Apo sa Bulsa ni Nanay</string>
+    <string name="app_tagline">Hindi na papauto</string>
 
     <!-- Overlay Warning Dialog Buttons -->
     <string name="alert_ai_badge">Sinuri ng AI sa phone</string>

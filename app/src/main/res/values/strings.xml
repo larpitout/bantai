@@ -2,7 +2,7 @@
 <resources>
     <!-- App Identity -->
     <string name="app_name">Bantai</string>
-    <string name="app_tagline">Your Pocket Guardian Against Scams</string>
+    <string name="app_tagline">Hindi na papauto</string>
 
     <!-- Overlay Warning Dialog Buttons -->
     <string name="alert_ai_badge">Checked by on-device AI</string>

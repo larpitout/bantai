@@ -15,19 +15,29 @@
             android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/setup_title"
+            android:text="@string/app_name"
             android:textColor="#212529"
-            android:textSize="26sp"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvTagline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="@string/app_tagline"
+            android:textColor="#0D6EFD"
+            android:textSize="16sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tvSubtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="6dp"
             android:text="@string/setup_subtitle"
             android:textColor="#6C757D"
-            android:textSize="15sp" />
+            android:textSize="14sp" />
 
         <!-- Master Protection Switch Card -->
         <LinearLayout
