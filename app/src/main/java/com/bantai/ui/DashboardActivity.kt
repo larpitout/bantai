@@ -29,6 +29,7 @@ import com.bantai.data.ScamHistory
 import com.bantai.pipeline.VerdictSource
 import com.bantai.rules.LinkChecker
 import com.bantai.rules.RuleFilter
+import com.bantai.util.PermissionHelper
 import java.text.DateFormat
 import java.util.Date
 import kotlinx.coroutines.Job
@@ -41,7 +42,7 @@ import kotlinx.coroutines.launch
  */
 class DashboardActivity : AppCompatActivity() {
 
-    private enum class Tab { HOME, ALERTS, CHECK }
+    private enum class Tab { HOME, ALERTS, CHECK, SETTINGS }
 
     private lateinit var content: LinearLayout
     private lateinit var statusPill: TextView
@@ -158,8 +159,9 @@ class DashboardActivity : AppCompatActivity() {
             Tab.HOME to item(R.drawable.ic_nav_home, R.string.nav_home) { switchTo(Tab.HOME) },
             Tab.ALERTS to item(R.drawable.ic_nav_list, R.string.nav_alerts) { switchTo(Tab.ALERTS) },
             Tab.CHECK to item(R.drawable.ic_nav_search, R.string.nav_check) { switchTo(Tab.CHECK) },
+            // Tab din ang Settings: hindi nawawala ang navbar.
+            Tab.SETTINGS to item(R.drawable.ic_nav_tune, R.string.nav_settings) { switchTo(Tab.SETTINGS) },
         )
-        item(R.drawable.ic_nav_tune, R.string.nav_settings) { startActivity(Intent(this, SetupActivity::class.java)) }
         return bar
     }
 
@@ -180,6 +182,7 @@ class DashboardActivity : AppCompatActivity() {
             Tab.HOME -> renderHome()
             Tab.ALERTS -> renderAlerts()
             Tab.CHECK -> renderCheck()
+            Tab.SETTINGS -> renderSettings()
         }
     }
 
@@ -332,6 +335,89 @@ class DashboardActivity : AppCompatActivity() {
                 show(c.verdict.isScam || ruleScam, getString(if (ai) R.string.check_ai_done else R.string.check_ai_unavailable))
             }
         }
+    }
+
+    // ---------- Settings (tab, hindi hiwalay na screen) ----------
+
+    private fun renderSettings() {
+        val prefs = GuardianPreferences(this)
+
+        // Proteksyon
+        content.addView(card {
+            addView(label(getString(R.string.card_protection)))
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                addView(text(getString(if (prefs.isProtectionEnabled) R.string.status_active else R.string.status_paused), 18f, bold = true,
+                    color = if (prefs.isProtectionEnabled) GREEN else MUTED).apply { layoutParams = LinearLayout.LayoutParams(0, -2, 1f) })
+                addView(androidx.appcompat.widget.SwitchCompat(context).apply {
+                    isChecked = prefs.isProtectionEnabled
+                    setOnCheckedChangeListener { _, on -> prefs.isProtectionEnabled = on; render() }
+                })
+            })
+        })
+
+        // Mga permission: pindutin para buksan ang tamang settings ng phone
+        content.addView(card {
+            addView(label(getString(R.string.card_permissions)))
+            val callOk = android.os.Build.VERSION.SDK_INT >= 29 &&
+                getSystemService(android.app.role.RoleManager::class.java).isRoleHeld(android.app.role.RoleManager.ROLE_CALL_SCREENING)
+            addView(permRow(R.string.setup_perm_notification_title, PermissionHelper.isNotificationAccessGranted(this@DashboardActivity)) {
+                startActivity(PermissionHelper.getNotificationAccessSettingsIntent())
+            })
+            addView(permRow(R.string.setup_perm_accessibility_title, PermissionHelper.isAccessibilityServiceEnabled(this@DashboardActivity)) {
+                startActivity(PermissionHelper.getAccessibilitySettingsIntent())
+            })
+            addView(permRow(R.string.setup_perm_overlay_title, ScamAlertOverlay.canShow(this@DashboardActivity)) {
+                startActivity(Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:$packageName")))
+            })
+            addView(permRow(R.string.setup_perm_battery_title, PermissionHelper.isIgnoringBatteryOptimizations(this@DashboardActivity)) {
+                startActivity(PermissionHelper.getBatteryOptimizationIntent(this@DashboardActivity))
+            })
+            addView(permRow(R.string.setup_perm_call_title, callOk) {
+                if (android.os.Build.VERSION.SDK_INT >= 29) {
+                    val roles = getSystemService(android.app.role.RoleManager::class.java)
+                    @Suppress("DEPRECATION")
+                    startActivityForResult(roles.createRequestRoleIntent(android.app.role.RoleManager.ROLE_CALL_SCREENING), 2)
+                }
+            })
+        })
+
+        // Trusted contact
+        val name = field(getString(R.string.contact_name_hint), prefs.apoName, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PERSON_NAME)
+        val phone = field(getString(R.string.contact_phone_hint), prefs.apoPhone, InputType.TYPE_CLASS_PHONE)
+        content.addView(card {
+            addView(label(getString(R.string.card_trusted_contact)))
+            addView(name)
+            addView(phone.apply { (layoutParams as LinearLayout.LayoutParams).topMargin = dp(10) })
+        })
+        content.addView(button(getString(R.string.btn_save), BLUE) {
+            prefs.apoName = name.text.toString()
+            prefs.apoPhone = phone.text.toString()
+            android.widget.Toast.makeText(this, R.string.saved, android.widget.Toast.LENGTH_SHORT).show()
+        })
+    }
+
+    /** Isang permission: pangalan at status; pindutin para buksan ang settings ng phone. */
+    private fun permRow(title: Int, granted: Boolean, open: () -> Unit) = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        minimumHeight = dp(52)
+        isClickable = true
+        setOnClickListener { open() }
+        addView(text(getString(title), 16f, bold = true, color = INK).apply { layoutParams = LinearLayout.LayoutParams(0, -2, 1f) })
+        addView(chip(getString(if (granted) R.string.perm_on else R.string.perm_off),
+            if (granted) Color.parseColor("#ECFDF5") else ROSE_BG, if (granted) GREEN else ROSE))
+    }
+
+    private fun field(hint: String, value: String, type: Int) = EditText(this).apply {
+        this.hint = hint
+        setText(value)
+        inputType = type
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
+        background = rounded(Color.WHITE, 14, BORDER)
+        setPadding(dp(14), dp(12), dp(14), dp(12))
+        layoutParams = LinearLayout.LayoutParams(-1, -2)
     }
 
     // ---------- Insights ----------

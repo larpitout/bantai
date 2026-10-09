@@ -146,4 +146,12 @@
     <string name="check_ai_thinking">On-device AI is also checking…</string>
     <string name="check_ai_done">Checked by on-device AI</string>
     <string name="check_ai_unavailable">Checked by Bantai rules (AI did not answer in time)</string>
+    <string name="card_protection">Protection</string>
+    <string name="card_permissions">Permissions</string>
+    <string name="btn_save">Save</string>
+    <string name="saved">Saved</string>
+    <string name="contact_name_hint">Trusted contact name</string>
+    <string name="contact_phone_hint">Trusted contact phone number</string>
+    <string name="perm_on">On</string>
+    <string name="perm_off">Turn on</string>
 </resources>

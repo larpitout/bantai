@@ -146,4 +146,12 @@
     <string name="check_ai_thinking">Sinusuri rin ng AI sa phone…</string>
     <string name="check_ai_done">Sinuri ng AI sa phone</string>
     <string name="check_ai_unavailable">Sinuri ng Bantai rules (hindi agad sumagot ang AI)</string>
+    <string name="card_protection">Proteksyon</string>
+    <string name="card_permissions">Mga permission</string>
+    <string name="btn_save">I-save</string>
+    <string name="saved">Na-save</string>
+    <string name="contact_name_hint">Pangalan ng Trusted Contact</string>
+    <string name="contact_phone_hint">Numero ng Trusted Contact</string>
+    <string name="perm_on">Naka-on</string>
+    <string name="perm_off">I-on</string>
 </resources>
