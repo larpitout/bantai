@@ -24,7 +24,7 @@ class BantaiNotificationListener : NotificationListenerService() {
         Bantai.warmUp(this)
     }
 
-    /** Tagalog na babala; kapag mapanganib ang link, sinasabi kung bakit (hal. "hindi opisyal na website ng GCash"). */
+    /** Babala sa wika ng app; kapag mapanganib ang link, sinasabi kung bakit (hal. "hindi opisyal na website ng GCash"). */
     private fun warningText(message: String, rule: com.bantai.model.RuleResult): Pair<String, String> {
         val text = Bantai.localized(this)
         val link = LinkChecker.check(message)
@@ -134,7 +134,7 @@ class BantaiNotificationListener : NotificationListenerService() {
                     if (!check.verdict.isScam) return@collect
                     val fromAi = check.source == VerdictSource.LLM
                     if (shown && !fromAi) return@collect
-                    // Tagalog template mula sa rules ang laging ipinapakita; si Gemma ang nagpapasya kung scam.
+                    // Template mula sa rules ang laging ipinapakita; si Gemma ang nagpapasya kung scam.
                     val (reason, action) = warningText(message, check.rule)
                     val signals = signalNames(check.rule.signals)
                     if (!shown) {
