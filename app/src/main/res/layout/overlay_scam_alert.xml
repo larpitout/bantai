@@ -48,6 +48,22 @@
     </LinearLayout>
 
     <TextView
+        android:id="@+id/tvAlertAiBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_pill"
+        android:paddingStart="10dp"
+        android:paddingTop="4dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="4dp"
+        android:text="@string/alert_ai_badge"
+        android:textColor="@color/bantai_primary"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <TextView
         android:id="@+id/tvAlertReason"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
