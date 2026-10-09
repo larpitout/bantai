@@ -1,46 +1,44 @@
 package com.bantai.ui
 
 import android.content.Intent
-import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import android.widget.Button
-import android.widget.EditText
+import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
+import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import com.bantai.Bantai
 import com.bantai.R
 import com.bantai.data.GuardianPreferences
-import com.bantai.rules.RuleFilter
 import com.bantai.util.PermissionHelper
 
 /**
- * Setup and Onboarding Activity for Apo (Guardian).
+ * Setup and Onboarding Activity. Disenyo: "Setup" ng bantai_ui.
  *
  * Responsibilities:
- * - Enter and persist Apo contact details (Name and Phone)
- * - Display live status of Notification Access and Accessibility permissions
+ * - Pause or resume Bantai protection
+ * - Display live status of Notification Access, Overlay and Accessibility permissions
  * - Provide 1-tap navigation to system settings to grant permissions
- * - Test Scam Alert trigger verifying rule filter & TTS speech
  */
 class SetupActivity : AppCompatActivity() {
 
     private lateinit var prefs: GuardianPreferences
 
-    private lateinit var etApoName: EditText
-    private lateinit var etApoPhone: EditText
-    private lateinit var btnSave: Button
-    private lateinit var tvNotificationStatus: TextView
-    private lateinit var tvAccessibilityStatus: TextView
-    private lateinit var layoutNotificationPerm: android.view.View
-    private lateinit var layoutAccessibilityPerm: android.view.View
-    private lateinit var tvOverlayStatus: TextView
-    private lateinit var layoutOverlayPerm: android.view.View
-    private lateinit var switchProtection: androidx.appcompat.widget.SwitchCompat
+    private lateinit var btnSave: View
+    private lateinit var switchNotification: SwitchCompat
+    private lateinit var switchAccessibility: SwitchCompat
+    private lateinit var switchOverlay: SwitchCompat
+    private lateinit var layoutNotificationPerm: View
+    private lateinit var layoutAccessibilityPerm: View
+    private lateinit var layoutOverlayPerm: View
+    private lateinit var switchProtection: SwitchCompat
     private lateinit var tvProtectionStatus: TextView
-    private lateinit var btnTest: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +48,7 @@ class SetupActivity : AppCompatActivity() {
         Bantai.warmUp(this)
 
         initViews()
+        padForSystemBars()
         loadPreferences()
         setupListeners()
     }
@@ -60,23 +59,33 @@ class SetupActivity : AppCompatActivity() {
     }
 
     private fun initViews() {
-        etApoName = findViewById(R.id.etApoName)
-        etApoPhone = findViewById(R.id.etApoPhone)
         btnSave = findViewById(R.id.btnSave)
-        tvNotificationStatus = findViewById(R.id.tvNotificationStatus)
-        tvAccessibilityStatus = findViewById(R.id.tvAccessibilityStatus)
+        switchNotification = findViewById(R.id.switchNotification)
+        switchAccessibility = findViewById(R.id.switchAccessibility)
+        switchOverlay = findViewById(R.id.switchOverlay)
         layoutNotificationPerm = findViewById(R.id.layoutNotificationPerm)
         layoutAccessibilityPerm = findViewById(R.id.layoutAccessibilityPerm)
-        tvOverlayStatus = findViewById(R.id.tvOverlayStatus)
         layoutOverlayPerm = findViewById(R.id.layoutOverlayPerm)
         switchProtection = findViewById(R.id.switchProtection)
         tvProtectionStatus = findViewById(R.id.tvProtectionStatus)
-        btnTest = findViewById(R.id.btnTest)
+
+        // XML na clipToOutline ay API 31+ pa; minSdk natin ay 26.
+        findViewById<View>(R.id.logoFrame).clipToOutline = true
+    }
+
+    /** Edge-to-edge sa Android 15+: huwag matakpan ng status at navigation bar. */
+    private fun padForSystemBars() {
+        val content = findViewById<View>(R.id.setupContent)
+        val baseTop = content.paddingTop
+        val baseBottom = content.paddingBottom
+        ViewCompat.setOnApplyWindowInsetsListener(content) { v, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.updatePadding(top = baseTop + bars.top, bottom = baseBottom + bars.bottom)
+            insets
+        }
     }
 
     private fun loadPreferences() {
-        etApoName.setText(prefs.apoName)
-        etApoPhone.setText(prefs.apoPhone)
         val isEnabled = prefs.isProtectionEnabled
         switchProtection.isChecked = isEnabled
         updateSwitchUi(isEnabled)
@@ -84,19 +93,9 @@ class SetupActivity : AppCompatActivity() {
 
     private fun setupListeners() {
         btnSave.setOnClickListener {
-            val name = etApoName.text.toString().trim()
-            val phone = etApoPhone.text.toString().trim()
-
-            if (name.isEmpty() || phone.isEmpty()) {
-                Toast.makeText(this, R.string.setup_toast_fill_fields, Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            prefs.apoName = name
-            prefs.apoPhone = phone
             prefs.isOnboardingCompleted = true
-
-            Toast.makeText(this, R.string.setup_toast_saved, Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.setup_toast_done, Toast.LENGTH_SHORT).show()
+            finish()
         }
 
         layoutNotificationPerm.setOnClickListener {
@@ -117,19 +116,15 @@ class SetupActivity : AppCompatActivity() {
             prefs.isProtectionEnabled = isChecked
             updateSwitchUi(isChecked)
         }
-
-        btnTest.setOnClickListener {
-            triggerTestScamAlert()
-        }
     }
 
     private fun updateSwitchUi(isEnabled: Boolean) {
         if (isEnabled) {
             tvProtectionStatus.setText(R.string.switch_protection_active)
-            tvProtectionStatus.setTextColor(Color.parseColor("#198754"))
+            tvProtectionStatus.setTextColor(ContextCompat.getColor(this, R.color.bantai_primary))
         } else {
             tvProtectionStatus.setText(R.string.switch_protection_inactive)
-            tvProtectionStatus.setTextColor(Color.parseColor("#6C757D"))
+            tvProtectionStatus.setTextColor(ContextCompat.getColor(this, R.color.bantai_text_muted))
         }
     }
 
@@ -137,39 +132,8 @@ class SetupActivity : AppCompatActivity() {
      * Checks permission status in real-time and updates the UI indicators.
      */
     fun updatePermissionStatuses() {
-        val overlayGranted = ScamAlertOverlay.canShow(this)
-        tvOverlayStatus.setText(if (overlayGranted) R.string.status_granted else R.string.status_not_granted)
-        tvOverlayStatus.setTextColor(Color.parseColor(if (overlayGranted) "#198754" else "#DC3545"))
-
-        val notifGranted = PermissionHelper.isNotificationAccessGranted(this)
-        if (notifGranted) {
-            tvNotificationStatus.setText(R.string.status_granted)
-            tvNotificationStatus.setTextColor(Color.parseColor("#198754"))
-        } else {
-            tvNotificationStatus.setText(R.string.status_not_granted)
-            tvNotificationStatus.setTextColor(Color.parseColor("#DC3545"))
-        }
-
-        val a11yGranted = PermissionHelper.isAccessibilityServiceEnabled(this)
-        if (a11yGranted) {
-            tvAccessibilityStatus.setText(R.string.status_granted)
-            tvAccessibilityStatus.setTextColor(Color.parseColor("#198754"))
-        } else {
-            tvAccessibilityStatus.setText(R.string.status_not_granted)
-            tvAccessibilityStatus.setTextColor(Color.parseColor("#DC3545"))
-        }
-    }
-
-    /**
-     * Ipinapakita ang totoong overlay na babala gamit ang sample na scam.
-     */
-    private fun triggerTestScamAlert() {
-        if (!ScamAlertOverlay.canShow(this)) {
-            Toast.makeText(this, R.string.setup_perm_overlay_desc, Toast.LENGTH_LONG).show()
-            return
-        }
-        val sampleScamText = "Ma si Junjun to bagong number ko padala ka 5k sa gcash emergency lang"
-        val (reasonRes, actionRes) = RuleFilter.instantWarningRes(RuleFilter.score(sampleScamText))
-        ScamAlertOverlay.show(this, getString(reasonRes), getString(actionRes))
+        switchOverlay.isChecked = ScamAlertOverlay.canShow(this)
+        switchNotification.isChecked = PermissionHelper.isNotificationAccessGranted(this)
+        switchAccessibility.isChecked = PermissionHelper.isAccessibilityServiceEnabled(this)
     }
 }
