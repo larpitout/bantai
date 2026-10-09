@@ -67,7 +67,8 @@ class LiteRtEngine(
                 val e = checkNotNull(engine) { "Engine not ready: ${_state.value}" }
                 if (abandoned.get()) throw CancellationException("Umalis na ang tumawag")
                 // Bagong conversation kada tawag para walang naiiwang history.
-                val conversation = e.createConversation(ConversationConfig(samplerConfig = SAMPLER))
+                // Maikling sagot lang ang kailangan (VERDICT + REASON): mas mabilis kapag hindi na nagpapatuloy ang model.
+                val conversation = e.createConversation(ConversationConfig(samplerConfig = SAMPLER, maxOutputToken = MAX_OUTPUT_TOKENS))
                 active.set(conversation)
                 try {
                     val out = StringBuilder()
@@ -102,6 +103,7 @@ class LiteRtEngine(
 
     companion object {
         private const val TAG = "LiteRtEngine"
+        private const val MAX_OUTPUT_TOKENS = 48
         const val DEFAULT_MODEL_PATH = "/data/local/tmp/llm/gemma3-1b-it-int4.litertlm"
 
         // Mababa ang temperature para konsistent ang HATOL/DAHILAN/GAWIN format.

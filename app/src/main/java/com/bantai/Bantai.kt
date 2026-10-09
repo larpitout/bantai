@@ -180,6 +180,9 @@ object Bantai {
         speaker ?: Speaker(context.applicationContext).also { speaker = it }
 
     /** Walang model (rules-only): engine na hindi kailanman READY, kaya rules ang laging sagot. */
-    fun scamPipeline(context: Context) = ScamPipeline(engine ?: LiteRtEngine(modelPath = "", cacheDir = null))
+    fun scamPipeline(context: Context) = ScamPipeline(
+        engine ?: LiteRtEngine(modelPath = "", cacheDir = null),
+        language = if (localized(context).resources.configuration.locales[0].language in setOf("tl", "fil")) "Filipino" else "English",
+    )
 
 }
