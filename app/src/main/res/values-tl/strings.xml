@@ -48,6 +48,11 @@
     <string name="setup_perm_accessibility_desc">Pinapayagan si Bantai na maglabas ng babala at gumabay sa screen.</string>
     <string name="setup_btn_save">I-save ang Settings</string>
     <string name="setup_btn_test">I-test ang Babala</string>
+    <string name="status_granted">Naka-enable na</string>
+    <string name="status_not_granted">Pindutin para I-enable</string>
+    <string name="setup_toast_saved">Matagumpay na na-save ang settings.</string>
+    <string name="setup_toast_fill_fields">Pakilagay ang pangalan at cellphone number ni Apo.</string>
+    <string name="setup_test_alert_triggered">Sinusubukan ang babala laban sa scam...</string>
 
     <!-- Accessibility Service -->
     <string name="accessibility_service_description">Binabasa ni Bantai ang text sa screen para maka-detect ng scam at tulungan ang nakatatanda.</string>
