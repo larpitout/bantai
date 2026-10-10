@@ -85,6 +85,15 @@ object RuleFilter {
         )
     }
 
+    // Kahit kakilala ang nagpadala, SCAM pa rin kapag may link, OTP o premyo (baka na-hack o worm).
+    private val CONTACT_OVERRIDE_SIGNALS = setOf(
+        "Suspicious Link", "Dangerous Link", "Account / OTP / Parcel", "Prize / Raffle"
+    )
+
+    /** Hiling na pera na walang link/OTP/premyo: SUSPICIOUS lang (hindi SCAM) kapag galing sa naka-save na contact. */
+    fun isContactMoneyRequest(ruleResult: RuleResult): Boolean =
+        "Money Request" in ruleResult.signals && ruleResult.signals.none { it in CONTACT_OVERRIDE_SIGNALS }
+
     /**
      * ponytail: English, para sa ScamPipeline (walang Context). Ang overlay ay gumagamit ng
      * [instantWarningRes] para naka-localize; pag-isahin kapag may Context na ang pipeline.

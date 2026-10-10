@@ -6,12 +6,16 @@ import android.service.notification.StatusBarNotification
 import android.util.Log
 import com.bantai.Bantai
 import com.bantai.data.GuardianPreferences
+import com.bantai.model.Verdict
 import com.bantai.pipeline.VerdictSource
 import com.bantai.R
 import com.bantai.rules.LinkChecker
 import com.bantai.rules.RuleFilter
 import com.bantai.ui.ScamAlertOverlay
+import com.bantai.util.ContactHelper
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class BantaiNotificationListener : NotificationListenerService() {
 
@@ -128,34 +132,49 @@ class BantaiNotificationListener : NotificationListenerService() {
         if (ruleResult.score >= 1) {
             val openChat = notification.contentIntent // para buksan ang mismong chat mula sa notification ni Bantai
             Bantai.scope.launch {
+                // Kakilala ba ang humihingi ng pera? Sa contacts ng phone lang tinitingnan (null kapag walang pahintulot).
+                val contact = if ("Money Request" in ruleResult.signals) {
+                    withContext(Dispatchers.IO) { ContactHelper.find(this@BantaiNotificationListener, sender) }
+                } else null
                 var shown = false
-                Bantai.scamPipeline(this@BantaiNotificationListener).check(message, sender).collect { check ->
-                    Log.d(TAG, "verdict scam=${check.verdict.isScam} source=${check.source} final=${check.isFinal}")
-                    if (!check.verdict.isScam) return@collect
+                Bantai.scamPipeline(this@BantaiNotificationListener).check(message, sender, senderIsContact = contact != null).collect { check ->
+                    Log.d(TAG, "verdict=${check.verdict.level} source=${check.source} final=${check.isFinal}")
+                    if (check.verdict.level == Verdict.SAFE) return@collect
+                    val suspicious = check.verdict.level == Verdict.SUSPICIOUS
                     val fromAi = check.source == VerdictSource.LLM
-                    if (shown && !fromAi) return@collect
+                    val loc = Bantai.localized(this@BantaiNotificationListener)
                     // Template mula sa rules ang laging ipinapakita; si Gemma ang nagpapasya kung scam.
-                    val (ruleReason, action) = warningText(message, check.rule)
+                    val (ruleReason, action) = if (suspicious) {
+                        loc.getString(R.string.suspicious_reason, contact?.name ?: sender) to loc.getString(R.string.suspicious_action)
+                    } else warningText(message, check.rule)
                     // AI ang bida: kapag si Qwen/Gemma ang nagpasya, ang sarili niyang paliwanag ang ipapakita.
-                    val reason = check.verdict.reason.takeIf { fromAi && it.isNotBlank() && it.length < 300 } ?: ruleReason
+                    // Kakilala: template lang, dahil "scam" ang salita ng model.
+                    val reason = check.verdict.reason.takeIf { !suspicious && fromAi && it.isNotBlank() && it.length < 300 } ?: ruleReason
                     val signals = signalNames(check.rule.signals)
+                    val kind = if (suspicious) loc.getString(R.string.kind_contact_money) else kindOf(message, check.rule.signals)
                     // Kasaysayan (audit): sa huling hatol, para alam kung AI o rules ang nagpasya.
                     if (check.isFinal) {
                         com.bantai.data.ScamHistory.add(
-                            this@BantaiNotificationListener, sender, message, reason, kindOf(message, check.rule.signals),
+                            this@BantaiNotificationListener, sender, message, reason, kind,
                             check.rule.score, action, signals, if (fromAi) Bantai.modelName() else null,
+                            suspicious, contact?.number.takeIf { suspicious },
                         )
                     }
+                    // Naipakita na ang babala ng rules; ang huling hatol ng rules ay para sa kasaysayan lang.
+                    if (shown && !fromAi) return@collect
                     if (!shown) {
-                        ScamNotifier.notify(this@BantaiNotificationListener, sender, reason, openChat)
+                        ScamNotifier.notify(
+                            this@BantaiNotificationListener, sender, reason, openChat,
+                            if (suspicious) R.string.notif_title_suspicious else R.string.notif_title,
+                        )
                     }
                     val a11y = BantaiAccessibilityService.instance
                     if (a11y != null) {
                         // Walang biglang popup: lalabas ang babala kapag binuksan ni Nanay ang mensahe.
-                        Bantai.flag(message, reason, action, fromAi, signals, check.rule.score)
+                        Bantai.flag(message, reason, action, fromAi, signals, check.rule.score, check.verdict.level, contact)
                         a11y.recheck()
                     } else {
-                        ScamAlertOverlay.show(this@BantaiNotificationListener, reason, action, fromAi, message, signals)
+                        ScamAlertOverlay.show(this@BantaiNotificationListener, reason, action, fromAi, message, signals, check.verdict.level, contact)
                     }
                     shown = true
                 }

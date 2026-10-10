@@ -8,6 +8,9 @@
     <!-- Para hindi patayin ng phone si Bantai sa background -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
+    <!-- Para malaman kung kakilala (nasa contacts) ang nag-message; sa phone lang binabasa -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
     <!-- Crucial for Android 11+ to discover and bind to Google TextToSpeech engine -->
     <queries>
         <intent>

@@ -16,6 +16,7 @@ import androidx.core.view.updatePadding
 import com.bantai.Bantai
 import com.bantai.R
 import com.bantai.data.GuardianPreferences
+import com.bantai.util.ContactHelper
 import com.bantai.util.PermissionHelper
 
 /**
@@ -46,6 +47,8 @@ class SetupActivity : AppCompatActivity() {
     private lateinit var layoutBatteryPerm: View
     private lateinit var switchCall: SwitchCompat
     private lateinit var layoutCallPerm: View
+    private lateinit var switchContacts: SwitchCompat
+    private lateinit var layoutContactsPerm: View
     private lateinit var switchProtection: SwitchCompat
     private lateinit var tvProtectionStatus: TextView
 
@@ -85,6 +88,8 @@ class SetupActivity : AppCompatActivity() {
         layoutBatteryPerm = findViewById(R.id.layoutBatteryPerm)
         switchCall = findViewById(R.id.switchCall)
         layoutCallPerm = findViewById(R.id.layoutCallPerm)
+        switchContacts = findViewById(R.id.switchContacts)
+        layoutContactsPerm = findViewById(R.id.layoutContactsPerm)
         switchProtection = findViewById(R.id.switchProtection)
         tvProtectionStatus = findViewById(R.id.tvProtectionStatus)
 
@@ -139,6 +144,11 @@ class SetupActivity : AppCompatActivity() {
             }
         }
 
+        layoutContactsPerm.setOnClickListener {
+            // Opsyonal: kapag tinanggihan, karaniwang babala pa rin (walang "kakilala").
+            PermissionHelper.requestContacts(this)
+        }
+
         layoutOverlayPerm.setOnClickListener {
             startActivity(
                 Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
@@ -149,6 +159,12 @@ class SetupActivity : AppCompatActivity() {
             prefs.isProtectionEnabled = isChecked
             updateSwitchUi(isChecked)
         }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        PermissionHelper.onContactsResult(this, requestCode)
+        updatePermissionStatuses()
     }
 
     private fun updateSwitchUi(isEnabled: Boolean) {
@@ -169,6 +185,7 @@ class SetupActivity : AppCompatActivity() {
         switchNotification.isChecked = PermissionHelper.isNotificationAccessGranted(this)
         switchAccessibility.isChecked = PermissionHelper.isAccessibilityServiceEnabled(this)
         switchBattery.isChecked = PermissionHelper.isIgnoringBatteryOptimizations(this)
+        switchContacts.isChecked = ContactHelper.hasPermission(this)
         switchCall.isChecked = android.os.Build.VERSION.SDK_INT >= 29 &&
             getSystemService(android.app.role.RoleManager::class.java).isRoleHeld(android.app.role.RoleManager.ROLE_CALL_SCREENING)
     }

@@ -43,6 +43,15 @@ class RuleFilterTest {
     }
 
     @Test
+    fun testContactMoneyRequestExcludesLinkOtpAndPrize() {
+        assertTrue(RuleFilter.isContactMoneyRequest(RuleFilter.score("Pautang naman 2k, padala mo sa gcash ko ngayon na")))
+        assertFalse(RuleFilter.isContactMoneyRequest(RuleFilter.score("Padala ka sa gcash, dito: http://gcash-verify.xyz/login")))
+        assertFalse(RuleFilter.isContactMoneyRequest(RuleFilter.score("Padala mo sa akin yung OTP ng gcash mo")))
+        assertFalse(RuleFilter.isContactMoneyRequest(RuleFilter.score("Nanalo ka ng premyo, padala ka ng bayad")))
+        assertFalse(RuleFilter.isContactMoneyRequest(RuleFilter.score("Kain na tayo mamaya")))
+    }
+
+    @Test
     fun testInstantWarningCreationForHighRiskImpersonation() {
         val text = "Ma si Junjun to bagong number ko padala ka 5k gcash"
         val result = RuleFilter.score(text)

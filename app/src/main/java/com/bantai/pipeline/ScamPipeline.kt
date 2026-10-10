@@ -2,6 +2,7 @@ package com.bantai.pipeline
 
 import com.bantai.model.RuleResult
 import com.bantai.model.ScamVerdict
+import com.bantai.model.Verdict
 import com.bantai.rules.PromptBuilder
 import com.bantai.rules.RuleFilter
 import com.bantai.rules.ScamParser
@@ -31,6 +32,7 @@ data class ScamCheck(
  * - Score 0: safe from rules, the model is not called.
  * - Score 1: the model decides; falls back to the rule warning.
  * - Score 2+: rule warning is emitted at once, then the model's explanation. The model cannot downgrade it to safe.
+ * - Saved contact asking for money (no link, OTP or prize): SUSPICIOUS instead of SCAM.
  *
  * Falls back to the rule verdict when the engine is not READY, the call times out, throws,
  * or the reply has no verdict line. The flow never throws to its collector.
@@ -44,8 +46,14 @@ class ScamPipeline(
     private val allowAiDowngrade: Boolean = false,
 ) {
 
-    fun check(message: String, sender: String = ""): Flow<ScamCheck> = flow {
+    fun check(message: String, sender: String = "", senderIsContact: Boolean = false): Flow<ScamCheck> = flow {
         val rule = RuleFilter.score(message, sender)
+        val contactMoney = senderIsContact && RuleFilter.isContactMoneyRequest(rule)
+        // Score 2+ mula sa kakilala: SUSPICIOUS anuman ang sabihin ng model, kaya hindi na ito tinatawag.
+        if (contactMoney && rule.score >= 2 && !allowAiDowngrade) {
+            emit(ScamCheck(rule, SUSPICIOUS_VERDICT, VerdictSource.RULES, isFinal = true))
+            return@flow
+        }
         if (rule.score == 0 && !allowAiDowngrade) {
             emit(ScamCheck(rule, SAFE_VERDICT, VerdictSource.RULES, isFinal = true))
             return@flow
@@ -64,7 +72,7 @@ class ScamPipeline(
         } else {
             ScamCheck(rule, llmVerdict, VerdictSource.LLM, isFinal = true)
         }
-        emit(final)
+        emit(if (contactMoney && final.verdict.isScam) final.copy(verdict = SUSPICIOUS_VERDICT) else final)
     }
 
     /** Returns null when the model gave no usable verdict. */
@@ -94,6 +102,14 @@ class ScamPipeline(
             isScam = false,
             reason = "Mukhang ligtas po at karaniwang mensahe lamang ito.",
             action = "Wala pong kailangang gawin.",
+        )
+
+        // English tulad ng createInstantWarning; ang babala ay gumagamit ng naka-localize na string.
+        val SUSPICIOUS_VERDICT = ScamVerdict(
+            isScam = false,
+            reason = "Your contact is asking for money. Their account may have been hacked.",
+            action = "Call them directly on the phone before sending anything.",
+            level = Verdict.SUSPICIOUS,
         )
     }
 }

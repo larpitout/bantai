@@ -18,7 +18,7 @@ object ScamNotifier {
 
     private const val CHANNEL = "scam_alerts"
 
-    fun notify(context: Context, sender: String, reason: String, openChat: PendingIntent?) {
+    fun notify(context: Context, sender: String, reason: String, openChat: PendingIntent?, titleRes: Int = R.string.notif_title) {
         val app = context.applicationContext
         val text = Bantai.localized(app)
         val nm = app.getSystemService(NotificationManager::class.java)
@@ -33,7 +33,7 @@ object ScamNotifier {
         )
         val notification = NotificationCompat.Builder(app, CHANNEL)
             .setSmallIcon(android.R.drawable.stat_sys_warning)
-            .setContentTitle(text.getString(R.string.notif_title, sender))
+            .setContentTitle(text.getString(titleRes, sender))
             .setContentText(reason)
             .setStyle(NotificationCompat.BigTextStyle().bigText("$reason\n${text.getString(R.string.notif_tap_hint)}"))
             .setPriority(NotificationCompat.PRIORITY_HIGH)

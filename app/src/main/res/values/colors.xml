@@ -11,6 +11,8 @@
     <color name="bantai_text_muted">#4B5563</color>
     <color name="caution_border">#FCD34D</color>
     <color name="caution_text">#78350F</color>
+    <color name="danger_border">#F87171</color>
+    <color name="danger_text">#991B1B</color>
     <color name="welcome_grad_top">#0072FF</color>
     <color name="welcome_grad_bottom">#03265B</color>
 </resources>

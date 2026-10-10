@@ -18,10 +18,18 @@ data class RuleResult(
     val signals: List<String>
 )
 
+/** SUSPICIOUS: kakilala (nasa contacts) na humihingi ng pera. Hindi tinatawag na scam, pero pinapa-verify. */
+enum class Verdict {
+    SCAM,
+    SUSPICIOUS,
+    SAFE
+}
+
 data class ScamVerdict(
     val isScam: Boolean,
     val reason: String,
-    val action: String
+    val action: String,
+    val level: Verdict = if (isScam) Verdict.SCAM else Verdict.SAFE
 ) {
     val dahilan: String get() = reason
     val gawin: String get() = action

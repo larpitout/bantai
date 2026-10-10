@@ -152,4 +152,14 @@
     <string name="chip_ai">AI</string>
     <string name="day_today">Today</string>
     <string name="day_yesterday">Yesterday</string>
+    <string name="setup_perm_contacts_title">Contacts</string>
+    <string name="setup_perm_contacts_desc">Lets Bantai know when a message is from someone you know, to avoid false warnings.</string>
+    <string name="suspicious_title">Careful: Verify First</string>
+    <string name="suspicious_reason">Your contact %1$s is asking for money. Their account may have been hacked.</string>
+    <string name="suspicious_action">Call them directly on the phone first to make sure it is really them.</string>
+    <string name="btn_call_contact">Call %1$s</string>
+    <string name="notif_title_suspicious">Verify first: %1$s is asking for money</string>
+    <string name="verdict_suspicious">SUSPICIOUS</string>
+    <string name="kind_contact_money">Contact asking for money</string>
+    <string name="filter_all">All</string>
 </resources>

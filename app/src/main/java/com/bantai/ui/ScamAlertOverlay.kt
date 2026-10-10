@@ -3,8 +3,11 @@ package com.bantai.ui
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.graphics.PixelFormat
 import android.graphics.Rect
+import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.provider.Settings
 import android.util.Log
 import android.view.Gravity
@@ -14,6 +17,8 @@ import android.view.WindowManager
 import android.widget.TextView
 import com.bantai.Bantai
 import com.bantai.R
+import com.bantai.model.Verdict
+import com.bantai.util.ContactHelper
 
 /**
  * Ang babala, sa dalawang paraan:
@@ -33,13 +38,16 @@ object ScamAlertOverlay {
     fun canShow(context: Context) = Settings.canDrawOverlays(context)
 
     /** Popup agad (fallback kapag walang Accessibility). */
-    fun show(context: Context, reason: String, action: String, fromAi: Boolean = false, message: String = "", signals: List<String> = emptyList()) {
+    fun show(
+        context: Context, reason: String, action: String, fromAi: Boolean = false, message: String = "", signals: List<String> = emptyList(),
+        level: Verdict = Verdict.SCAM, contact: ContactHelper.SavedContact? = null,
+    ) {
         val app = context.applicationContext
         if (!canShow(app)) {
             Log.w(TAG, "Walang 'Display over other apps' permission, hindi maipakita ang babala")
             return
         }
-        present(app, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, reason, action, fromAi, message, signals, score = 0, bottomOffsetDp = 0) { dismiss(app) }
+        present(app, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, reason, action, fromAi, message, signals, score = 0, bottomOffsetDp = 0, level = level, contact = contact) { dismiss(app) }
     }
 
     /** Banner sa loob ng bukas na chat, para sa mensaheng na-flag. */
@@ -60,6 +68,8 @@ object ScamAlertOverlay {
             // Nasa itaas ng text box ng chat, para makapag-type pa rin si Nanay.
             bottomOffsetDp = 72,
             anchor = bubble,
+            level = flag.level,
+            contact = flag.contact,
         ) {
             flag.dismissed = true // "Sige po": hindi na lalabas ulit para sa mensaheng ito
             dismiss(service)
@@ -80,6 +90,8 @@ object ScamAlertOverlay {
         score: Int,
         bottomOffsetDp: Int,
         anchor: Rect? = null,
+        level: Verdict = Verdict.SCAM,
+        contact: ContactHelper.SavedContact? = null,
         onDismiss: () -> Unit,
     ) {
         dismiss(ctx)
@@ -89,12 +101,26 @@ object ScamAlertOverlay {
         val view = LayoutInflater.from(Bantai.localized(app)).inflate(R.layout.overlay_scam_alert, null)
         val tts = Bantai.speaker(app)
 
+        val loc = Bantai.localized(app)
+        // SCAM: pula. SUSPICIOUS (kakilalang humihingi ng pera): dilaw, at may "Tawagan si …".
+        val suspicious = level == Verdict.SUSPICIOUS
+        val title = loc.getString(if (suspicious) R.string.suspicious_title else R.string.warning_title)
+        val ink = app.getColor(if (suspicious) R.color.caution_text else R.color.danger_text)
+        view.findViewById<TextView>(R.id.tvAlertTitle).apply {
+            text = title
+            setTextColor(ink)
+        }
+        (view.findViewById<View>(R.id.alertCard).background.mutate() as? GradientDrawable)?.setStroke(
+            (3 * app.resources.displayMetrics.density).toInt(),
+            app.getColor(if (suspicious) R.color.caution_border else R.color.danger_border),
+        )
+
         view.findViewById<TextView>(R.id.tvAlertReason).text = reason
         view.findViewById<TextView>(R.id.tvAlertAction).text = action
         // Audit: gaano kapanganib at sino ang nagpasya (rules o AI sa phone).
-        val loc = Bantai.localized(app)
         val hasRisk = score > 0
         view.findViewById<TextView>(R.id.tvAlertRisk).apply {
+            setTextColor(ink)
             visibility = if (hasRisk) View.VISIBLE else View.GONE
             val level = loc.getString(
                 when { score >= 3 -> R.string.risk_high; score == 2 -> R.string.risk_medium; else -> R.string.risk_low }
@@ -113,9 +139,21 @@ object ScamAlertOverlay {
         }
 
         view.findViewById<View>(R.id.btnAlertListen).setOnClickListener {
-            tts.speak("${Bantai.localized(app).getString(R.string.warning_title)}. $reason $action")
+            tts.speak("$title. $reason $action")
         }
         view.findViewById<View>(R.id.btnAlertDismiss).setOnClickListener { onDismiss() }
+        val number = contact?.number
+        view.findViewById<TextView>(R.id.btnAlertCall).apply {
+            visibility = if (suspicious && !number.isNullOrBlank()) View.VISIBLE else View.GONE
+            text = loc.getString(R.string.btn_call_contact, contact?.name.orEmpty())
+            setOnClickListener {
+                // Dialer lang ang bubuksan; si Nanay pa rin ang pipindot ng tawag.
+                runCatching {
+                    app.startActivity(Intent(Intent.ACTION_DIAL, Uri.fromParts("tel", number, null)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                }
+                onDismiss()
+            }
+        }
 
         // Sukatin ang view para makuha ang totoong pixel height bago ipuwesto
         val metrics = app.resources.displayMetrics

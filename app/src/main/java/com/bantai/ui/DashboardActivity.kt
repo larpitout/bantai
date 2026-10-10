@@ -30,6 +30,7 @@ import com.bantai.data.ScamHistory
 import com.bantai.pipeline.VerdictSource
 import com.bantai.rules.LinkChecker
 import com.bantai.rules.RuleFilter
+import com.bantai.util.ContactHelper
 import com.bantai.util.PermissionHelper
 import eightbitlab.com.blurview.BlurTarget
 import eightbitlab.com.blurview.BlurView
@@ -55,6 +56,8 @@ class DashboardActivity : AppCompatActivity() {
 
     /** Babalang binuksan sa Alerts tab (audit); null = listahan. */
     private var selected: ScamHistory.Item? = null
+    /** Filter ng kasaysayan: null = lahat, false = SCAM, true = SUSPICIOUS (kakilala). */
+    private var filter: Boolean? = null
 
     // Iisang wika sa buong app (pareho ng babala).
     override fun attachBaseContext(newBase: Context) {
@@ -266,10 +269,10 @@ class DashboardActivity : AppCompatActivity() {
             if (last == null) {
                 addView(text(getString(R.string.history_empty), 16f, color = MUTED))
             } else {
-                addView(row(getString(R.string.field_verdict), verdictChip(true)))
+                addView(row(getString(R.string.field_verdict), verdictChip(true, last.suspicious)))
                 addView(row(getString(R.string.field_from), text(last.sender, 15f, bold = true, color = INK)))
                 addView(row(getString(R.string.field_reason), text(last.reason, 15f, color = INK)))
-                addView(row(getString(R.string.field_kind), chip(last.kind, ROSE_BG, ROSE)))
+                addView(row(getString(R.string.field_kind), chip(last.kind, if (last.suspicious) AMBER_BG else ROSE_BG, if (last.suspicious) AMBER else ROSE)))
             }
         })
     }
@@ -319,10 +322,23 @@ class DashboardActivity : AppCompatActivity() {
         })
 
         content.addView(sectionTitle(getString(R.string.dashboard_history)))
+        content.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(dp(4), dp(10), 0, 0)
+            listOf(null to R.string.filter_all, false to R.string.verdict_scam, true to R.string.verdict_suspicious).forEach { (value, name) ->
+                val on = filter == value
+                addView(chip(getString(name), if (on) BLUE else SLATE_BG, if (on) Color.WHITE else MUTED).apply {
+                    setPadding(dp(14), dp(8), dp(14), dp(8))
+                    (layoutParams as LinearLayout.LayoutParams).marginEnd = dp(8)
+                    isClickable = true
+                    setOnClickListener { filter = value; render() }
+                })
+            }
+        })
         val fmt = DateFormat.getTimeInstance(DateFormat.SHORT, locale)
         // Nakagrupo ayon sa araw; isang row bawat mensahe, pindutin para makita ang buong audit.
         var day: String? = null
-        for (item in items) {
+        for (item in items.filter { filter == null || it.suspicious == filter }) {
             val itemDay = dayLabel(item.time)
             if (itemDay != day) {
                 day = itemDay
@@ -336,7 +352,7 @@ class DashboardActivity : AppCompatActivity() {
         orientation = LinearLayout.HORIZONTAL
         isClickable = true
         setOnClickListener { selected = item; render() }
-        val (riskBg, riskFg) = riskColors(item.score)
+        val (riskBg, riskFg) = if (item.suspicious) AMBER_BG to AMBER else riskColors(item.score)
         addView(text("!", 20f, bold = true, color = riskFg).apply {
             gravity = Gravity.CENTER
             background = rounded(riskBg, 999, riskBg)
@@ -357,7 +373,7 @@ class DashboardActivity : AppCompatActivity() {
                     layoutParams = LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(8) }
                 })
             })
-            addView(text(item.kind, 13f, bold = true, color = ROSE).apply { setPadding(0, dp(2), 0, 0) })
+            addView(text(item.kind, 13f, bold = true, color = if (item.suspicious) AMBER else ROSE).apply { setPadding(0, dp(2), 0, 0) })
             addView(text(item.message, 15f, color = MUTED).apply {
                 maxLines = 2
                 ellipsize = android.text.TextUtils.TruncateAt.END
@@ -365,7 +381,7 @@ class DashboardActivity : AppCompatActivity() {
             })
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
-                addView(chip(riskLabel(item.score), riskBg, riskFg))
+                addView(chip(if (item.suspicious) getString(R.string.verdict_suspicious) else riskLabel(item.score), riskBg, riskFg))
                 if (item.aiModel != null) {
                     addView(chip(getString(R.string.chip_ai), Color.parseColor("#EFF6FF"), BLUE).apply { (layoutParams as LinearLayout.LayoutParams).marginStart = dp(6) })
                 }
@@ -381,10 +397,11 @@ class DashboardActivity : AppCompatActivity() {
             isClickable = true
             setOnClickListener { selected = null; render() }
         })
-        content.addView(card(ROSE_BG, ROSE_BORDER) {
+        val accent = if (item.suspicious) AMBER else RED
+        content.addView(card(if (item.suspicious) AMBER_BG else ROSE_BG, if (item.suspicious) AMBER_BORDER else ROSE_BORDER) {
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
-                addView(chip(getString(R.string.verdict_scam), RED, Color.WHITE))
+                addView(chip(getString(if (item.suspicious) R.string.verdict_suspicious else R.string.verdict_scam), accent, Color.WHITE))
                 addView(chip(riskLabel(item.score), Color.WHITE, riskColors(item.score).second).apply { (layoutParams as LinearLayout.LayoutParams).marginStart = dp(6) })
             })
             addView(text(item.kind, 21f, bold = true, color = INK).apply { setPadding(0, dp(10), 0, dp(2)) })
@@ -400,7 +417,12 @@ class DashboardActivity : AppCompatActivity() {
         if (item.action.isNotBlank()) {
             content.addView(card {
                 addView(label(getString(R.string.field_action)))
-                addView(text(item.action, 17f, bold = true, color = RED))
+                addView(text(item.action, 17f, bold = true, color = accent))
+            })
+        }
+        item.callNumber?.let { number ->
+            content.addView(button(getString(R.string.btn_call_contact, item.sender), BLUE) {
+                runCatching { startActivity(Intent(Intent.ACTION_DIAL, android.net.Uri.fromParts("tel", number, null))) }
             })
         }
         content.addView(card {
@@ -581,6 +603,9 @@ class DashboardActivity : AppCompatActivity() {
             addView(permRow(R.string.setup_perm_battery_title, PermissionHelper.isIgnoringBatteryOptimizations(this@DashboardActivity)) {
                 startActivity(PermissionHelper.getBatteryOptimizationIntent(this@DashboardActivity))
             })
+            addView(permRow(R.string.setup_perm_contacts_title, ContactHelper.hasPermission(this@DashboardActivity)) {
+                PermissionHelper.requestContacts(this@DashboardActivity)
+            })
             addView(permRow(R.string.setup_perm_call_title, callOk) {
                 if (android.os.Build.VERSION.SDK_INT >= 29) {
                     val roles = getSystemService(android.app.role.RoleManager::class.java)
@@ -589,6 +614,12 @@ class DashboardActivity : AppCompatActivity() {
                 }
             })
         })
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        PermissionHelper.onContactsResult(this, requestCode)
+        render()
     }
 
     /** Isang permission: pangalan at status; pindutin para buksan ang settings ng phone. */
@@ -705,8 +736,11 @@ class DashboardActivity : AppCompatActivity() {
         addView(value)
     }
 
-    private fun verdictChip(scam: Boolean) = LinearLayout(this).apply {
-        addView(chip(getString(if (scam) R.string.verdict_scam else R.string.verdict_safe), if (scam) RED else GREEN, Color.WHITE))
+    private fun verdictChip(scam: Boolean, suspicious: Boolean = false) = LinearLayout(this).apply {
+        addView(
+            if (suspicious) chip(getString(R.string.verdict_suspicious), AMBER, Color.WHITE)
+            else chip(getString(if (scam) R.string.verdict_scam else R.string.verdict_safe), if (scam) RED else GREEN, Color.WHITE)
+        )
     }
 
     private fun chip(value: String, bg: Int, fg: Int) = text(value, 13f, bold = true, color = fg).apply {
@@ -768,5 +802,6 @@ class DashboardActivity : AppCompatActivity() {
         val ROSE_BORDER = Color.parseColor("#FECDD3")
         val AMBER = Color.parseColor("#B45309")
         val AMBER_BG = Color.parseColor("#FFFBEB")
+        val AMBER_BORDER = Color.parseColor("#FDE68A")
     }
 }

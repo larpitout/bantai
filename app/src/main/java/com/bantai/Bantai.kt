@@ -7,9 +7,11 @@ import android.content.res.Configuration
 import android.os.Build
 import android.os.LocaleList
 import android.util.Log
+import com.bantai.model.Verdict
 import com.bantai.pipeline.ScamPipeline
 import com.bantai.service.NotificationExtractor
 import com.bantai.service.Speaker
+import com.bantai.util.ContactHelper
 import com.bantay.app.ai.LiteRtEngine
 import com.bantay.app.core.EngineState
 import java.io.File
@@ -144,6 +146,9 @@ object Bantai {
         val key: String, val reason: String, val action: String, var fromAi: Boolean, val message: String, val signals: List<String>,
         /** Bilang ng senyales mula sa rules: 3+ mataas, 2 katamtaman, 1 mababa. */
         val score: Int,
+        val level: Verdict = Verdict.SCAM,
+        /** Ang kakilalang nagpadala (SUSPICIOUS lang), para sa "Tawagan si …". */
+        val contact: ContactHelper.SavedContact? = null,
     ) {
         var dismissed = false
     }
@@ -154,11 +159,14 @@ object Bantai {
     private fun keyOf(text: String) = text.lowercase().replace(Regex("\\s+"), " ").trim().take(40)
 
     /** Itabi o i-update ang babala para sa [message]. */
-    fun flag(message: String, reason: String, action: String, fromAi: Boolean, signals: List<String>, score: Int): Flagged {
+    fun flag(
+        message: String, reason: String, action: String, fromAi: Boolean, signals: List<String>, score: Int,
+        level: Verdict = Verdict.SCAM, contact: ContactHelper.SavedContact? = null,
+    ): Flagged {
         val key = keyOf(message)
         flagged.firstOrNull { it.key == key }?.let { it.fromAi = it.fromAi || fromAi; return it }
         if (flagged.size >= 20) flagged.removeFirst()
-        return Flagged(key, reason, action, fromAi, message, signals, score).also(flagged::addLast)
+        return Flagged(key, reason, action, fromAi, message, signals, score, level, contact).also(flagged::addLast)
     }
 
     /** Ang na-flag na mensaheng nakikita sa screen ngayon, kung meron. */

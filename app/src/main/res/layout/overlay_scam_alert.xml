@@ -8,6 +8,7 @@
     android:padding="8dp">
 
 <LinearLayout
+    android:id="@+id/alertCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/bg_alert_card"
@@ -134,6 +135,24 @@
             android:textColor="@color/bantai_text"
             android:textSize="18sp"
             android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnAlertCall"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="8dp"
+            android:minHeight="48dp"
+            android:paddingStart="8dp"
+            android:paddingTop="6dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="6dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_btn_primary"
+            android:gravity="center"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
     </LinearLayout>
 </LinearLayout>
 </FrameLayout>

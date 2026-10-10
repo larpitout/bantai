@@ -1,5 +1,6 @@
 package com.bantai.pipeline
 
+import com.bantai.model.Verdict
 import com.bantai.rules.PromptBuilder
 import com.bantai.rules.RuleFilter
 import com.bantay.app.core.EngineState
@@ -144,6 +145,50 @@ class ScamPipelineTest {
     }
 
     @Test
+    fun contactAskingForMoneyIsSuspiciousWithoutCallingTheModel() = runTest {
+        assertTrue(RuleFilter.score(CONTACT_MONEY_TEXT).score >= 2)
+        val engine = StubEngine()
+
+        val results = ScamPipeline(engine).check(CONTACT_MONEY_TEXT, "Junjun", senderIsContact = true).toList()
+
+        assertEquals(1, results.size)
+        assertEquals(Verdict.SUSPICIOUS, results[0].verdict.level)
+        assertFalse(results[0].verdict.isScam)
+        assertTrue(results[0].isFinal)
+        assertEquals(0, engine.calls)
+    }
+
+    @Test
+    fun unknownSenderAskingForMoneyIsStillScam() = runTest {
+        val results = ScamPipeline(StubEngine()).check(CONTACT_MONEY_TEXT, "09171234567").toList()
+
+        assertEquals(Verdict.SCAM, results.last().verdict.level)
+    }
+
+    @Test
+    fun contactWithOneSignalLetsTheModelDecide() = runTest {
+        val flagged = ScamPipeline(StubEngine { SCAM_REPLY }).check(ONE_SIGNAL_TEXT, "Junjun", senderIsContact = true).toList()
+        assertEquals(Verdict.SUSPICIOUS, flagged.last().verdict.level)
+        assertEquals(VerdictSource.LLM, flagged.last().source)
+
+        val safe = ScamPipeline(StubEngine { SAFE_REPLY }).check(ONE_SIGNAL_TEXT, "Junjun", senderIsContact = true).toList()
+        assertEquals(Verdict.SAFE, safe.last().verdict.level)
+
+        val noModel = ScamPipeline(StubEngine(initial = EngineState.IDLE)).check(ONE_SIGNAL_TEXT, "Junjun", senderIsContact = true).toList()
+        assertEquals(Verdict.SUSPICIOUS, noModel.last().verdict.level)
+    }
+
+    @Test
+    fun linkOrOtpFromContactIsStillScam() = runTest {
+        for (text in listOf(CONTACT_LINK_TEXT, CONTACT_OTP_TEXT)) {
+            val results = ScamPipeline(StubEngine()).check(text, "Junjun", senderIsContact = true).toList()
+
+            assertEquals(text, Verdict.SCAM, results.last().verdict.level)
+            assertTrue(results.last().verdict.isScam)
+        }
+    }
+
+    @Test
     fun promptIsShortAndCarriesTheMessage() {
         val prompt = PromptBuilder.buildScamPrompt(SCAM_TEXT, listOf("Money Request"))
 
@@ -163,6 +208,10 @@ class ScamPipelineTest {
         const val SAFE_TEXT = "Lola, happy birthday po! Dadalaw po kami sa Linggo."
         const val ONE_SIGNAL_TEXT = "Padala ka naman ng ulam dito sa bahay."
         const val SCAM_TEXT = "Ma si Junjun to bagong number ko padala ka 5k gcash"
+
+        const val CONTACT_MONEY_TEXT = "Pautang naman 2k, padala mo sa gcash ko ngayon na"
+        const val CONTACT_LINK_TEXT = "Padala ka sa gcash, dito: http://gcash-verify.xyz/login"
+        const val CONTACT_OTP_TEXT = "Padala mo sa akin yung OTP ng gcash mo ngayon na"
 
         const val SCAM_REPLY = "HATOL: SCAM\nDAHILAN: Humihingi ng pera.\nGAWIN: Huwag magpadala."
         const val SAFE_REPLY = "HATOL: LIGTAS\nDAHILAN: Karaniwang mensahe lang.\nGAWIN: Wala pong kailangang gawin."
