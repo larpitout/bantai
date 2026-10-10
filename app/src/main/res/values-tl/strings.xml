@@ -10,7 +10,6 @@
     <string name="welcome_logo_desc">Logo ng Bantai</string>
 
     <!-- Overlay Warning Dialog Buttons -->
-    <string name="alert_ai_badge">Sinuri ng AI sa phone</string>
     <string name="btn_read_aloud">Basahin</string>
     <string name="btn_dismiss">Sige po</string>
 
@@ -76,9 +75,6 @@
     <string name="risk_high">Mataas na panganib</string>
     <string name="risk_medium">Katamtamang panganib</string>
     <string name="risk_low">Mababang panganib</string>
-    <string name="risk_line">%1$s · %2$s</string>
-    <string name="decided_by_ai">sinuri ng AI sa phone</string>
-    <string name="decided_by_rules">sinuri ng Bantai sa phone</string>
     <string name="kind_link">Peke / mapanganib na link</string>
     <string name="kind_relative">Pekeng kamag-anak / bagong number</string>
     <string name="kind_prize">Pekeng premyo</string>
@@ -137,8 +133,6 @@
     <string name="check_desc">I-paste ang kahina-hinalang text o link. Susuriin ito ni Bantai sa phone, offline.</string>
     <string name="check_hint">I-paste dito ang mensahe o link</string>
     <string name="btn_check">Suriin</string>
-    <string name="check_ai_done">Sinuri ng AI sa phone</string>
-    <string name="check_ai_unavailable">Sinuri ng Bantai rules (hindi agad sumagot ang AI)</string>
     <string name="card_protection">Proteksyon</string>
     <string name="card_permissions">Mga permission</string>
     <string name="perm_on">Naka-on</string>
@@ -147,9 +141,6 @@
     <string name="card_message">Mensahe</string>
     <string name="card_audit">Audit</string>
     <string name="field_risk">Panganib</string>
-    <string name="field_decided_by">Sinuri ng</string>
-    <string name="decided_by_ai_model">AI sa phone (%1$s)</string>
-    <string name="chip_ai">AI</string>
     <string name="day_today">Ngayon</string>
     <string name="day_yesterday">Kahapon</string>
     <string name="setup_perm_contacts_title">Contacts</string>

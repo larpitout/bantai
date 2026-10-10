@@ -382,9 +382,6 @@ class DashboardActivity : AppCompatActivity() {
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
                 addView(chip(if (item.suspicious) getString(R.string.verdict_suspicious) else riskLabel(item.score), riskBg, riskFg))
-                if (item.aiModel != null) {
-                    addView(chip(getString(R.string.chip_ai), Color.parseColor("#EFF6FF"), BLUE).apply { (layoutParams as LinearLayout.LayoutParams).marginStart = dp(6) })
-                }
             })
         })
     }
@@ -431,14 +428,6 @@ class DashboardActivity : AppCompatActivity() {
             item.signals.forEach {
                 addView(chip(it, AMBER_BG, AMBER).apply { (layoutParams as LinearLayout.LayoutParams).topMargin = dp(8) })
             }
-            addView(View(context).apply {
-                setBackgroundColor(BORDER)
-                layoutParams = LinearLayout.LayoutParams(-1, dp(1)).apply { topMargin = dp(14); bottomMargin = dp(8) }
-            })
-            addView(row(getString(R.string.field_decided_by), text(
-                item.aiModel?.let { getString(R.string.decided_by_ai_model, it) } ?: getString(R.string.decided_by_rules), 15f, bold = true,
-                color = if (item.aiModel != null) BLUE else INK,
-            )))
         })
     }
 
@@ -508,7 +497,7 @@ class DashboardActivity : AppCompatActivity() {
             }
         }
 
-        fun show(isScam: Boolean, reasonText: String, actionText: String, note: String?) {
+        fun show(isScam: Boolean, reasonText: String, actionText: String) {
             out.removeAllViews()
             out.addView(card {
                 addView(row(getString(R.string.field_verdict), verdictChip(isScam)))
@@ -517,11 +506,10 @@ class DashboardActivity : AppCompatActivity() {
                 if (rule.signals.isNotEmpty()) {
                     addView(row(getString(R.string.field_signals), text(rule.signals.joinToString(", "), 14f, color = MUTED)))
                 }
-                note?.let { addView(text(it, 14f, bold = true, color = BLUE).apply { setPadding(0, dp(8), 0, 0) }) }
             })
         }
 
-        show(initialIsScam, initialReason, initialAction, null)
+        show(initialIsScam, initialReason, initialAction)
         if (!hasAi) return
 
         // AI sa phone: may allowAiDowngrade para sa Check tab upang marinig ang totoong desisyon ng AI.
@@ -561,7 +549,7 @@ class DashboardActivity : AppCompatActivity() {
                 } else {
                     initialAction
                 }
-                show(isScam, finalReason, finalAction, getString(if (ai) R.string.check_ai_done else R.string.check_ai_unavailable))
+                show(isScam, finalReason, finalAction)
             }
         }
     }

@@ -117,18 +117,14 @@ object ScamAlertOverlay {
 
         view.findViewById<TextView>(R.id.tvAlertReason).text = reason
         view.findViewById<TextView>(R.id.tvAlertAction).text = action
-        // Audit: gaano kapanganib at sino ang nagpasya (rules o AI sa phone).
-        val hasRisk = score > 0
+        // Gaano kapanganib, ayon sa dami ng senyales.
         view.findViewById<TextView>(R.id.tvAlertRisk).apply {
             setTextColor(ink)
-            visibility = if (hasRisk) View.VISIBLE else View.GONE
-            val level = loc.getString(
+            visibility = if (score > 0) View.VISIBLE else View.GONE
+            text = loc.getString(
                 when { score >= 3 -> R.string.risk_high; score == 2 -> R.string.risk_medium; else -> R.string.risk_low }
             )
-            text = loc.getString(R.string.risk_line, level, loc.getString(if (fromAi) R.string.decided_by_ai else R.string.decided_by_rules))
         }
-        // Ipakita lang ang hiwalay na badge kung walang risk line para hindi doble ang "checked by AI"
-        view.findViewById<View>(R.id.tvAlertAiBadge).visibility = if (fromAi && !hasRisk) View.VISIBLE else View.GONE
 
         // "Bakit na-flag?": ang mga nakitang senyales, para may paliwanag at hindi lang "scam".
         val why = view.findViewById<TextView>(R.id.tvAlertWhy)

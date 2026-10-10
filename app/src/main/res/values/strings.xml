@@ -10,7 +10,6 @@
     <string name="welcome_logo_desc">Bantai logo</string>
 
     <!-- Overlay Warning Dialog Buttons -->
-    <string name="alert_ai_badge">Checked by on-device AI</string>
     <string name="btn_read_aloud">Read</string>
     <string name="btn_dismiss">Got it</string>
 
@@ -76,9 +75,6 @@
     <string name="risk_high">High risk</string>
     <string name="risk_medium">Medium risk</string>
     <string name="risk_low">Low risk</string>
-    <string name="risk_line">%1$s · %2$s</string>
-    <string name="decided_by_ai">checked by on-device AI</string>
-    <string name="decided_by_rules">checked by Bantai rules on this phone</string>
     <string name="kind_link">Fake / risky link</string>
     <string name="kind_relative">Fake relative / new number</string>
     <string name="kind_prize">Fake prize</string>
@@ -137,8 +133,6 @@
     <string name="check_desc">Paste a suspicious text or link. Bantai checks it on this phone, offline.</string>
     <string name="check_hint">Paste the message or link here</string>
     <string name="btn_check">Check</string>
-    <string name="check_ai_done">Checked by on-device AI</string>
-    <string name="check_ai_unavailable">Checked by Bantai rules (AI did not answer in time)</string>
     <string name="card_protection">Protection</string>
     <string name="card_permissions">Permissions</string>
     <string name="perm_on">On</string>
@@ -147,9 +141,6 @@
     <string name="card_message">Message</string>
     <string name="card_audit">Audit</string>
     <string name="field_risk">Risk</string>
-    <string name="field_decided_by">Checked by</string>
-    <string name="decided_by_ai_model">On-device AI (%1$s)</string>
-    <string name="chip_ai">AI</string>
     <string name="day_today">Today</string>
     <string name="day_yesterday">Yesterday</string>
     <string name="setup_perm_contacts_title">Contacts</string>
