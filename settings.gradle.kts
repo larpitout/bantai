@@ -11,6 +11,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Para sa BlurView (frosted glass navbar) — wala sa Maven Central.
+        maven("https://jitpack.io")
     }
 }
 
