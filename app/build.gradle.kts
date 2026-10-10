@@ -63,6 +63,9 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
 
+    // Frosted glass blur (iOS-style) para sa floating navbar.
+    implementation("com.github.Dimezis:BlurView:version-3.2.0")
+
     // Testing
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

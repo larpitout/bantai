@@ -11,6 +11,7 @@ import android.text.InputType
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
+import android.view.ViewOutlineProvider
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -30,13 +31,15 @@ import com.bantai.pipeline.VerdictSource
 import com.bantai.rules.LinkChecker
 import com.bantai.rules.RuleFilter
 import com.bantai.util.PermissionHelper
+import eightbitlab.com.blurview.BlurTarget
+import eightbitlab.com.blurview.BlurView
 import java.text.DateFormat
 import java.util.Date
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
- * Pangunahing screen ni Apo, may header at bottom navbar (disenyo: Dashboard ng bantai_ui).
+ * Pangunahing screen ni Apo, may header at lumulutang na bottom navbar (disenyo: Dashboard ng bantai_ui).
  * Mga tab: Home (status, huling scan), Babala (insights + audit), Suriin (i-paste at suriin),
  * Settings (setup). Binubuksan ng Welcome pagkatapos ng onboarding, at ng "Posibleng scam" na notification.
  */
@@ -46,7 +49,7 @@ class DashboardActivity : AppCompatActivity() {
 
     private lateinit var content: LinearLayout
     private lateinit var statusPill: TextView
-    private lateinit var navItems: Map<Tab, Pair<ImageView, TextView>>
+    private lateinit var navItems: Map<Tab, NavItem>
     private var tab = Tab.HOME
     private var checkJob: Job? = null
 
@@ -64,17 +67,23 @@ class DashboardActivity : AppCompatActivity() {
 
         content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(18), dp(4), dp(18), dp(24))
+            setPadding(dp(18), dp(4), dp(18), dp(104))
         }
-        val screen = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
+        // BlurTarget: ang nilalamang puwedeng i-blur ng floating navbar.
+        val target = BlurTarget(this).apply {
             setBackgroundColor(Color.parseColor("#F4F8FE"))
-            addView(header())
-            addView(ScrollView(context).apply {
-                addView(content)
-                layoutParams = LinearLayout.LayoutParams(-1, 0, 1f)
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                addView(header())
+                addView(ScrollView(context).apply {
+                    addView(content)
+                    layoutParams = LinearLayout.LayoutParams(-1, 0, 1f)
+                })
             })
-            addView(bottomNav())
+        }
+        val screen = FrameLayout(this).apply {
+            addView(target)
+            addView(bottomNav(target))
         }
         // Edge-to-edge (Android 15+): huwag matakpan ng status at navigation bar.
         ViewCompat.setOnApplyWindowInsetsListener(screen) { v, insets ->
@@ -113,7 +122,6 @@ class DashboardActivity : AppCompatActivity() {
             layoutParams = LinearLayout.LayoutParams(dp(40), dp(40))
         })
         addView(text("BANTAI", 21f, bold = true, color = INK).apply {
-            letterSpacing = 0.2f
             layoutParams = LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = dp(10) }
         })
         statusPill = text("", 13f, bold = true, color = GREEN).apply {
@@ -133,16 +141,17 @@ class DashboardActivity : AppCompatActivity() {
         )
     }
 
-    // ---------- Bottom navbar ----------
+    // ---------- Floating bottom navbar ----------
 
-    private fun bottomNav(): View {
+    private class NavItem(val icon: ImageView, val title: TextView, val box: View)
+
+    private fun bottomNav(target: BlurTarget): View {
+        // Mga tab sa loob ng iisang floating bubble.
         val bar = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            setBackgroundColor(Color.WHITE)
-            elevation = dp(12).toFloat()
-            setPadding(0, dp(6), 0, dp(6))
+            setPadding(dp(6), dp(6), dp(6), dp(6))
         }
-        fun item(icon: Int, label: Int, onClick: () -> Unit): Pair<ImageView, TextView> {
+        fun item(icon: Int, label: Int, onClick: () -> Unit): NavItem {
             val img = ImageView(this).apply {
                 setImageResource(icon)
                 imageTintList = ColorStateList.valueOf(MUTED)
@@ -152,18 +161,29 @@ class DashboardActivity : AppCompatActivity() {
                 gravity = Gravity.CENTER
                 layoutParams = LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(2) }
             }
-            bar.addView(LinearLayout(this).apply {
+            val box = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
                 minimumHeight = dp(56)
                 isClickable = true
                 contentDescription = getString(label)
                 setOnClickListener { onClick() }
+                // Capsule din ang ripple: i-clip sa parehong bubble shape ng active tab.
+                background = rounded(Color.TRANSPARENT, 28, Color.TRANSPARENT)
+                clipToOutline = true
+                with(obtainStyledAttributes(intArrayOf(android.R.attr.selectableItemBackground))) {
+                    foreground = getDrawable(0)
+                    recycle()
+                }
                 addView(img)
                 addView(txt)
-                layoutParams = LinearLayout.LayoutParams(0, -2, 1f)
-            })
-            return img to txt
+                layoutParams = LinearLayout.LayoutParams(0, -2, 1f).apply {
+                    marginStart = dp(2)
+                    marginEnd = dp(2)
+                }
+            }
+            bar.addView(box)
+            return NavItem(img, txt, box)
         }
         navItems = mapOf(
             Tab.HOME to item(R.drawable.ic_nav_home, R.string.nav_home) { switchTo(Tab.HOME) },
@@ -172,7 +192,23 @@ class DashboardActivity : AppCompatActivity() {
             // Tab din ang Settings: hindi nawawala ang navbar.
             Tab.SETTINGS to item(R.drawable.ic_nav_tune, R.string.nav_settings) { switchTo(Tab.SETTINGS) },
         )
-        return bar
+        // Isang bubble na lumulutang: full capsule shape, totoong blur ng content sa likod, may tint at anino.
+        return BlurView(this).apply {
+            addView(bar)
+            background = rounded(
+                Color.argb(100, 255, 255, 255), 36,
+                Color.argb(120, 0xDC, 0xE6, 0xF4),
+            )
+            outlineProvider = ViewOutlineProvider.BACKGROUND
+            clipToOutline = true
+            elevation = dp(12).toFloat()
+            setupWith(target).setBlurRadius(25f)
+            layoutParams = FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM).apply {
+                marginStart = dp(16)
+                marginEnd = dp(16)
+                bottomMargin = dp(16)
+            }
+        }
     }
 
     private fun switchTo(t: Tab) {
@@ -184,9 +220,15 @@ class DashboardActivity : AppCompatActivity() {
     private fun render() {
         updateHeader()
         navItems.forEach { (t, v) ->
-            val c = if (t == tab) BLUE else MUTED
-            v.first.imageTintList = ColorStateList.valueOf(c)
-            v.second.setTextColor(c)
+            val on = t == tab
+            val c = if (on) BLUE else MUTED
+            v.icon.imageTintList = ColorStateList.valueOf(c)
+            v.title.setTextColor(c)
+            v.box.background = rounded(
+                if (on) Color.argb(190, 0xE6, 0xF0, 0xFC) else Color.TRANSPARENT,
+                28,
+                if (on) ContextCompat.getColor(this, R.color.bantai_pale_border) else Color.TRANSPARENT,
+            )
         }
         content.removeAllViews()
         when (tab) {
