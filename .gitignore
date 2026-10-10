@@ -30,3 +30,7 @@ local.properties
 
 # Model weights (i-adb push, huwag i-commit)
 *.litertlm
+
+# Internal docs (hindi para sa repo)
+docs/USER_JOURNEY.md
+docs/BANTAY_TASKS.md

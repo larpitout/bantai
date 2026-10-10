@@ -1,80 +1,56 @@
-# 🚀 [Project Name]
+# Bantai - Hindi na pauuto
 
-> **AppBuildersPH Hackathon 2026 Submission**  
-> *Theme:* **Local AI** — *"Build an AI product that remains genuinely useful when the cloud disappears."*
+Text scams like fake "bagong number" relatives asking for money, OTP phishing, and bogus parcel fees commonly target Filipinos, especially seniors. Bantai is an Android app that screens incoming SMS and chat messages for scams and warns the user inside the chat app. The check runs on the phone with an on-device LLM (Qwen3.5-2B).
 
----
+## Run It Locally (for Judges)
 
-## 📖 Overview & Value Proposition
-[Short 2-3 sentence elevator pitch describing the project, the specific user problem it solves, and why local on-device AI is the killer differentiator.]
-
----
-
-## ⚡ Why Local AI? (The Core Advantage)
-- 🔒 **100% Privacy:** Sensitive data, user inputs, and local files never leave the device.
-- 📴 **Zero Internet Required:** Fully functional offline or in air-gapped / disaster conditions.
-- ⚡ **Ultra-Low Latency:** Immediate on-device response without cloud round-trip delays.
-- 💸 **Zero Token / Cloud Costs:** Free, unlimited local AI inference for users.
-
----
-
-## 🛠️ Architecture & Tech Stack
-
-```mermaid
-flowchart LR
-    User["👤 User Device / UI"] --> LocalInference["🧠 On-Device / Local AI Model"]
-    LocalInference --> LocalStore["💾 Local Storage / Cache"]
-    LocalInference --> Result["✨ Instant Result (Offline)"]
-```
-
-- **Frontend / Client:** [e.g. Next.js / React / TypeScript / Tailwind CSS]
-- **Local AI Engine / Framework:** [e.g. Ollama / Transformers.js / WebLLM / MediaPipe / ONNX Runtime]
-- **Models Used:** [e.g. Llama 3.2 1B / Gemma 2B / Whisper / SmolLM]
-- **AI Tooling Disclosure:** [e.g. Built using Devin, Copilot, ChatGPT for development assistance]
-
----
-
-## 🚀 Quickstart & Local Reproduction Guide
+No servers, accounts, or API keys. The only download is the model file.
 
 ### Prerequisites
-- Node.js (v18+ / v20+) or Python 3.10+
-- [Local model runner if needed, e.g. `ollama` or WebGPU-enabled browser]
+- Android Studio, or JDK 17+ (a full JDK, not just a JRE) plus Android SDK Platform 35
+- An Android 8.0+ phone (arm64), recommended over an emulator for notification and accessibility features
+- About 2.2 GB of free storage on the phone for the Qwen model
+- **At least 6,000 MB of RAM as reported by Android** to run Qwen3.5-2B. With less, the app runs rules + link checks only, without the AI model.
 
-### 1. Clone the repository
+### 1. Clone
 ```bash
-git clone https://github.com/[team-username]/[repo-name].git
-cd [repo-name]
+git clone https://github.com/larpitout/bantai.git
+cd bantai
 ```
 
-### 2. Install dependencies
+### 2. Download the model
+Download `Qwen3.5-2B_int8.litertlm` (2,116,592,816 bytes, Apache-2.0) from [`litert-community/Qwen3.5-2B`](https://huggingface.co/litert-community/Qwen3.5-2B) on Hugging Face.
+
+> Phones reporting under 6,000 MB RAM won't load Qwen. They use Gemma 3 1B if its file is present, otherwise rules-only.
+
+### 3. Put the model on the phone (debug build)
 ```bash
-npm install
-# or pnpm install / yarn
+adb shell mkdir -p /data/local/tmp/llm/
+adb push Qwen3.5-2B_int8.litertlm /data/local/tmp/llm/
 ```
 
-### 3. Environment Setup
+*Alternative, release build:* put the file in `models/` at the repo root and run `./gradlew assembleRelease`. The release build bundles `models/` into the APK, so the APK is about 2.1 GB larger.
+
+### 4. Build and install
 ```bash
-cp .env.example .env
+./gradlew installDebug
 ```
 
-### 4. Run the application
-```bash
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+### 5. Grant permissions (the Setup screen walks you through it)
+- **Notification access**: to screen incoming messages
+- **Accessibility (messaging apps only)**: to show the warning when the flagged chat is opened
+- **Display over other apps**: to draw the warning
+- Optional: **Contacts** (marks money requests from saved contacts as Suspicious, with a Call button), **Battery optimization exemption** (keeps Bantai running on aggressive OEMs), and **Caller ID & spam app** (call warnings)
 
----
+> **Android 13+ sideloaded apps:** if a permission is greyed out, go to **Settings → Apps → Bantai → ⋮ → Allow restricted settings**.
 
-## 👥 Team Members & Contributions
+To confirm which model loaded: `adb logcat -s Bantai` should show `Model: Qwen3.5-2B_int8.litertlm`, followed by `READY`.
 
-| Member Name | Role | Primary Contributions |
-| :--- | :--- | :--- |
-| **[Member 1]** | UI/UX & Submission Lead | User Journey, Wireframes, Video Demo & Pitch |
-| **[Member 2]** | Frontend Developer | UI Components, State Management, Client Integration |
-| **[Member 3]** | Backend / AI Developer | Local Model Pipeline, Prompting & Data Flow |
-| **[Member 4]** | Fullstack Developer | Core Feature Engineering & System Integration |
+### 6. Try it
+- **No second phone needed (debug build):**
+  ```bash
+  adb shell cmd notification post -t "GCash" "BantaiTest" "URGENT: GCash account locked, verify at gcash-verify.xyz"
+  ```
+- Or send yourself an SMS like: `Ma bagong number ko to, padala ka 5k sa gcash emergency lang`
+- Then open the message in your chat app to see the warning, or paste the text in the **Check** tab.
 
----
-
-## 📄 License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
