@@ -122,7 +122,6 @@ class DashboardActivity : AppCompatActivity() {
             layoutParams = LinearLayout.LayoutParams(dp(40), dp(40))
         })
         addView(text("BANTAI", 21f, bold = true, color = INK).apply {
-            letterSpacing = 0.2f
             layoutParams = LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = dp(10) }
         })
         statusPill = text("", 13f, bold = true, color = GREEN).apply {
