@@ -17,6 +17,7 @@ object ScamHistory {
     private const val KEY_SCANNED_DAY = "scanned_day"
     private const val KEY_SCANNED_TODAY = "scanned_today"
     private const val MAX = 50
+    private const val MAX_SAFE = 20
 
     /** [kind] ay ang uri ng scam sa wika ng babala (hal. "Pekeng link"). */
     data class Item(
@@ -34,22 +35,38 @@ object ScamHistory {
         val suspicious: Boolean = false,
         /** Numero ng kakilala, para sa "Tawagan". */
         val callNumber: String? = null,
-    )
+        /** May senyales pero ligtas ayon sa huling hatol ("checked and cleared"). */
+        val safe: Boolean = false,
+    ) {
+        /** Hatol para sa filter ng Alerts: SAFE > SUSPICIOUS > SCAM (isa lang totoo). */
+        val level: com.bantai.model.Verdict
+            get() = if (safe) com.bantai.model.Verdict.SAFE
+                else if (suspicious) com.bantai.model.Verdict.SUSPICIOUS
+                else com.bantai.model.Verdict.SCAM
+    }
 
     fun add(
         context: Context, sender: String, message: String, reason: String, kind: String, score: Int,
         action: String = "", signals: List<String> = emptyList(), aiModel: String? = null,
-        suspicious: Boolean = false, callNumber: String? = null,
+        suspicious: Boolean = false, callNumber: String? = null, safe: Boolean = false,
     ) {
         val items = JSONArray().put(
             JSONObject().put("t", System.currentTimeMillis()).put("s", sender).put("m", message.take(160))
                 .put("r", reason).put("k", kind).put("c", score)
                 .put("a", action).put("g", JSONArray(signals)).put("ai", aiModel ?: "")
-                .put("v", suspicious).put("p", callNumber ?: "")
+                .put("v", suspicious).put("p", callNumber ?: "").put("sf", safe)
         )
         val old = read(context)
         for (i in 0 until minOf(old.length(), MAX - 1)) items.put(old.get(i))
-        prefs(context).edit().putString(KEY, items.toString()).apply()
+        // Safe ("checked and cleared") items: huling [MAX_SAFE] lang — hindi bumubuga ang kasaysayan.
+        var safeKept = 0
+        val trimmed = JSONArray()
+        for (i in 0 until items.length()) {
+            val o = items.getJSONObject(i)
+            if (o.optBoolean("sf") && ++safeKept > MAX_SAFE) continue
+            trimmed.put(o)
+        }
+        prefs(context).edit().putString(KEY, trimmed.toString()).apply()
     }
 
     fun list(context: Context): List<Item> {
@@ -60,7 +77,7 @@ object ScamHistory {
             Item(
                 o.getLong("t"), o.optString("s"), o.optString("m"), o.optString("r"), o.optString("k"), o.optInt("c"),
                 o.optString("a"), (0 until (g?.length() ?: 0)).map { g!!.getString(it) }, o.optString("ai").ifBlank { null },
-                o.optBoolean("v"), o.optString("p").ifBlank { null },
+                o.optBoolean("v"), o.optString("p").ifBlank { null }, o.optBoolean("sf"),
             )
         }
     }

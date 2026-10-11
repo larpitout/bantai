@@ -16,11 +16,31 @@ object PermissionHelper {
     fun isIgnoringBatteryOptimizations(context: Context): Boolean =
         context.getSystemService(android.os.PowerManager::class.java).isIgnoringBatteryOptimizations(context.packageName)
 
-    /** Diretsong tanong na "Allow"; kung hindi suportado ng phone, ang listahan ng battery settings. */
+    /** Diretsong tanong na "Allow"; kung hindi suportado ng phone, ang listahan ng battery settings. Kapag naka-on na, doon na rin pinapatay. */
     fun getBatteryOptimizationIntent(context: Context): Intent {
+        if (isIgnoringBatteryOptimizations(context)) {
+            return Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+        }
         val direct = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, android.net.Uri.parse("package:${context.packageName}"))
         return if (direct.resolveActivity(context.packageManager) != null) direct
         else Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+    }
+
+    /** Android 10+ (API 29): naka-assign ba kay Bantai ang "Caller ID & spam app"? */
+    fun isCallScreeningRole(context: Context): Boolean =
+        android.os.Build.VERSION.SDK_INT >= 29 &&
+            context.getSystemService(android.app.role.RoleManager::class.java)
+                .isRoleHeld(android.app.role.RoleManager.ROLE_CALL_SCREENING)
+
+    /** Kapag naka-on na ang role: default-apps settings (doon ito pinapalit). Kapag wala pa: tanong ng Android. */
+    fun openCallScreening(activity: android.app.Activity) {
+        if (isCallScreeningRole(activity)) {
+            activity.startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS))
+        } else if (android.os.Build.VERSION.SDK_INT >= 29) {
+            val roles = activity.getSystemService(android.app.role.RoleManager::class.java)
+            @Suppress("DEPRECATION")
+            activity.startActivityForResult(roles.createRequestRoleIntent(android.app.role.RoleManager.ROLE_CALL_SCREENING), 2)
+        }
     }
 
     const val REQUEST_CONTACTS = 3

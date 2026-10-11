@@ -23,6 +23,7 @@
     <string name="warning_prize_reason">Unsolicited prize or lottery claim detected, which is commonly a scam.</string>
     <string name="warning_link_reason">Message contains an unverified external link. Do not tap or open it.</string>
     <string name="warning_generic_reason">This message contains multiple common scam indicators.</string>
+    <string name="warning_uncertain_reason">Bantai couldn\'t fully check this message, but it has signs that need care.</string>
     <string name="warning_safe_reason">This message appears to be safe and normal.</string>
 
     <!-- Scam Warning Recommended Actions -->
@@ -31,7 +32,9 @@
     <string name="warning_prize_action">Do not reply or provide any personal details to claim unverified prizes.</string>
     <string name="warning_link_action">Do not click the link or provide any personal details.</string>
     <string name="warning_generic_action">Do not send money or sensitive personal information. Verify with a family member first.</string>
+    <string name="warning_uncertain_action">Verify with the sender or family before replying or sending anything.</string>
     <string name="warning_safe_action">No action required.</string>
+    <string name="warning_ai_disclaimer">Reminder: Bantai\'s AI can make mistakes and even official senders can be spoofed. Double-check before sending money, codes, or personal details.</string>
 
     <!-- Signal Names -->
     <string name="signal_money_request">Money Request</string>
@@ -44,8 +47,9 @@
     <!-- Setup Screen (Onboarding) -->
     <string name="setup_title">Bantai Setup</string>
     <string name="setup_header_subtitle">Quick 1-minute configuration</string>
-    <string name="setup_step_pill">Step 2 of 2</string>
     <string name="setup_perm_section_title">Required Permissions</string>
+    <string name="setup_perm_recommended_title">Recommended</string>
+    <string name="setup_perm_recommended_desc">Bantai works without these, but they make protection stronger.</string>
     <string name="setup_btn_finish">Finish Setup</string>
     <string name="setup_toast_done">Setup complete. Bantai is on guard.</string>
     <string name="setup_perm_notification_title">Notification Access</string>
@@ -56,6 +60,12 @@
     <string name="switch_protection_title">Bantai Protection</string>
     <string name="switch_protection_active">Active</string>
     <string name="switch_protection_inactive">Paused</string>
+    <string name="switch_protection_desc_on">Bantai reads new messages from SMS, Messenger, Viber and other chat apps on this phone and warns you if one looks like a scam. Nothing leaves your phone.</string>
+    <string name="switch_protection_desc_off">Paused: Bantai is not checking messages or calls. You will get no scam warnings until you turn it back on.</string>
+    <string name="pause_confirm_title">Pause Bantai protection?</string>
+    <string name="pause_confirm_message">While paused, Bantai will not warn you about scam messages or calls.</string>
+    <string name="pause_confirm_yes">Pause</string>
+    <string name="pause_confirm_no">Keep protection on</string>
     <string name="setup_perm_accessibility_title">Accessibility (Messages only)</string>
     <string name="setup_perm_accessibility_desc">Lets Bantai notice when you open a flagged message, to show the warning there.</string>
     <string name="accessibility_service_description">Bantai checks only messaging apps, on this phone, to show a scam warning when you open a flagged message.</string>
@@ -64,7 +74,7 @@
     <string name="warning_link_risky_ending">This link goes to an unknown website often used by scammers.</string>
     <string name="warning_link_fake_site">This link points to a fake-looking website, not a real company.</string>
     <string name="setup_perm_battery_title">Battery: Unrestricted</string>
-    <string name="setup_perm_battery_desc">So the phone does not stop Bantai in the background.</string>
+    <string name="setup_perm_battery_desc">Without this, some phones (OPPO, TECNO, Xiaomi, Infinix) close Bantai in the background and warnings stop.</string>
     <string name="history_title">Flagged messages</string>
     <string name="history_empty">No flagged messages yet.</string>
     <string name="why_flagged">Why was this flagged?</string>
@@ -81,6 +91,7 @@
     <string name="kind_account">Account, OTP or parcel</string>
     <string name="kind_money">Asking for money</string>
     <string name="kind_other">Other</string>
+    <string name="kind_safe">Checked — safe</string>
     <string name="dashboard_title">Bantai</string>
     <string name="dashboard_protection_on">Protection is ON</string>
     <string name="dashboard_protection_off">Protection is OFF</string>
@@ -102,7 +113,7 @@
     <string name="tip_prize">Tip: Real prizes never ask you to pay or send details first.</string>
     <string name="tip_money">Tip: Confirm with family before sending money to anyone.</string>
     <string name="setup_perm_call_title">Call warnings</string>
-    <string name="setup_perm_call_desc">Set Bantai as Caller ID and spam app to warn about unknown callers.</string>
+    <string name="setup_perm_call_desc">Warns you when an unknown number calls. Without this, Bantai checks messages only.</string>
     <string name="call_scam_sender_reason">This number sent you a scam text earlier.</string>
     <string name="call_scam_sender_action">Do not answer. If you answer, do not give money, OTP or PIN.</string>
     <string name="call_unknown_reason">Call from a number that is not in your contacts.</string>
@@ -124,7 +135,7 @@
     <string name="field_kind">Type</string>
     <string name="field_signals">Signals</string>
     <string name="verdict_scam">SCAM</string>
-    <string name="verdict_safe">VALID</string>
+    <string name="verdict_safe">SAFE</string>
     <string name="nav_home">Home</string>
     <string name="nav_alerts">Alerts</string>
     <string name="nav_check">Check</string>

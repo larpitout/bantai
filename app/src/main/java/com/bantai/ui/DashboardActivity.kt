@@ -28,6 +28,7 @@ import com.bantai.R
 import com.bantai.data.GuardianPreferences
 import com.bantai.data.ScamHistory
 import com.bantai.pipeline.VerdictSource
+import com.bantai.model.Verdict
 import com.bantai.rules.LinkChecker
 import com.bantai.rules.RuleFilter
 import com.bantai.util.ContactHelper
@@ -56,8 +57,8 @@ class DashboardActivity : AppCompatActivity() {
 
     /** Babalang binuksan sa Alerts tab (audit); null = listahan. */
     private var selected: ScamHistory.Item? = null
-    /** Filter ng kasaysayan: null = lahat, false = SCAM, true = SUSPICIOUS (kakilala). */
-    private var filter: Boolean? = null
+    /** Filter ng kasaysayan: null = lahat; kundi ang hatol na ipapakita (SCAM/SUSPICIOUS/SAFE). */
+    private var filter: Verdict? = null
 
     // Iisang wika sa buong app (pareho ng babala).
     override fun attachBaseContext(newBase: Context) {
@@ -259,8 +260,8 @@ class DashboardActivity : AppCompatActivity() {
             orientation = LinearLayout.HORIZONTAL
             layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) }
             addView(stat(ScamHistory.scannedToday(this@DashboardActivity), getString(R.string.dashboard_scanned_today)))
-            addView(stat(items.count { ScamHistory.isToday(it.time) }, getString(R.string.dashboard_flagged_today)))
-            addView(stat(items.size, getString(R.string.dashboard_flagged_total)))
+            addView(stat(items.count { ScamHistory.isToday(it.time) && !it.safe }, getString(R.string.dashboard_flagged_today)))
+            addView(stat(items.count { !it.safe }, getString(R.string.dashboard_flagged_total)))
         })
 
         content.addView(card {
@@ -269,10 +270,12 @@ class DashboardActivity : AppCompatActivity() {
             if (last == null) {
                 addView(text(getString(R.string.history_empty), 16f, color = MUTED))
             } else {
-                addView(row(getString(R.string.field_verdict), verdictChip(true, last.suspicious)))
+                addView(row(getString(R.string.field_verdict), verdictChip(!last.safe, last.suspicious)))
                 addView(row(getString(R.string.field_from), text(last.sender, 15f, bold = true, color = INK)))
                 addView(row(getString(R.string.field_reason), text(last.reason, 15f, color = INK)))
-                addView(row(getString(R.string.field_kind), chip(last.kind, if (last.suspicious) AMBER_BG else ROSE_BG, if (last.suspicious) AMBER else ROSE)))
+                addView(row(getString(R.string.field_kind), chip(last.kind,
+                    if (last.safe) GREEN_BG else if (last.suspicious) AMBER_BG else ROSE_BG,
+                    if (last.safe) GREEN else if (last.suspicious) AMBER else ROSE)))
             }
         })
     }
@@ -300,8 +303,9 @@ class DashboardActivity : AppCompatActivity() {
             return
         }
 
-        // Insights: mga bilang muna, saka ang payo sa sariling kahon.
-        val lines = insights(items)
+        // Insights: mga na-flag lang ang binibilang (hindi kasama ang cleared/safe).
+        val flagged = items.filter { !it.safe }
+        val lines = insights(flagged)
         content.addView(card {
             addView(label(getString(R.string.dashboard_insights)))
             lines.dropLast(1).forEach { addView(bullet(it)) }
@@ -315,17 +319,20 @@ class DashboardActivity : AppCompatActivity() {
             })
         })
 
-        val kinds = items.groupingBy { it.kind }.eachCount().entries.sortedByDescending { it.value }
-        content.addView(card {
-            addView(label(getString(R.string.dashboard_by_kind)))
-            kinds.forEach { (kind, count) -> addView(kindBar(kind, count, kinds.first().value)) }
-        })
+        val kinds = flagged.groupingBy { it.kind }.eachCount().entries.sortedByDescending { it.value }
+        if (kinds.isNotEmpty()) {
+            content.addView(card {
+                addView(label(getString(R.string.dashboard_by_kind)))
+                kinds.forEach { (kind, count) -> addView(kindBar(kind, count, kinds.first().value)) }
+            })
+        }
 
         content.addView(sectionTitle(getString(R.string.dashboard_history)))
         content.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(dp(4), dp(10), 0, 0)
-            listOf(null to R.string.filter_all, false to R.string.verdict_scam, true to R.string.verdict_suspicious).forEach { (value, name) ->
+            listOf(null to R.string.filter_all, Verdict.SCAM to R.string.verdict_scam,
+                Verdict.SUSPICIOUS to R.string.verdict_suspicious, Verdict.SAFE to R.string.verdict_safe).forEach { (value, name) ->
                 val on = filter == value
                 addView(chip(getString(name), if (on) BLUE else SLATE_BG, if (on) Color.WHITE else MUTED).apply {
                     setPadding(dp(14), dp(8), dp(14), dp(8))
@@ -338,7 +345,7 @@ class DashboardActivity : AppCompatActivity() {
         val fmt = DateFormat.getTimeInstance(DateFormat.SHORT, locale)
         // Nakagrupo ayon sa araw; isang row bawat mensahe, pindutin para makita ang buong audit.
         var day: String? = null
-        for (item in items.filter { filter == null || it.suspicious == filter }) {
+        for (item in items.filter { filter == null || it.level == filter }) {
             val itemDay = dayLabel(item.time)
             if (itemDay != day) {
                 day = itemDay
@@ -352,8 +359,12 @@ class DashboardActivity : AppCompatActivity() {
         orientation = LinearLayout.HORIZONTAL
         isClickable = true
         setOnClickListener { selected = item; render() }
-        val (riskBg, riskFg) = if (item.suspicious) AMBER_BG to AMBER else riskColors(item.score)
-        addView(text("!", 20f, bold = true, color = riskFg).apply {
+        val (riskBg, riskFg) = when {
+            item.safe -> GREEN_BG to GREEN
+            item.suspicious -> AMBER_BG to AMBER
+            else -> riskColors(item.score)
+        }
+        addView(text(if (item.safe) "✓" else "!", 20f, bold = true, color = riskFg).apply {
             gravity = Gravity.CENTER
             background = rounded(riskBg, 999, riskBg)
             layoutParams = LinearLayout.LayoutParams(dp(40), dp(40)).apply { marginEnd = dp(12) }
@@ -373,7 +384,7 @@ class DashboardActivity : AppCompatActivity() {
                     layoutParams = LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(8) }
                 })
             })
-            addView(text(item.kind, 13f, bold = true, color = if (item.suspicious) AMBER else ROSE).apply { setPadding(0, dp(2), 0, 0) })
+            addView(text(item.kind, 13f, bold = true, color = if (item.safe) GREEN else if (item.suspicious) AMBER else ROSE).apply { setPadding(0, dp(2), 0, 0) })
             addView(text(item.message, 15f, color = MUTED).apply {
                 maxLines = 2
                 ellipsize = android.text.TextUtils.TruncateAt.END
@@ -381,7 +392,10 @@ class DashboardActivity : AppCompatActivity() {
             })
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
-                addView(chip(if (item.suspicious) getString(R.string.verdict_suspicious) else riskLabel(item.score), riskBg, riskFg))
+                addView(chip(
+                    if (item.safe) getString(R.string.verdict_safe)
+                    else if (item.suspicious) getString(R.string.verdict_suspicious)
+                    else riskLabel(item.score), riskBg, riskFg))
             })
         })
     }
@@ -394,12 +408,20 @@ class DashboardActivity : AppCompatActivity() {
             isClickable = true
             setOnClickListener { selected = null; render() }
         })
-        val accent = if (item.suspicious) AMBER else RED
-        content.addView(card(if (item.suspicious) AMBER_BG else ROSE_BG, if (item.suspicious) AMBER_BORDER else ROSE_BORDER) {
+        val accent = if (item.safe) GREEN else if (item.suspicious) AMBER else RED
+        content.addView(card(
+            if (item.safe) GREEN_BG else if (item.suspicious) AMBER_BG else ROSE_BG,
+            if (item.safe) GREEN else if (item.suspicious) AMBER_BORDER else ROSE_BORDER,
+        ) {
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
-                addView(chip(getString(if (item.suspicious) R.string.verdict_suspicious else R.string.verdict_scam), accent, Color.WHITE))
-                addView(chip(riskLabel(item.score), Color.WHITE, riskColors(item.score).second).apply { (layoutParams as LinearLayout.LayoutParams).marginStart = dp(6) })
+                addView(chip(getString(
+                    if (item.safe) R.string.verdict_safe
+                    else if (item.suspicious) R.string.verdict_suspicious
+                    else R.string.verdict_scam), accent, Color.WHITE))
+                if (!item.safe) {
+                    addView(chip(riskLabel(item.score), Color.WHITE, riskColors(item.score).second).apply { (layoutParams as LinearLayout.LayoutParams).marginStart = dp(6) })
+                }
             })
             addView(text(item.kind, 21f, bold = true, color = INK).apply { setPadding(0, dp(10), 0, dp(2)) })
             addView(text("${item.sender}  ·  ${fmt.format(Date(item.time))}", 14f, color = MUTED))
@@ -506,6 +528,8 @@ class DashboardActivity : AppCompatActivity() {
                 if (rule.signals.isNotEmpty()) {
                     addView(row(getString(R.string.field_signals), text(rule.signals.joinToString(", "), 14f, color = MUTED)))
                 }
+                // Kahit SAFE ang hatol: ang AI ay maaaring magkamali at ang sender ay maaaring peke.
+                addView(text(getString(R.string.warning_ai_disclaimer), 12f, color = MUTED).apply { setPadding(0, dp(8), 0, 0) })
             })
         }
 
@@ -569,7 +593,18 @@ class DashboardActivity : AppCompatActivity() {
                     color = if (prefs.isProtectionEnabled) GREEN else MUTED).apply { layoutParams = LinearLayout.LayoutParams(0, -2, 1f) })
                 addView(androidx.appcompat.widget.SwitchCompat(context).apply {
                     isChecked = prefs.isProtectionEnabled
-                    setOnCheckedChangeListener { _, on -> prefs.isProtectionEnabled = on; render() }
+                    setOnCheckedChangeListener { _, on ->
+                        if (on) {
+                            prefs.isProtectionEnabled = true
+                            render()
+                        } else {
+                            ProtectionToggle.confirmPause(
+                                this@DashboardActivity,
+                                onConfirm = { prefs.isProtectionEnabled = false; render() },
+                                onCancel = { render() },
+                            )
+                        }
+                    }
                 })
             })
         })
@@ -577,8 +612,7 @@ class DashboardActivity : AppCompatActivity() {
         // Mga permission: pindutin para buksan ang tamang settings ng phone
         content.addView(card {
             addView(label(getString(R.string.card_permissions)))
-            val callOk = android.os.Build.VERSION.SDK_INT >= 29 &&
-                getSystemService(android.app.role.RoleManager::class.java).isRoleHeld(android.app.role.RoleManager.ROLE_CALL_SCREENING)
+            val callOk = PermissionHelper.isCallScreeningRole(this@DashboardActivity)
             addView(permRow(R.string.setup_perm_notification_title, PermissionHelper.isNotificationAccessGranted(this@DashboardActivity)) {
                 startActivity(PermissionHelper.getNotificationAccessSettingsIntent())
             })
@@ -595,11 +629,7 @@ class DashboardActivity : AppCompatActivity() {
                 PermissionHelper.requestContacts(this@DashboardActivity)
             })
             addView(permRow(R.string.setup_perm_call_title, callOk) {
-                if (android.os.Build.VERSION.SDK_INT >= 29) {
-                    val roles = getSystemService(android.app.role.RoleManager::class.java)
-                    @Suppress("DEPRECATION")
-                    startActivityForResult(roles.createRequestRoleIntent(android.app.role.RoleManager.ROLE_CALL_SCREENING), 2)
-                }
+                PermissionHelper.openCallScreening(this@DashboardActivity)
             })
         })
     }
@@ -783,6 +813,7 @@ class DashboardActivity : AppCompatActivity() {
         val SLATE_BG = Color.parseColor("#F1F5F9")
         val BORDER = Color.parseColor("#DCE6F4")
         val GREEN = Color.parseColor("#059669")
+        val GREEN_BG = Color.parseColor("#ECFDF5")
         val RED = Color.parseColor("#DC2626")
         val RED_BG = Color.parseColor("#FEF2F2")
         val ROSE = Color.parseColor("#BE123C")

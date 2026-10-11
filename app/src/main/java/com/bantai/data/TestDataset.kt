@@ -258,6 +258,76 @@ object TestDataset {
             isScam = false,
             category = "Care Reminder",
             expectedMinScore = 0
+        ),
+
+        // ========================
+        // SENDER-AWARE CASES (31-38)
+        // Para sa sender context + SUSPICIOUS tier ng pipeline.
+        // Tandaan: ang SUSPICIOUS ay isScam=false sa eval (bilateral ang scoring).
+        // ========================
+        TestCase(
+            id = 31,
+            sender = "8080",
+            text = "Globe Prepaid: Enjoy 5GB data for 3 days with Go50. Register via the GlobeOne app.",
+            isScam = false,
+            category = "Official Sender Promo",
+            expectedMinScore = 0
+        ),
+        TestCase(
+            id = 32,
+            sender = "GCASH",
+            text = "GCash: You received P500.00 from Juan D. Your new balance is P1,250.45. Ref. No. 601234567890.",
+            isScam = false,
+            category = "Official Sender Advisory",
+            expectedMinScore = 1
+        ),
+        TestCase(
+            id = 33,
+            sender = "BDO",
+            text = "BDO: Your account will be locked today. Verify your details at http://bdo-verify.top/secure immediately.",
+            isScam = true,
+            category = "Spoofed Official Sender",
+            expectedMinScore = 2
+        ),
+        TestCase(
+            id = 34,
+            sender = "Junjun Anak",
+            text = "Nay pautang po 2k pang-load ko lang po, bayad ko po sa sweldo padala niyo sa gcash ko.",
+            isScam = false, // suspicious territory: kakilalang humihingi ng pera
+            category = "Contact Money Request",
+            expectedMinScore = 1
+        ),
+        TestCase(
+            id = 35,
+            sender = "+639171234567",
+            text = "Ma pabili po ng 100 load sa tindahan, wala na po akong pang-text sa inyo.",
+            isScam = false, // suspicious territory: maaaring totoong hiling ng pamilya
+            category = "Family Load Request",
+            expectedMinScore = 1
+        ),
+        TestCase(
+            id = 36,
+            sender = "DITO",
+            text = "DITO: Your SIM registration is incomplete. Your number will be deactivated. Verify at http://dito-simreg.top/reg",
+            isScam = true,
+            category = "SIM Registration Phishing",
+            expectedMinScore = 2
+        ),
+        TestCase(
+            id = 37,
+            sender = "+639351234567",
+            text = "Nay mag-invest po kayo sa amin 1000 lang po tubong 5000 agad garantisado padala lang po sa gcash.",
+            isScam = true,
+            category = "Investment Scam Tagalog",
+            expectedMinScore = 1
+        ),
+        TestCase(
+            id = 38,
+            sender = "Kuya Romy",
+            text = "Nay kumusta po kayo diyan? Dadalaw po kami sa Sabado at magluluto ako ng sinigang.",
+            isScam = false,
+            category = "Family Tagalog Chat",
+            expectedMinScore = 0
         )
     )
 }

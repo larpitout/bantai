@@ -23,6 +23,7 @@
     <string name="warning_prize_reason">Walang totoong premyo o raffle na humihingi ng bayad o personal na impormasyon.</string>
     <string name="warning_link_reason">May kasamang kahina-hinalang link ang mensahe. Huwag po itong buksan.</string>
     <string name="warning_generic_reason">Mukhang kahina-hinala po ang mensaheng ito dahil may mga senyales ng scam.</string>
+    <string name="warning_uncertain_reason">Hindi po nasuri nang buo ni Bantai ang mensaheng ito, pero may mga senyales itong dapat pag-ingatan.</string>
     <string name="warning_safe_reason">Ligtas po at karaniwang mensahe lamang ito.</string>
 
     <!-- Scam Warning Recommended Actions -->
@@ -31,7 +32,9 @@
     <string name="warning_prize_action">Huwag pong pansinin at huwag magbigay ng kahit anong detalye para sa hindi inaasahang premyo.</string>
     <string name="warning_link_action">Huwag pong pindutin ang link at huwag magbigay ng impormasyon.</string>
     <string name="warning_generic_action">Huwag pong magpadala ng pera o magbigay ng impormasyon. Tanungin muna ang isang kapamilya.</string>
+    <string name="warning_uncertain_action">I-verify po muna sa nagpadala o sa pamilya bago sumagot o magpadala ng kahit ano.</string>
     <string name="warning_safe_action">Walang kailangang gawin.</string>
+    <string name="warning_ai_disclaimer">Paalala po: maaaring magkamali ang AI ni Bantai at maaari ring magpanggap ang mga opisyal na sender. Siguraduhing muli po bago magpadala ng pera, code, o personal na detalye.</string>
 
     <!-- Signal Names -->
     <string name="signal_money_request">Hingi ng Pera</string>
@@ -44,8 +47,9 @@
     <!-- Setup Screen (Onboarding) -->
     <string name="setup_title">Setup ng Bantai</string>
     <string name="setup_header_subtitle">Mabilis na 1 minutong setup</string>
-    <string name="setup_step_pill">Hakbang 2 ng 2</string>
     <string name="setup_perm_section_title">Mga Kailangang Pahintulot</string>
+    <string name="setup_perm_recommended_title">Mga Inirerekomenda</string>
+    <string name="setup_perm_recommended_desc">Gumagana po si Bantai kahit wala ang mga ito, pero mas malakas ang proteksyon kapag naka-on.</string>
     <string name="setup_btn_finish">Tapusin ang Setup</string>
     <string name="setup_toast_done">Tapos na ang setup. Nagbabantay na si Bantai.</string>
     <string name="setup_perm_notification_title">Notification Access</string>
@@ -56,6 +60,12 @@
     <string name="switch_protection_title">Proteksyon ni Bantai</string>
     <string name="switch_protection_active">Aktibo</string>
     <string name="switch_protection_inactive">Naka-pause</string>
+    <string name="switch_protection_desc_on">Binabasa ni Bantai ang mga bagong mensahe mula sa SMS, Messenger, Viber at iba pang chat app sa phone na ito, at nagbababala po kapag mukhang scam. Walang lumalabas ng phone ninyo.</string>
+    <string name="switch_protection_desc_off">Naka-pause po: hindi sinusuri ni Bantai ang mga mensahe o tawag. Walang babala sa scam hanggang i-on ninyo ulit.</string>
+    <string name="pause_confirm_title">I-pause po ba ang proteksyon ni Bantai?</string>
+    <string name="pause_confirm_message">Habang naka-pause, hindi po kayo babalaan ni Bantai tungkol sa mga scam na mensahe o tawag.</string>
+    <string name="pause_confirm_yes">I-pause po</string>
+    <string name="pause_confirm_no">Panatilihing naka-on</string>
     <string name="setup_perm_accessibility_title">Accessibility (Messages lang)</string>
     <string name="setup_perm_accessibility_desc">Para malaman ni Bantai kapag binuksan ang na-flag na mensahe, at doon ipakita ang babala.</string>
     <string name="accessibility_service_description">Sa mga messaging app lang tumitingin si Bantai, sa loob ng phone, para ipakita ang babala kapag binuksan ang kahina-hinalang mensahe.</string>
@@ -64,7 +74,7 @@
     <string name="warning_link_risky_ending">Hindi kilalang website po ang link na ito, at madalas itong gamitin ng mga scammer.</string>
     <string name="warning_link_fake_site">Mukhang pekeng website po ang link na ito, hindi ng totoong kumpanya.</string>
     <string name="setup_perm_battery_title">Battery: Unrestricted</string>
-    <string name="setup_perm_battery_desc">Para hindi patayin ng phone si Bantai sa background.</string>
+    <string name="setup_perm_battery_desc">Kapag wala po ito, baka isara ng ilang phone (OPPO, TECNO, Xiaomi, Infinix) si Bantai sa background at huminto ang mga babala.</string>
     <string name="history_title">Mga na-flag na mensahe</string>
     <string name="history_empty">Wala pang na-flag na mensahe.</string>
     <string name="why_flagged">Bakit na-flag?</string>
@@ -81,6 +91,7 @@
     <string name="kind_account">Account, OTP o parcel</string>
     <string name="kind_money">Humihingi ng pera</string>
     <string name="kind_other">Iba pa</string>
+    <string name="kind_safe">Sinuri — ligtas</string>
     <string name="dashboard_title">Bantai</string>
     <string name="dashboard_protection_on">Naka-ON ang proteksyon</string>
     <string name="dashboard_protection_off">Naka-OFF ang proteksyon</string>
@@ -102,7 +113,7 @@
     <string name="tip_prize">Payo: Walang totoong premyo na pinagbabayad ka muna.</string>
     <string name="tip_money">Payo: Kumpirmahin muna sa pamilya bago magpadala ng pera kahit kanino.</string>
     <string name="setup_perm_call_title">Babala sa tawag</string>
-    <string name="setup_perm_call_desc">Gawing Caller ID at spam app si Bantai para magbabala sa hindi kilalang tumatawag.</string>
+    <string name="setup_perm_call_desc">Nagbababala po kapag tumawag ang hindi kilalang numero. Kapag wala ito, mga mensahe lang ang sinusuri ni Bantai.</string>
     <string name="call_scam_sender_reason">Ang numerong ito ay nagpadala po ng scam na text kanina.</string>
     <string name="call_scam_sender_action">Huwag pong sagutin. Kung sasagutin, huwag magbigay ng pera, OTP o PIN.</string>
     <string name="call_unknown_reason">Tawag po mula sa numerong wala sa contacts ninyo.</string>
@@ -124,7 +135,7 @@
     <string name="field_kind">Uri</string>
     <string name="field_signals">Senyales</string>
     <string name="verdict_scam">SCAM</string>
-    <string name="verdict_safe">VALID</string>
+    <string name="verdict_safe">LIGTAS</string>
     <string name="nav_home">Home</string>
     <string name="nav_alerts">Babala</string>
     <string name="nav_check">Suriin</string>

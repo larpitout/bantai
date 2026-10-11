@@ -1,6 +1,7 @@
 package com.bantai.rules
 
 import com.bantai.model.ScamVerdict
+import com.bantai.model.Verdict
 import java.util.Locale
 
 object ScamParser {
@@ -8,7 +9,7 @@ object ScamParser {
     /**
      * Parses the LLM's raw text response into a structured ScamVerdict.
      * Expected format:
-     * VERDICT: SCAM (or SAFE)
+     * VERDICT: SCAM (or SUSPICIOUS / SAFE)
      * REASON: <Explanation>
      * ACTION: <Recommended action>
      */
@@ -43,21 +44,31 @@ object ScamParser {
 
         if (verdictStr != null) {
             val v = verdictStr.uppercase(Locale.ROOT).trim()
-            val isScam = when {
-                v.startsWith("NOT") || v.contains("NOT SCAM") || v.contains("NOT A SCAM") || v.contains("NO SCAM") -> false
-                v.contains("SAFE") || v.contains("LIGTAS") || v.contains("VALID") || v.contains("LEGIT") -> false
-                v.contains("SCAM") || v.contains("PHISHING") || v.contains("FRAUD") || v.contains("MAPANGANIB") -> true
-                else -> false
+            val level = when {
+                v.startsWith("NOT") || v.contains("NOT SCAM") || v.contains("NOT A SCAM") || v.contains("NO SCAM") -> Verdict.SAFE
+                v.contains("SUSPICIOUS") || v.contains("KAHINA-HINALA") || v.contains("MAG-INGAT") || v.contains("MAGINGAT") -> Verdict.SUSPICIOUS
+                v.contains("SAFE") || v.contains("LIGTAS") || v.contains("VALID") || v.contains("LEGIT") -> Verdict.SAFE
+                v.contains("SCAM") || v.contains("PHISHING") || v.contains("FRAUD") || v.contains("MAPANGANIB") -> Verdict.SCAM
+                else -> Verdict.SAFE
             }
-            val finalIsScam = if (isScam && action != null && (action.contains("no action", ignoreCase = true) || action.contains("wala", ignoreCase = true))) {
-                false
+            val finalLevel = if (level != Verdict.SAFE && action != null && (action.contains("no action", ignoreCase = true) || action.contains("wala", ignoreCase = true))) {
+                Verdict.SAFE
             } else {
-                isScam
+                level
             }
             return ScamVerdict(
-                isScam = finalIsScam,
-                reason = reason ?: if (finalIsScam) "This message appears suspicious." else "This message appears safe.",
-                action = action ?: if (finalIsScam) "Do not send money or click links. Verify with family." else "No action required."
+                isScam = finalLevel == Verdict.SCAM,
+                reason = reason ?: when (finalLevel) {
+                    Verdict.SCAM -> "This message appears suspicious."
+                    Verdict.SUSPICIOUS -> "This message needs verification."
+                    Verdict.SAFE -> "This message appears safe."
+                },
+                action = action ?: when (finalLevel) {
+                    Verdict.SCAM -> "Do not send money or click links. Verify with family."
+                    Verdict.SUSPICIOUS -> "Verify with the sender or family before replying."
+                    Verdict.SAFE -> "No action required."
+                },
+                level = finalLevel
             )
         }
 
@@ -66,9 +77,12 @@ object ScamParser {
         val hasNegative = upperRaw.contains("NOT SCAM") || upperRaw.contains("NOT A SCAM") || upperRaw.contains("NO SCAM") ||
                 upperRaw.contains("SAFE") || upperRaw.contains("VALID") || upperRaw.contains("LIGTAS") || upperRaw.contains("LEGIT")
         val detectedScam = !hasNegative && (upperRaw.contains("SCAM") ||
-                upperRaw.contains("SUSPICIOUS") ||
                 upperRaw.contains("PHISHING") ||
                 upperRaw.contains("DO NOT SEND"))
+        val detectedSuspicious = !hasNegative && !detectedScam && (upperRaw.contains("SUSPICIOUS") ||
+                upperRaw.contains("KAHINA-HINALA") ||
+                upperRaw.contains("MAG-INGAT") || upperRaw.contains("MAGINGAT"))
+        val level = if (detectedScam) Verdict.SCAM else if (detectedSuspicious) Verdict.SUSPICIOUS else Verdict.SAFE
 
         if (fallbackVerdict != null) {
             return fallbackVerdict.copy(
@@ -78,8 +92,9 @@ object ScamParser {
 
         return ScamVerdict(
             isScam = detectedScam,
-            reason = if (detectedScam) "This message appears suspicious." else "This message appears safe.",
-            action = if (detectedScam) "Do not send money or click links." else "No action required."
+            reason = if (level != Verdict.SAFE) "This message appears suspicious." else "This message appears safe.",
+            action = if (level != Verdict.SAFE) "Verify with the sender or family before replying." else "No action required.",
+            level = level
         )
     }
 }

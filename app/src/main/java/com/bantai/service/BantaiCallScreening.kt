@@ -6,6 +6,7 @@ import android.telecom.Call
 import android.telecom.CallScreeningService
 import com.bantai.Bantai
 import com.bantai.R
+import com.bantai.data.GuardianPreferences
 import com.bantai.data.ScamHistory
 import com.bantai.ui.ScamAlertOverlay
 
@@ -18,6 +19,8 @@ class BantaiCallScreening : CallScreeningService() {
 
     override fun onScreenCall(details: Call.Details) {
         respondToCall(details, CallResponse.Builder().build()) // payagan; babala lang
+        // Laging payagan ang tawag; kapag naka-pause ang proteksyon, walang babala.
+        if (!GuardianPreferences(this).isProtectionEnabled) return
         if (details.callDirection != Call.Details.DIRECTION_INCOMING) return
 
         val number = details.handle?.schemeSpecificPart.orEmpty()

@@ -45,6 +45,7 @@ object LinkChecker {
         "microsoft.com", "live.com", "office.com",
         "yahoo.com",
         "viber.com", "whatsapp.com", "telegram.org", "t.me",
+        "github.com", "gitlab.com", "bitbucket.org",
     )
 
     private val SHORTENERS = setOf(

@@ -35,7 +35,11 @@ object ScamNotifier {
             .setSmallIcon(android.R.drawable.stat_sys_warning)
             .setContentTitle(text.getString(titleRes, sender))
             .setContentText(reason)
-            .setStyle(NotificationCompat.BigTextStyle().bigText("$reason\n${text.getString(R.string.notif_tap_hint)}"))
+            .setStyle(
+                NotificationCompat.BigTextStyle().bigText(
+                    "$reason\n${text.getString(R.string.notif_tap_hint)}\n\n${text.getString(R.string.warning_ai_disclaimer)}"
+                )
+            )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_RECOMMENDATION)
             .setColor(app.getColor(R.color.caution_text))

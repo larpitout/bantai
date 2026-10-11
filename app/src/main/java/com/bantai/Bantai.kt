@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Iisang on-device model para sa buong app (Qwen o Gemma, ayon sa RAM): Scam Alert ang gumagamit.
+ * Iisang on-device model para sa buong app (Gemma 3 1B): Scam Alert ang gumagamit.
  * ponytail: nananatiling naka-load habang buhay ang process; i-unload kapag matagal walang gamit
  * kung pinapatay ng low-memory killer.
  */
@@ -31,13 +31,13 @@ object Bantai {
 
     private const val TAG = "Bantai"
     /**
-     * Mga model ayon sa una sa pipiliin: Qwen3.5-2B (mas matalino, ~2 GB) kapag kaya ng RAM, saka Gemma 3 1B.
-     * Ang bawat isa ay may sariling minimum na totoong RAM; kulang sa lahat → rules-only.
+     * Gemma 3 1B (~580 MB) lang ang modelo: sa Infinix X6811, ang Qwen3.5-2B ay mas mabagal
+     * (158s load) at mas mababa ang accuracy (3/8, garbaged output), kaya tinanggal ito.
+     * May minimum na totoong RAM; kulang → rules-only.
      */
     private class Model(val file: String, val minRamMb: Long)
 
     private val MODELS = listOf(
-        Model("Qwen3.5-2B_int8.litertlm", 6_000),
         Model("gemma3-1b-it-int4.litertlm", 5_500),
     )
 
