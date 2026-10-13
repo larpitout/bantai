@@ -103,7 +103,9 @@ class LiteRtEngine(
 
     companion object {
         private const val TAG = "LiteRtEngine"
-        private const val MAX_OUTPUT_TOKENS = 48
+        // Dalawang linya lang ang sagot (VERDICT + REASON): 32 tokens ay sapat para sa maikling
+        // REASON. Bawat token ay ~150-250ms sa Infinix X6811, kaya malaki ang tipid sa latency.
+        private const val MAX_OUTPUT_TOKENS = 32
         const val DEFAULT_MODEL_PATH = "/data/local/tmp/llm/gemma3-1b-it-int4.litertlm"
 
         // Mababa ang temperature para konsistent ang HATOL/DAHILAN/GAWIN format.

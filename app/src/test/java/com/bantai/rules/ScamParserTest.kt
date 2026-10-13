@@ -101,4 +101,33 @@ class ScamParserTest {
         val res = ScamParser.parse(out)
         assertFalse(res.isScam)
     }
+
+    @Test
+    fun testParseSuspiciousVerdict() {
+        val out = """
+            VERDICT: SUSPICIOUS
+            REASON: It asks for money but may be a real request from family.
+            ACTION: Verify first.
+        """.trimIndent()
+        val res = ScamParser.parse(out)
+        assertFalse(res.isScam)
+        assertEquals(com.bantai.model.Verdict.SUSPICIOUS, res.level)
+        assertEquals("It asks for money but may be a real request from family.", res.reason)
+    }
+
+    @Test
+    fun testParseSuspiciousTagalogTokens() {
+        for (hatol in listOf("KAHINA-HINALA", "MAG-INGAT")) {
+            val res = ScamParser.parse("HATOL: $hatol\nDAHILAN: Baka totoo, baka hindi.")
+            assertFalse(hatol, res.isScam)
+            assertEquals(hatol, com.bantai.model.Verdict.SUSPICIOUS, res.level)
+        }
+    }
+
+    @Test
+    fun testParseLooseSuspiciousFallback() {
+        val res = ScamParser.parse("This message looks suspicious, please verify with the sender.")
+        assertFalse(res.isScam)
+        assertEquals(com.bantai.model.Verdict.SUSPICIOUS, res.level)
+    }
 }

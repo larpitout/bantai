@@ -98,6 +98,16 @@
         android:textSize="16sp"
         android:visibility="gone" />
 
+    <!-- Paalala sa ilalim ng babala: ang AI ay maaaring magkamali at ang sender ay maaaring peke. -->
+    <TextView
+        android:id="@+id/tvAlertDisclaimer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="@string/warning_ai_disclaimer"
+        android:textColor="@color/bantai_text_muted"
+        android:textSize="12sp" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

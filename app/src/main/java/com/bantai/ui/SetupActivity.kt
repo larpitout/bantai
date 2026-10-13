@@ -51,6 +51,33 @@ class SetupActivity : AppCompatActivity() {
     private lateinit var layoutContactsPerm: View
     private lateinit var switchProtection: SwitchCompat
     private lateinit var tvProtectionStatus: TextView
+    private lateinit var tvProtectionDesc: TextView
+
+    /** Pag-on/off mula sa code (hindi sa user): huwag ipakita ang confirm dialog. */
+    private var suppressProtectionListener = false
+
+    /** Pag-off ng proteksyon: may kumpirmasyon muna; pag-on: agad-agad. */
+    private val protectionListener = android.widget.CompoundButton.OnCheckedChangeListener { _, isChecked ->
+        if (suppressProtectionListener) return@OnCheckedChangeListener
+        if (isChecked) {
+            prefs.isProtectionEnabled = true
+            updateSwitchUi(true)
+        } else {
+            ProtectionToggle.confirmPause(
+                activity = this,
+                onConfirm = {
+                    prefs.isProtectionEnabled = false
+                    updateSwitchUi(false)
+                },
+                onCancel = {
+                    // Binalik sa ON nang hindi inuulit ang dialog.
+                    suppressProtectionListener = true
+                    switchProtection.isChecked = true
+                    suppressProtectionListener = false
+                },
+            )
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -92,6 +119,7 @@ class SetupActivity : AppCompatActivity() {
         layoutContactsPerm = findViewById(R.id.layoutContactsPerm)
         switchProtection = findViewById(R.id.switchProtection)
         tvProtectionStatus = findViewById(R.id.tvProtectionStatus)
+        tvProtectionDesc = findViewById(R.id.tvProtectionDesc)
 
         // XML na clipToOutline ay API 31+ pa; minSdk natin ay 26.
         findViewById<View>(R.id.logoFrame).clipToOutline = true
@@ -138,10 +166,7 @@ class SetupActivity : AppCompatActivity() {
 
         layoutCallPerm.setOnClickListener {
             // Android 10+: gawing "Caller ID & spam app" si Bantai para makapagbabala sa tawag.
-            if (android.os.Build.VERSION.SDK_INT >= 29) {
-                val roles = getSystemService(android.app.role.RoleManager::class.java)
-                startActivityForResult(roles.createRequestRoleIntent(android.app.role.RoleManager.ROLE_CALL_SCREENING), 2)
-            }
+            PermissionHelper.openCallScreening(this)
         }
 
         layoutContactsPerm.setOnClickListener {
@@ -155,10 +180,7 @@ class SetupActivity : AppCompatActivity() {
             )
         }
 
-        switchProtection.setOnCheckedChangeListener { _, isChecked ->
-            prefs.isProtectionEnabled = isChecked
-            updateSwitchUi(isChecked)
-        }
+        switchProtection.setOnCheckedChangeListener(protectionListener)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -171,9 +193,11 @@ class SetupActivity : AppCompatActivity() {
         if (isEnabled) {
             tvProtectionStatus.setText(R.string.switch_protection_active)
             tvProtectionStatus.setTextColor(ContextCompat.getColor(this, R.color.bantai_primary))
+            tvProtectionDesc.setText(R.string.switch_protection_desc_on)
         } else {
             tvProtectionStatus.setText(R.string.switch_protection_inactive)
             tvProtectionStatus.setTextColor(ContextCompat.getColor(this, R.color.bantai_text_muted))
+            tvProtectionDesc.setText(R.string.switch_protection_desc_off)
         }
     }
 
@@ -186,7 +210,6 @@ class SetupActivity : AppCompatActivity() {
         switchAccessibility.isChecked = PermissionHelper.isAccessibilityServiceEnabled(this)
         switchBattery.isChecked = PermissionHelper.isIgnoringBatteryOptimizations(this)
         switchContacts.isChecked = ContactHelper.hasPermission(this)
-        switchCall.isChecked = android.os.Build.VERSION.SDK_INT >= 29 &&
-            getSystemService(android.app.role.RoleManager::class.java).isRoleHeld(android.app.role.RoleManager.ROLE_CALL_SCREENING)
+        switchCall.isChecked = PermissionHelper.isCallScreeningRole(this)
     }
 }

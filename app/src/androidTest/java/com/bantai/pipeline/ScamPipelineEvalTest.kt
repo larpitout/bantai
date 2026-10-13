@@ -7,6 +7,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.bantai.data.TestCase
 import com.bantai.data.TestDataset
 import com.bantai.rules.PromptBuilder
+import com.bantai.rules.SenderClassifier
 import com.bantay.app.ai.LiteRtEngine
 import com.bantay.app.core.EngineState
 import kotlin.system.measureTimeMillis
@@ -90,7 +91,9 @@ class ScamPipelineEvalTest {
         val cases = TestDataset.messages
         val tally = Tally("llm")
         for (case in cases) {
-            val prompt = PromptBuilder.buildScamPrompt(case.text)
+            // Model only: walang rule signals, pero may sender context mula sa SenderClassifier.
+            val senderLine = SenderClassifier.classify(case.sender, senderIsContact = false).promptLine()
+            val prompt = PromptBuilder.buildScamPrompt(case.text, senderLine)
             // The full prompt is the same around every message, so it is logged once.
             if (case === cases.first()) Log.i(TAG, "llm prompt=${prompt.replace('\n', '|')}")
             Log.i(TAG, "llm[${case.id}] tanong=${case.text.replace('\n', ' ')}")
@@ -148,12 +151,13 @@ class ScamPipelineEvalTest {
 
         fun label(isScam: Boolean) = if (isScam) "SCAM" else "LIGTAS"
 
-        /** Null when there is no HATOL line or it does not name exactly one verdict. */
+        /** Null when there is no HATOL line or it does not name exactly one verdict. SUSPICIOUS ay hindi scam. */
         fun strictVerdict(raw: String): Boolean? {
             val hatol = HATOL_LINE.find(raw)?.groupValues?.get(1)?.uppercase() ?: return null
             val scam = "SCAM" in hatol
+            val suspicious = "SUSPICIOUS" in hatol || "KAHINA" in hatol || "MAG-INGAT" in hatol || "MAGINGAT" in hatol
             val safe = "LIGTAS" in hatol || "SAFE" in hatol
-            return if (scam == safe) null else scam
+            return if (listOf(scam, suspicious, safe).count { it } != 1) null else scam
         }
     }
 }
